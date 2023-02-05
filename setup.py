@@ -55,6 +55,7 @@ setup(
             "ParameterDistribution = webviz_subsurface.plugins._parameter_distribution:ParameterDistribution",
             "ParameterParallelCoordinates = webviz_subsurface.plugins._parameter_parallel_coordinates:ParameterParallelCoordinates",
             "ParameterResponseCorrelation = webviz_subsurface.plugins._parameter_response_correlation:ParameterResponseCorrelation",
+            "PlumeStability = webviz_subsurface.plugins._plume_stability:PlumeStability",
             "ProdMisfit = webviz_subsurface.plugins._prod_misfit:ProdMisfit",
             "PropertyStatistics = webviz_subsurface.plugins._property_statistics:PropertyStatistics",
             "PvtPlot = webviz_subsurface.plugins._pvt_plot:PvtPlot",
