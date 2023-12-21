@@ -443,6 +443,7 @@ class CO2Leakage(WebvizPluginABC):
                     color_map_name=color_map_name,
                     readable_name_=readable_name(attribute),
                     visualization_threshold=self._visualization_threshold,
+                    map_attribute_names=self._map_attribute_names,
                 )
             surf_data, self._summed_co2 = process_summed_mass(
                 formation,

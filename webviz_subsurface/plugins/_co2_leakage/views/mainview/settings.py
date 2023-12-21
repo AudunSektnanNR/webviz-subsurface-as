@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Dict, List, Optional, Tuple
 
 import dash
@@ -163,6 +164,11 @@ class ViewSettings(SettingsGroupABC):
             # Map
             prop_name = property_origin(MapAttribute(prop), self._map_attribute_names)
             surfaces = surface_provider.surface_names_for_attribute(prop_name)
+            if len(surfaces) == 0:
+                warnings.warn(
+                    f"Surface not found for property: {prop}.\n"
+                    f"Expected name: <formation>--{prop_name}--<date>.gri"
+                )
             # Formation names
             formations = [{"label": v.title(), "value": v} for v in surfaces]
             picked_formation = None
