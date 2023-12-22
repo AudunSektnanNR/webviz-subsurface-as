@@ -666,7 +666,7 @@ class FeedbackLayout(wcc.Dialog):
 
 class FeedbackButton(html.Button):
     def __init__(self) -> None:
-        style = LayoutStyle.OPTIONS_BUTTON
+        style = LayoutStyle.FEEDBACK_BUTTON
         style["display"] = "none"
         super().__init__(
             LayoutLabels.FEEDBACK,

@@ -56,6 +56,14 @@ class LayoutStyle:
         "background-color": "lightgrey",
     }
 
+    FEEDBACK_BUTTON = {
+        "marginBottom": "10px",
+        "width": "100%",
+        "height": "30px",
+        "line-height": "30px",
+        "background-color": "lightgrey",
+    }
+
 
 class ZoneViews(StrEnum):
     CONTAINMENTSPLIT = "Split into containment polygons"
