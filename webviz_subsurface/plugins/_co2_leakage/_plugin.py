@@ -358,7 +358,8 @@ class CO2Leakage(WebvizPluginABC):
             Output(self._view_component(MapViewElement.Ids.DECKGL_MAP), "children"),
             Output(self._view_component(MapViewElement.Ids.DECKGL_MAP), "views"),
             Output(
-                self._settings_component(ViewSettings.Ids.VISUALIZATION_UPDATE), "n_clicks"
+                self._settings_component(ViewSettings.Ids.VISUALIZATION_UPDATE),
+                "n_clicks",
             ),
             Input(self._settings_component(ViewSettings.Ids.PROPERTY), "value"),
             Input(self._view_component(MapViewElement.Ids.DATE_SLIDER), "value"),
@@ -377,7 +378,8 @@ class CO2Leakage(WebvizPluginABC):
                 "value",
             ),
             Input(
-                self._settings_component(ViewSettings.Ids.VISUALIZATION_UPDATE), "n_clicks"
+                self._settings_component(ViewSettings.Ids.VISUALIZATION_UPDATE),
+                "n_clicks",
             ),
             Input(ViewSettings.Ids.OPTIONS_DIALOG_OPTIONS, "value"),
             Input(ViewSettings.Ids.OPTIONS_DIALOG_WELL_FILTER, "value"),
@@ -403,7 +405,7 @@ class CO2Leakage(WebvizPluginABC):
             selected_wells: List[str],
             ensemble: str,
             current_views: List[Any],
-        ) -> Tuple[List[Dict[Any, Any]], List[Any], Dict[Any, Any]]:
+        ) -> Tuple[List[Dict[Any, Any]], List[Any], Dict[Any, Any], int]:
             attribute = MapAttribute(attribute)
             if len(realization) == 0 or ensemble is None:
                 raise PreventUpdate

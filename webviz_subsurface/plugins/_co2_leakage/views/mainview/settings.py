@@ -443,16 +443,15 @@ class MapSelectorLayout(wcc.Selectors):
                                     id=visualization_threshold_id,
                                     type="number",
                                     value=-1,
-                                    style={"width": "70%"}
+                                    style={"width": "70%"},
                                 ),
-                                html.Div(
-                                    style={"width": "5%"}
-                                ),
+                                html.Div(style={"width": "5%"}),
                                 html.Button(
-                                    'Update',
+                                    "Update",
                                     id=visualization_update_id,
                                     style=LayoutStyle.VISUALIZATION_BUTTON,
-                                    n_clicks=0),
+                                    n_clicks=0,
+                                ),
                             ],
                             style={"display": "flex"},
                         ),
