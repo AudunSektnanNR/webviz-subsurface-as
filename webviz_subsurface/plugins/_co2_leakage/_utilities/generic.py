@@ -42,6 +42,7 @@ class LayoutLabels(str, Enum):
     WELL_FILTER = "Well filter"
     COMMON_SELECTIONS = "Options and global filters"
     FEEDBACK = "User feedback"
+    VISUALIZATION_UPDATE = "Update threshold"
 
 
 # pylint: disable=too-few-public-methods
@@ -59,6 +60,13 @@ class LayoutStyle:
     FEEDBACK_BUTTON = {
         "marginBottom": "10px",
         "width": "100%",
+        "height": "30px",
+        "line-height": "30px",
+        "background-color": "lightgrey",
+    }
+
+    VISUALIZATION_BUTTON = {
+        "marginLeft": "10px",
         "height": "30px",
         "line-height": "30px",
         "background-color": "lightgrey",
