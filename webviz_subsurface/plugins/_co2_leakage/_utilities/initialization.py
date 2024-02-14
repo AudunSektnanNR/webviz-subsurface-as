@@ -84,7 +84,7 @@ def init_table_provider(
             text = (
                 "Some CSV-files are very large and might create problems when loading."
             )
-            text += f"\n  ensambles: {ens}"
+            text += f"\n  ensembles: {ens}"
             text += f"\n  CSV-files: {table_rel_path}"
             text += f"\n  Max size : {max_size_mb:.2f} MB"
             LOGGER.warning(text)
