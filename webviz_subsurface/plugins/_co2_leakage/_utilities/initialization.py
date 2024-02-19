@@ -138,29 +138,17 @@ def process_files(
     cont_bound: Optional[str],
     haz_bound: Optional[str],
     well_file: Optional[str],
-    root: str,
 ) -> List[Optional[str]]:
     """
     Checks if the files exist (otherwise gives a warning and returns None)
     Concatenates ensemble root dir and path to file if relative
     """
-    return [
-        _process_file(source, root) for source in [cont_bound, haz_bound, well_file]
-    ]
+    return [_process_file(source) for source in [cont_bound, haz_bound, well_file]]
 
 
-def _process_file(file: Optional[str], root: str) -> Optional[str]:
+def _process_file(file: Optional[str]) -> Optional[str]:
     if file is not None:
-        file = _check_if_file_exists(
-            os.path.join(Path(root).parents[1], file)
-            if not Path(file).is_absolute()
-            else file
-        )
-    return file
-
-
-def _check_if_file_exists(file: str) -> Optional[str]:
-    if not os.path.isfile(file):
-        warnings.warn(f"Cannot find specified file {file}.")
-        return None
+        if not os.path.isfile(file):
+            warnings.warn(f"Cannot find specified file {file}.")
+            return None
     return file

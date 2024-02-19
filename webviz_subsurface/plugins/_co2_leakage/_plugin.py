@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import plotly.graph_objects as go
@@ -92,9 +93,9 @@ class CO2Leakage(WebvizPluginABC):
         app: Dash,
         webviz_settings: WebvizSettings,
         ensembles: List[str],
-        file_containment_boundary: Optional[str] = None,
-        file_hazardous_boundary: Optional[str] = None,
-        well_pick_file: Optional[str] = None,
+        file_containment_boundary: Path = None,
+        file_hazardous_boundary: Path = None,
+        well_pick_file: Path = None,
         plume_mass_relpath: str = TABLES_PATH + "/plume_mass.csv",
         plume_actual_volume_relpath: str = TABLES_PATH + "/plume_actual_volume.csv",
         unsmry_relpath: Optional[str] = None,
@@ -113,7 +114,6 @@ class CO2Leakage(WebvizPluginABC):
                 ]
                 for ensemble_name in ensembles
             }
-            # TODO? add support for different polygons and wells for each ensemble
             (
                 file_containment_boundary,
                 file_hazardous_boundary,
@@ -122,7 +122,6 @@ class CO2Leakage(WebvizPluginABC):
                 file_containment_boundary,
                 file_hazardous_boundary,
                 well_pick_file,
-                list(ensemble_paths.values())[0],
             )
             self._polygon_files = [file_containment_boundary, file_hazardous_boundary]
             self._surface_server = SurfaceImageServer.instance(app)
