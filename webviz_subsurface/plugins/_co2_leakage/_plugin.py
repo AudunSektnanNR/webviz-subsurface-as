@@ -233,6 +233,7 @@ class CO2Leakage(WebvizPluginABC):
         # Cannot avoid many arguments since all the parameters are needed
         # to determine what to plot
         # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-locals
         @callback(
             Output(
                 self._settings_component(ViewSettings.Ids.CONTAINMENT_VIEW), "value"
@@ -385,7 +386,9 @@ class CO2Leakage(WebvizPluginABC):
             Output(ViewSettings.Ids.WELL_FILTER_HEADER, "style"),
             Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
         )
-        def set_well_options(ensemble: str):
+        def set_well_options(
+            ensemble: str,
+        ) -> Tuple[List[Any], List[str], Dict[Any, Any], Dict[Any, Any]]:
             return (
                 [{"label": i, "value": i} for i in self._well_pick_names[ensemble]],
                 self._well_pick_names[ensemble],
