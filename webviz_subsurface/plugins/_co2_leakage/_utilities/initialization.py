@@ -127,6 +127,9 @@ def init_zone_and_region_options(
     options: Dict[str, Dict[str, Dict[str, List[str]]]] = {}
     for ens in ensemble_roots.keys():
         options[ens] = {}
+        print(f"  ens = {ens}")
+        print(f"  ensemble_provider[ens] = {ensemble_provider[ens]}")
+        print(f"  ensemble_provider[ens].realizations() = {ensemble_provider[ens].realizations()}")
         real = ensemble_provider[ens].realizations()[0]
         for source, table in zip(
             [GraphSource.CONTAINMENT_MASS, GraphSource.CONTAINMENT_ACTUAL_VOLUME],
