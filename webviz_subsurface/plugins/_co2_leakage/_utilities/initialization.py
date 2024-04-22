@@ -137,16 +137,22 @@ def init_zone_and_region_options(
         print(f"  ens = {ens}")
         print(f"  ensemble_provider[ens] = {ensemble_provider[ens]}")
         print(f"  ensemble_provider[ens].realizations() = {ensemble_provider[ens].realizations()}")
-        real = ensemble_provider[ens].realizations()[0]
-        for source, table in zip(
-            [GraphSource.CONTAINMENT_MASS, GraphSource.CONTAINMENT_ACTUAL_VOLUME],
-            [mass_table, actual_volume_table],
-        ):
-            try:
-                options[ens][source] = read_zone_and_region_options(table[ens], real)
-            except KeyError:
+        if len(ensemble_provider[ens].realizations()) > 0:
+            real = ensemble_provider[ens].realizations()[0]
+            for source, table in zip(
+                [GraphSource.CONTAINMENT_MASS, GraphSource.CONTAINMENT_ACTUAL_VOLUME],
+                [mass_table, actual_volume_table],
+            ):
+                try:
+                    options[ens][source] = read_zone_and_region_options(table[ens], real)
+                except KeyError:
+                    options[ens][source] = {"zones": [], "regions": []}
+            options[ens][GraphSource.UNSMRY] = {"zones": [], "regions": []}
+        else:
+            print("Quick fix.")
+            for source in (GraphSource.CONTAINMENT_MASS, GraphSource.CONTAINMENT_ACTUAL_VOLUME):
                 options[ens][source] = {"zones": [], "regions": []}
-        options[ens][GraphSource.UNSMRY] = {"zones": [], "regions": []}
+                options[ens][GraphSource.UNSMRY] = {"zones": [], "regions": []}
     return options
 
 
