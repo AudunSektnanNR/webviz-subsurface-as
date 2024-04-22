@@ -49,7 +49,14 @@ def init_surface_providers(
     webviz_settings: WebvizSettings,
     ensembles: List[str],
 ) -> Dict[str, EnsembleSurfaceProvider]:
+    print("\ninit_surface_providers()")
     surface_provider_factory = EnsembleSurfaceProviderFactory.instance()
+    print(f"surface_provider_factory: {surface_provider_factory}")
+    b = webviz_settings.shared_settings["scratch_ensembles"][ensembles[0]]
+    print(f"b               : {b}")
+    a = surface_provider_factory.create_from_ensemble_surface_files(b)
+    print(f"a               : {a}")
+    print(f"a.realizations(): {a.realizations()}")
     return {
         ens: surface_provider_factory.create_from_ensemble_surface_files(
             webviz_settings.shared_settings["scratch_ensembles"][ens],
