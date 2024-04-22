@@ -130,6 +130,7 @@ def init_zone_and_region_options(
     mass_table: Dict[str, EnsembleTableProvider],
     actual_volume_table: Dict[str, EnsembleTableProvider],
     ensemble_provider: Dict[str, EnsembleSurfaceProvider],
+    co2_table_provider: Dict[str, EnsembleTableProvider],
 ) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
     options: Dict[str, Dict[str, Dict[str, List[str]]]] = {}
     for ens in ensemble_roots.keys():
@@ -137,8 +138,11 @@ def init_zone_and_region_options(
         print(f"  ens = {ens}")
         print(f"  ensemble_provider[ens] = {ensemble_provider[ens]}")
         print(f"  ensemble_provider[ens].realizations() = {ensemble_provider[ens].realizations()}")
-        if len(ensemble_provider[ens].realizations()) > 0:
-            real = ensemble_provider[ens].realizations()[0]
+        print(f"  co2_table_provider[ens] = {co2_table_provider[ens]}")
+        print(f"  co2_table_provider[ens].realizations() = {co2_table_provider[ens].realizations()}")
+        if True or len(ensemble_provider[ens].realizations()) > 0:
+            # real = ensemble_provider[ens].realizations()[0]
+            real = co2_table_provider[ens].realizations()[0]
             for source, table in zip(
                 [GraphSource.CONTAINMENT_MASS, GraphSource.CONTAINMENT_ACTUAL_VOLUME],
                 [mass_table, actual_volume_table],

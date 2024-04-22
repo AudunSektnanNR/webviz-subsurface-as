@@ -177,11 +177,17 @@ class CO2Leakage(WebvizPluginABC):
             print(self._ensemble_surface_providers)
             for a,b  in self._ensemble_surface_providers.items():
                 print(f"{a}: {b}")
+
+            # for ens in ensemble_paths.keys():
+            #     a = self._ensemble_surface_providers[ens].realizations()
+            #     b = self._co2_table_providers[ens].realizations()
+
             self._zone_and_region_options = init_zone_and_region_options(
                 ensemble_paths,
                 self._co2_table_providers,
                 self._co2_actual_volume_table_providers,
                 self._ensemble_surface_providers,
+                self._co2_table_providers,
             )
         except Exception as err:
             self._error_message = f"Plugin initialization failed: {err}"
