@@ -49,14 +49,7 @@ def init_surface_providers(
     webviz_settings: WebvizSettings,
     ensembles: List[str],
 ) -> Dict[str, EnsembleSurfaceProvider]:
-    print("\ninit_surface_providers()")
     surface_provider_factory = EnsembleSurfaceProviderFactory.instance()
-    print(f"surface_provider_factory: {surface_provider_factory}")
-    b = webviz_settings.shared_settings["scratch_ensembles"][ensembles[0]]
-    print(f"b               : {b}")
-    a = surface_provider_factory.create_from_ensemble_surface_files(b)
-    print(f"a               : {a}")
-    print(f"a.realizations(): {a.realizations()}")
     return {
         ens: surface_provider_factory.create_from_ensemble_surface_files(
             webviz_settings.shared_settings["scratch_ensembles"][ens],
@@ -129,34 +122,21 @@ def init_zone_and_region_options(
     ensemble_roots: Dict[str, str],
     mass_table: Dict[str, EnsembleTableProvider],
     actual_volume_table: Dict[str, EnsembleTableProvider],
-    ensemble_provider: Dict[str, EnsembleSurfaceProvider],
     co2_table_provider: Dict[str, EnsembleTableProvider],
 ) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
     options: Dict[str, Dict[str, Dict[str, List[str]]]] = {}
     for ens in ensemble_roots.keys():
         options[ens] = {}
-        print(f"  ens = {ens}")
-        print(f"  ensemble_provider[ens] = {ensemble_provider[ens]}")
-        print(f"  ensemble_provider[ens].realizations() = {ensemble_provider[ens].realizations()}")
-        print(f"  co2_table_provider[ens] = {co2_table_provider[ens]}")
-        print(f"  co2_table_provider[ens].realizations() = {co2_table_provider[ens].realizations()}")
-        if True or len(ensemble_provider[ens].realizations()) > 0:
-            # real = ensemble_provider[ens].realizations()[0]
-            real = co2_table_provider[ens].realizations()[0]
-            for source, table in zip(
-                [GraphSource.CONTAINMENT_MASS, GraphSource.CONTAINMENT_ACTUAL_VOLUME],
-                [mass_table, actual_volume_table],
-            ):
-                try:
-                    options[ens][source] = read_zone_and_region_options(table[ens], real)
-                except KeyError:
-                    options[ens][source] = {"zones": [], "regions": []}
-            options[ens][GraphSource.UNSMRY] = {"zones": [], "regions": []}
-        else:
-            print("Quick fix.")
-            for source in (GraphSource.CONTAINMENT_MASS, GraphSource.CONTAINMENT_ACTUAL_VOLUME):
+        real = co2_table_provider[ens].realizations()[0]
+        for source, table in zip(
+            [GraphSource.CONTAINMENT_MASS, GraphSource.CONTAINMENT_ACTUAL_VOLUME],
+            [mass_table, actual_volume_table],
+        ):
+            try:
+                options[ens][source] = read_zone_and_region_options(table[ens], real)
+            except KeyError:
                 options[ens][source] = {"zones": [], "regions": []}
-                options[ens][GraphSource.UNSMRY] = {"zones": [], "regions": []}
+        options[ens][GraphSource.UNSMRY] = {"zones": [], "regions": []}
     return options
 
 

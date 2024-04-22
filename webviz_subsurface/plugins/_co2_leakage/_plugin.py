@@ -115,12 +115,6 @@ class CO2Leakage(WebvizPluginABC):
                 ]
                 for ensemble_name in ensembles
             }
-            print(f"\n\nensembles: ")
-            print(ensembles)
-            print(f"\nensemble_paths: ")
-            print(ensemble_paths)
-            for a,b  in ensemble_paths.items():
-                print(f"{a}: {b}")
             (
                 containment_poly_dict,
                 hazardous_poly_dict,
@@ -173,20 +167,10 @@ class CO2Leakage(WebvizPluginABC):
                 map_surface_names_to_well_pick_names,
             )
             # Zone and region options
-            print(f"\n_ensemble_surface_providers: ")
-            print(self._ensemble_surface_providers)
-            for a,b  in self._ensemble_surface_providers.items():
-                print(f"{a}: {b}")
-
-            # for ens in ensemble_paths.keys():
-            #     a = self._ensemble_surface_providers[ens].realizations()
-            #     b = self._co2_table_providers[ens].realizations()
-
             self._zone_and_region_options = init_zone_and_region_options(
                 ensemble_paths,
                 self._co2_table_providers,
                 self._co2_actual_volume_table_providers,
-                self._ensemble_surface_providers,
                 self._co2_table_providers,
             )
         except Exception as err:
