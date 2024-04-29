@@ -86,7 +86,9 @@ class SurfaceData:
             visualization_info,
             map_attribute_names,
         )
-        assert surf_meta is not None  # Should not occur
+        if surf_meta is None:  # Surface file does not exist
+            return None, None
+        assert isinstance(img_url, str)
         value_range = (
             0.0 if np.ma.is_masked(surf_meta.val_min) else surf_meta.val_min,
             0.0 if np.ma.is_masked(surf_meta.val_max) else surf_meta.val_max,
@@ -132,7 +134,10 @@ def derive_surface_address(
             threshold=contour_data["threshold"] if contour_data else 0.0,
             smoothing=contour_data["smoothing"] if contour_data else 0.0,
         )
-    date = None if attribute == MapAttribute.MIGRATION_TIME else date
+    date = None if attribute in [
+        MapAttribute.MIGRATION_TIME_SGAS,
+        MapAttribute.MIGRATION_TIME_AMFG,
+    ] else date
     if len(realization) == 1:
         return SimulatedSurfaceAddress(
             attribute=map_attribute_names[attribute],
@@ -151,7 +156,10 @@ def derive_surface_address(
 
 def readable_name(attribute: MapAttribute) -> str:
     unit = ""
-    if attribute == MapAttribute.MIGRATION_TIME:
+    if attribute in [
+        MapAttribute.MIGRATION_TIME_SGAS,
+        MapAttribute.MIGRATION_TIME_AMFG,
+    ]:
         unit = " [year]"
     elif attribute in (MapAttribute.AMFG_PLUME, MapAttribute.SGAS_PLUME):
         unit = " [# real.]"
@@ -198,7 +206,10 @@ def get_plume_polygon(
 
 
 def _find_legend_title(attribute: MapAttribute, unit: str) -> str:
-    if attribute == MapAttribute.MIGRATION_TIME:
+    if attribute in [
+        MapAttribute.MIGRATION_TIME_SGAS,
+        MapAttribute.MIGRATION_TIME_AMFG,
+    ]:
         return "years"
     if attribute in [MapAttribute.MASS, MapAttribute.DISSOLVED, MapAttribute.FREE]:
         return unit

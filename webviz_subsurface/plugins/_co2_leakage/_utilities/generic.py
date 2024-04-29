@@ -4,7 +4,8 @@ from webviz_config.utils import StrEnum
 
 
 class MapAttribute(Enum):
-    MIGRATION_TIME = "Migration Time"
+    MIGRATION_TIME_SGAS = "Migration time (SGAS)"
+    MIGRATION_TIME_AMFG = "Migration time (AMFG)"
     MAX_SGAS = "Maximum SGAS"
     MAX_AMFG = "Maximum AMFG"
     SGAS_PLUME = "Plume (SGAS)"

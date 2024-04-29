@@ -35,7 +35,8 @@ def init_map_attribute_names(
     if mapping is None:
         # Based on name convention of xtgeoapp_grd3dmaps:
         return {
-            MapAttribute.MIGRATION_TIME: "migrationtime",
+            MapAttribute.MIGRATION_TIME_SGAS: "migrationtime_sgas",
+            MapAttribute.MIGRATION_TIME_AMFG: "migrationtime_amfg",
             MapAttribute.MAX_SGAS: "max_sgas",
             MapAttribute.MAX_AMFG: "max_amfg",
             MapAttribute.MASS: "co2-mass-total",

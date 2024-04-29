@@ -190,10 +190,14 @@ class ViewSettings(SettingsGroupABC):
             prop_name = property_origin(MapAttribute(prop), self._map_attribute_names)
             surfaces = surface_provider.surface_names_for_attribute(prop_name)
             if len(surfaces) == 0:
-                warnings.warn(
-                    f"Surface not found for property: {prop}.\n"
-                    f"Expected name: <formation>--{prop_name}--<date>.gri"
-                )
+                warning = (f"Surface not found for property: {prop}.\n"
+                           f"Expected name: <formation>--{prop_name}")
+                if prop not in [
+                    MapAttribute.MIGRATION_TIME_SGAS,
+                    MapAttribute.MIGRATION_TIME_AMFG,
+                ]:
+                    warning += "--<date>"
+                warnings.warn(warning + ".gri")
             # Formation names
             formations = [{"label": v.title(), "value": v} for v in surfaces]
             picked_formation = None
@@ -246,7 +250,10 @@ class ViewSettings(SettingsGroupABC):
             Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
         )
         def set_visualization_threshold(attribute: str) -> bool:
-            return MapAttribute(attribute) == MapAttribute.MIGRATION_TIME
+            return MapAttribute(attribute) in [
+                MapAttribute.MIGRATION_TIME_SGAS,
+                MapAttribute.MIGRATION_TIME_AMFG,
+            ]
 
         @callback(
             Output(
@@ -336,14 +343,7 @@ class ViewSettings(SettingsGroupABC):
         def organize_color_and_mark_menus(
             color_choice: str,
             mark_choice: str,
-        ) -> Tuple[
-            List[Dict[str, str]],
-            str,
-            Dict[str, str],
-            Dict[str, str],
-            Dict[str, str],
-            Dict[str, str],
-        ]:
+        ) -> Tuple[List[Dict], str, Dict, Dict, Dict, Dict]:
             mark_options = [
                 {"label": "Phase", "value": "phase"},
                 {"label": "None", "value": "none"},
@@ -501,7 +501,7 @@ class MapSelectorLayout(wcc.Selectors):
                         wcc.Dropdown(
                             id=property_id,
                             options=_compile_property_options(),
-                            value=MapAttribute.MIGRATION_TIME.value,
+                            value=MapAttribute.MIGRATION_TIME_SGAS.value,
                             clearable=False,
                         ),
                         "Statistic",
@@ -862,8 +862,8 @@ def _compile_property_options() -> List[Dict[str, Any]]:
             "disabled": True,
         },
         {
-            "label": MapAttribute.MIGRATION_TIME.value,
-            "value": MapAttribute.MIGRATION_TIME.value,
+            "label": MapAttribute.MIGRATION_TIME_SGAS.value,
+            "value": MapAttribute.MIGRATION_TIME_SGAS.value,
         },
         {"label": MapAttribute.MAX_SGAS.value, "value": MapAttribute.MAX_SGAS.value},
         {
@@ -874,6 +874,10 @@ def _compile_property_options() -> List[Dict[str, Any]]:
             "label": html.Span(["AMFG:"], style={"text-decoration": "underline"}),
             "value": "",
             "disabled": True,
+        },
+        {
+            "label": MapAttribute.MIGRATION_TIME_AMFG.value,
+            "value": MapAttribute.MIGRATION_TIME_AMFG.value,
         },
         {"label": MapAttribute.MAX_AMFG.value, "value": MapAttribute.MAX_AMFG.value},
         {

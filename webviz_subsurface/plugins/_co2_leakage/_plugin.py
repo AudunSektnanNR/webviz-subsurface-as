@@ -359,7 +359,10 @@ class CO2Leakage(WebvizPluginABC):
             Input(self._settings_component(ViewSettings.Ids.PROPERTY), "value"),
         )
         def toggle_date_slider(attribute: str) -> Dict[str, str]:
-            if MapAttribute(attribute) == MapAttribute.MIGRATION_TIME:
+            if MapAttribute(attribute) in [
+                MapAttribute.MIGRATION_TIME_SGAS,
+                MapAttribute.MIGRATION_TIME_AMFG,
+            ]:
                 return {"display": "none"}
             return {}
 
