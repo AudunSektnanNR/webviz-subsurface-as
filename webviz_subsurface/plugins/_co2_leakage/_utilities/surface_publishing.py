@@ -69,7 +69,8 @@ def publish_and_get_surface_metadata(
             surface.values = surface.values / SCALE_DICT[visualization_info["unit"]]
         summed_mass = np.ma.sum(surface.values)
         if (
-            address.attribute not in [
+            address.attribute
+            not in [
                 map_attribute_names[MapAttribute.MIGRATION_TIME_SGAS],
                 map_attribute_names[MapAttribute.MIGRATION_TIME_AMFG],
             ]

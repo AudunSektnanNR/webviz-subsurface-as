@@ -190,8 +190,8 @@ class ViewSettings(SettingsGroupABC):
             prop_name = property_origin(MapAttribute(prop), self._map_attribute_names)
             surfaces = surface_provider.surface_names_for_attribute(prop_name)
             if len(surfaces) == 0:
-                warning = (f"Surface not found for property: {prop}.\n"
-                           f"Expected name: <formation>--{prop_name}")
+                warning = f"Surface not found for property: {prop}.\n"
+                warning += f"Expected name: <formation>--{prop_name}"
                 if prop not in [
                     MapAttribute.MIGRATION_TIME_SGAS,
                     MapAttribute.MIGRATION_TIME_AMFG,

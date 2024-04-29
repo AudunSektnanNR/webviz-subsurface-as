@@ -134,10 +134,15 @@ def derive_surface_address(
             threshold=contour_data["threshold"] if contour_data else 0.0,
             smoothing=contour_data["smoothing"] if contour_data else 0.0,
         )
-    date = None if attribute in [
-        MapAttribute.MIGRATION_TIME_SGAS,
-        MapAttribute.MIGRATION_TIME_AMFG,
-    ] else date
+    date = (
+        None
+        if attribute
+        in [
+            MapAttribute.MIGRATION_TIME_SGAS,
+            MapAttribute.MIGRATION_TIME_AMFG,
+        ]
+        else date
+    )
     if len(realization) == 1:
         return SimulatedSurfaceAddress(
             attribute=map_attribute_names[attribute],
