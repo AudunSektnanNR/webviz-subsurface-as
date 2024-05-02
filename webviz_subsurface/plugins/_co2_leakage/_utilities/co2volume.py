@@ -1,4 +1,5 @@
 import warnings
+from datetime import datetime as dt
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -622,6 +623,22 @@ def generate_co2_time_containment_one_realization_figure(
     return fig
 
 
+def spaced_dates(dates: List[str], num_between: int) -> Dict[str, List[str]]:
+    dates_list = [dt.strptime(date, "%Y-%m-%d") for date in dates]
+    date_dict: Dict[str, List[str]] = {date: [] for date in dates}
+    for i in range(len(dates_list) - 1):
+        date_dict[dates[i]].append(dates[i])
+        delta = (dates_list[i + 1] - dates_list[i]) / (num_between + 1)
+        for j in range(1, num_between + 1):
+            new_date = dates_list[i] + delta * j
+            if j <= num_between / 2:
+                date_dict[dates[i]].append(new_date.strftime("%Y-%m-%d"))
+            else:
+                date_dict[dates[i + 1]].append(new_date.strftime("%Y-%m-%d"))
+    date_dict[dates[-1]].append(dates[-1])
+    return date_dict
+
+
 def _add_hover_info_in_field(
     fig: go.Figure,
     df: pandas.DataFrame,
@@ -641,28 +658,32 @@ def _add_hover_info_in_field(
         for date in dates
     }
     prev_vals = {date: 0 for date in dates}
+    date_dict = spaced_dates(dates, 4)
     for name, color in zip(cat_ord["type"], colors):
         sub_df = df[df["type"] == name]
         for date in dates:
             amount = sub_df[sub_df["date"] == date]["amount"].item()
             prop = sub_df[sub_df["date"] == date]["prop"].item()
             prev_val = prev_vals[date]
-            new_val = prev_val + amount
-            mid_val = (prev_val + new_val) / 2
+            p15 = prev_val + 0.15 * amount
+            p85 = prev_val + 0.85 * amount
+            y_vals = np.linspace(p15, p85, 8).tolist() * len(date_dict[date])
+            y_vals.sort()
             fig.add_trace(
                 go.Scatter(
-                    x=[date],
-                    y=[mid_val],
+                    x=date_dict[date] * 8,
+                    y=y_vals,
                     mode="lines",
                     line=go.scatter.Line(color=color),
                     text=f"type={name}<br>date={date_strings[date]}<br>"
                     f"amount={amount:.3f}<br>prop={prop}",
+                    opacity=0,
                     hoverinfo="text",
                     hoveron="points",
                     showlegend=False,
                 )
             )
-            prev_vals[date] = new_val
+            prev_vals[date] = prev_val + amount
 
 
 def _make_cols_to_plot(
