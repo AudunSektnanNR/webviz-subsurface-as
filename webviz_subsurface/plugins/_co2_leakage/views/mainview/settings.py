@@ -192,7 +192,7 @@ class ViewSettings(SettingsGroupABC):
             if len(surfaces) == 0:
                 warning = f"Surface not found for property: {prop}.\n"
                 warning += f"Expected name: <formation>--{prop_name}"
-                if prop not in [
+                if MapAttribute(prop) not in [
                     MapAttribute.MIGRATION_TIME_SGAS,
                     MapAttribute.MIGRATION_TIME_AMFG,
                 ]:

@@ -56,7 +56,7 @@ def property_origin(
         return map_attribute_names[MapAttribute.MAX_SGAS]
     if attribute == MapAttribute.AMFG_PLUME:
         return map_attribute_names[MapAttribute.MAX_AMFG]
-    raise AssertionError(f"No origin defined for property: {attribute}")
+    raise AssertionError(f"Map attribute name not found for property: {attribute}")
 
 
 @dataclass
