@@ -125,6 +125,7 @@ def init_zone_and_region_options(
     actual_volume_table: Dict[str, EnsembleTableProvider],
     co2_table_provider: Dict[str, EnsembleTableProvider],
 ) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+    # TODO: Can add phase options in this, since we can have both aqu/gas and aqu/free gas/trapped gas
     options: Dict[str, Dict[str, Dict[str, List[str]]]] = {}
     for ens in ensemble_roots.keys():
         options[ens] = {}

@@ -525,6 +525,10 @@ def process_containment_info(
         regions = [reg_name for reg_name in regions if reg_name != "all"]
     containments = ["hazardous", "outside", "contained"]
     phases = ["gas", "aqueous"]
+    if "zone" in [mark_choice, color_choice]:
+        region = "all"
+    if "region" in [mark_choice, color_choice]:
+        zone = "all"
     return {
         "zone": zone,
         "region": region,
