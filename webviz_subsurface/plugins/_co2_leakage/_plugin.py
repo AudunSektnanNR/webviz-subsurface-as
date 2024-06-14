@@ -167,7 +167,8 @@ class CO2Leakage(WebvizPluginABC):
                 map_surface_names_to_well_pick_names,
             )
             # Zone and region options
-            # TODO: Can add phase options in this, since we can have both aqu/gas and aqu/free gas/trapped gas
+            # TODO: Can add phase options in this,
+            #  since we can have both aqu/gas and aqu/free gas/trapped gas
             self._zone_and_region_options = init_zone_and_region_options(
                 ensemble_paths,
                 self._co2_table_providers,

@@ -58,7 +58,8 @@ def read_zone_and_region_options(
     table_provider: EnsembleTableProvider,
     realization: int,
 ) -> Dict[str, List[str]]:
-    # TODO: Can add phase options in this, since we can have both aqu/gas and aqu/free gas/trapped gas
+    # TODO: Can add phase options in this,
+    #  since we can have both aqu/gas and aqu/free gas/trapped gas
     df = table_provider.get_column_data(table_provider.column_names(), [realization])
     zones = ["all"]
     for zone in list(df["zone"]):
@@ -130,11 +131,7 @@ def _prepare_pattern_and_color_options(
     mark_options = [] if mark_choice == "none" else containment_info[f"{mark_choice}s"]
     color_options = containment_info[f"{color_choice}s"]
     num_colors = len(color_options)
-    num_marks = (
-        num_colors
-        if mark_choice == "none"
-        else len(mark_options)
-    )
+    num_marks = num_colors if mark_choice == "none" else len(mark_options)
     marks = _get_marks(num_marks, mark_choice)
     colors = _get_colors(num_colors, color_choice)
     if mark_choice == "none":
@@ -144,21 +141,13 @@ def _prepare_pattern_and_color_options(
     df["type"] = [", ".join((c, m)) for c, m in zip(df[color_choice], df[mark_choice])]
     if containment_info["sorting"] == "color":
         cat_ord = {
-            "type": [
-                ", ".join((c, m))
-                for c in color_options
-                for m in mark_options
-            ],
+            "type": [", ".join((c, m)) for c in color_options for m in mark_options],
         }
         colors = [c for c in colors for _ in range(num_marks)]
         marks = marks * num_colors
     else:
         cat_ord = {
-            "type": [
-                ", ".join((c, m))
-                for m in mark_options
-                for c in color_options
-            ],
+            "type": [", ".join((c, m)) for m in mark_options for c in color_options],
         }
         colors = colors * num_marks
         marks = [m for m in marks for _ in range(num_colors)]
@@ -194,7 +183,7 @@ def _prepare_line_type_and_color_options(
             {
                 "name": color_options,
                 "color": colors,
-                "line_type": line_types * len(colors)
+                "line_type": line_types * len(colors),
             }
         )
     df["name"] = [", ".join((c, m)) for c, m in zip(df[color_choice], df[mark_choice])]
@@ -203,9 +192,7 @@ def _prepare_line_type_and_color_options(
         options = pd.DataFrame(
             {
                 "name": [
-                    ", ".join((c, m))
-                    for c in color_options
-                    for m in mark_options
+                    ", ".join((c, m)) for c in color_options for m in mark_options
                 ],
                 "color": [c for c in colors for _ in mark_options],
                 "line_type": [l for _ in colors for l in line_types],
@@ -215,9 +202,7 @@ def _prepare_line_type_and_color_options(
         options = pd.DataFrame(
             {
                 "name": [
-                    ", ".join((c, m))
-                    for m in mark_options
-                    for c in color_options
+                    ", ".join((c, m)) for m in mark_options for c in color_options
                 ],
                 "color": [c for _ in mark_options for c in colors],
                 "line_type": [l for l in line_types for _ in colors],
@@ -272,6 +257,7 @@ def _read_terminal_co2_volumes(
             data_frame = df
         else:
             data_frame = pd.concat([data_frame, df])
+    assert data_frame is not None
     data_frame.sort_values(
         ["sort_key", "sort_key_secondary"], inplace=True, ascending=[True, True]
     )
@@ -305,22 +291,26 @@ def _filter_rows(
         df.query(f'{mark_choice} not in ["total", "all"]', inplace=True)
 
 
-def _add_sort_key_and_real(df, label, containment_info):
+def _add_sort_key_and_real(
+    df: pd.DataFrame,
+    label: str,
+    containment_info: Dict,
+) -> None:
     sort_value = np.sum(
         df[
-            (df["phase"] == "total") &
-            (df["containment"] == "hazardous") &
-            (df["zone"] == containment_info["zone"]) &
-            (df["region"] == containment_info["region"])
-            ]["amount"]
+            (df["phase"] == "total")
+            & (df["containment"] == "hazardous")
+            & (df["zone"] == containment_info["zone"])
+            & (df["region"] == containment_info["region"])
+        ]["amount"]
     )
     sort_value_secondary = np.sum(
         df[
-            (df["phase"] == "total") &
-            (df["containment"] == "outside") &
-            (df["zone"] == containment_info["zone"]) &
-            (df["region"] == containment_info["region"])
-            ]["amount"]
+            (df["phase"] == "total")
+            & (df["containment"] == "outside")
+            & (df["zone"] == containment_info["zone"])
+            & (df["region"] == containment_info["region"])
+        ]["amount"]
     )
     df["real"] = [label] * df.shape[0]
     df["sort_key"] = [sort_value] * df.shape[0]
@@ -384,11 +374,11 @@ def _add_prop_to_df(
         if filter_columns is None:
             summed_amount = np.sum(df.loc[df[column] == element]["amount"])
         else:
-            filter = (df[column] == element)
+            filter_for_sum = df[column] == element
             for col in filter_columns:
                 if col in df.columns:
-                    filter &= (~df[col].isin(["total", "all"]))
-            summed_amount = np.sum(df.loc[filter]["amount"])
+                    filter_for_sum &= ~df[col].isin(["total", "all"])
+            summed_amount = np.sum(df.loc[filter_for_sum]["amount"])
         prop[np.where(df[column] == element)[0]] = summed_amount
     nonzero = np.where(prop > 0)[0]
     prop[nonzero] = (
@@ -561,12 +551,18 @@ def generate_co2_time_containment_figure(
     color_choice = containment_info["color_choice"]
     mark_choice = containment_info["mark_choice"]
     _filter_columns(df, color_choice, mark_choice, containment_info)
-    options = _prepare_line_type_and_color_options(df, containment_info, color_choice, mark_choice)
-    active_cols_at_startup = list(options[options["line_type"].isin(["solid", "0px"])]["name"])
+    options = _prepare_line_type_and_color_options(
+        df, containment_info, color_choice, mark_choice
+    )
+    active_cols_at_startup = list(
+        options[options["line_type"].isin(["solid", "0px"])]["name"]
+    )
     fig = go.Figure()
     # Generate dummy scatters for legend entries
     dummy_args = {"x": df["date"], "mode": "lines", "hoverinfo": "none"}
-    for name, color, line_type in zip(options["name"], options["color"], options["line_type"]):
+    for name, color, line_type in zip(
+        options["name"], options["color"], options["line_type"]
+    ):
         args = {
             "line_dash": line_type,
             "marker_color": color,
@@ -578,14 +574,18 @@ def generate_co2_time_containment_figure(
         fig.add_scatter(y=[0.0], **dummy_args, **args)
     for rlz in realizations:
         sub_df = df[df["realization"] == rlz].copy().reset_index()
-        _add_prop_to_df(sub_df, np.unique(df["date"]), "date", [color_choice, mark_choice])
+        _add_prop_to_df(
+            sub_df, np.unique(df["date"]), "date", [color_choice, mark_choice]
+        )
         common_args = {
             "x": sub_df["date"],
             "hovertemplate": "%{x}: %{y}<br>Realization: %{meta[0]}<br>Prop: %{customdata}%",
             "meta": [rlz],
             "showlegend": False,
         }
-        for name, color, line_type in zip(options["name"], options["color"], options["line_type"]):
+        for name, color, line_type in zip(
+            options["name"], options["color"], options["line_type"]
+        ):
             # NBNB-AS: Check this, mypy complains:
             args = {
                 "line_dash": line_type,
@@ -596,7 +596,9 @@ def generate_co2_time_containment_figure(
             }
             if name not in active_cols_at_startup:
                 args["visible"] = "legendonly"
-            fig.add_scatter(y=sub_df[sub_df["name"] == name]["amount"], **args, **common_args)
+            fig.add_scatter(
+                y=sub_df[sub_df["name"] == name]["amount"], **args, **common_args
+            )
     fig.layout.legend.tracegroupgap = 0
     fig.layout.xaxis.title = "Time"
     fig.layout.yaxis.title = scale.value
