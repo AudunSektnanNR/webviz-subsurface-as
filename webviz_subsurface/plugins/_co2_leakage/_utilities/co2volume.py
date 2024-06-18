@@ -54,13 +54,21 @@ def _read_dataframe(
     return df
 
 
-def read_zone_and_region_options(
+def read_menu_options(
     table_provider: EnsembleTableProvider,
     realization: int,
+    relpath: str,
 ) -> Dict[str, List[str]]:
-    # TODO: Can add phase options in this,
-    #  since we can have both aqu/gas and aqu/free gas/trapped gas
-    df = table_provider.get_column_data(table_provider.column_names(), [realization])
+    col_names = table_provider.column_names()
+    df = table_provider.get_column_data(col_names, [realization])
+    required_columns = ["date", "amount", "phase", "containment", "zone", "region"]
+    missing_columns = [col for col in required_columns if col not in col_names]
+    if len(missing_columns) > 0:
+        raise KeyError(
+            f"Missing expected columns {', '.join(missing_columns)} in {relpath}"
+            f" in realization {realization} (and possibly other csv-files). "
+            f"Provided files are likely from an old version of ccs-scripts."
+        )
     zones = ["all"]
     for zone in list(df["zone"]):
         if zone not in zones:
@@ -69,9 +77,14 @@ def read_zone_and_region_options(
     for region in list(df["region"]):
         if region not in regions:
             regions.append(region)
+    if "free_gas" in list(df["phase"]):
+        phases = ["total", "free_gas", "trapped_gas", "aqueous"]
+    else:
+        phases = ["total", "gas", "aqueous"]
     return {
         "zones": zones if len(zones) > 1 else [],
         "regions": regions if len(regions) > 1 else [],
+        "phases": phases,
     }
 
 
@@ -102,7 +115,7 @@ def _get_marks(num_marks: int, mark_choice: str) -> List[str]:
                 f"Some {mark_choice}s will share pattern."
             )
         return base_pattern[:num_marks]
-    return ["", "/"]
+    return ["", "/"] if num_marks == 2 else ["", ".", "/"]
 
 
 def _get_line_types(mark_options: List[str], mark_choice: str) -> List[str]:

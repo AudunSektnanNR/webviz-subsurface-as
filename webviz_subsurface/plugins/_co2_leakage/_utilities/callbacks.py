@@ -513,18 +513,18 @@ def process_containment_info(
     color_choice: str,
     mark_choice: Optional[str],
     sorting: str,
-    zone_and_region_options: Dict[str, List[str]],
+    menu_options: Dict[str, List[str]],
 ) -> Dict[str, Union[str, None, List[str], int]]:
     if mark_choice is None:
         mark_choice = "phase"
-    zones = zone_and_region_options["zones"]
-    regions = zone_and_region_options["regions"]
+    zones = menu_options["zones"]
+    regions = menu_options["regions"]
     if len(zones) > 0:
         zones = [zone_name for zone_name in zones if zone_name != "all"]
     if len(regions) > 0:
         regions = [reg_name for reg_name in regions if reg_name != "all"]
     containments = ["hazardous", "outside", "contained"]
-    phases = ["gas", "aqueous"]
+    phases = [phase for phase in menu_options["phases"] if phase != "total"]
     if "zone" in [mark_choice, color_choice]:
         region = "all"
     if "region" in [mark_choice, color_choice]:

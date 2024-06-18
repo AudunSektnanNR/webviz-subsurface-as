@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import warnings
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -78,7 +79,7 @@ class ViewSettings(SettingsGroupABC):
         map_attribute_names: Dict[MapAttribute, str],
         color_scale_names: List[str],
         well_names_dict: Dict[str, List[str]],
-        zone_and_region_options: Dict[str, Dict[str, Dict[str, List[str]]]],
+        menu_options: Dict[str, Dict[str, Dict[str, List[str]]]],
     ):
         super().__init__("Settings")
         self._ensemble_paths = ensemble_paths
@@ -87,15 +88,15 @@ class ViewSettings(SettingsGroupABC):
         self._color_scale_names = color_scale_names
         self._initial_surface = initial_surface
         self._well_names_dict = well_names_dict
-        self._zone_and_region_options = zone_and_region_options
+        self._menu_options = menu_options
         self._has_zones = max(
             len(inner_dict["zones"]) > 0
-            for outer_dict in zone_and_region_options.values()
+            for outer_dict in menu_options.values()
             for inner_dict in outer_dict.values()
         )
         self._has_regions = max(
             len(inner_dict["regions"]) > 0
-            for outer_dict in zone_and_region_options.values()
+            for outer_dict in menu_options.values()
             for inner_dict in outer_dict.values()
         )
 
@@ -275,6 +276,24 @@ class ViewSettings(SettingsGroupABC):
             return len(min_auto) == 1, len(max_auto) == 1
 
         @callback(
+            Output(self.component_unique_id(self.Ids.PHASE).to_string(), "options"),
+            Output(self.component_unique_id(self.Ids.PHASE).to_string(), "value"),
+            Input(self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"),
+            Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
+            State(self.component_unique_id(self.Ids.PHASE).to_string(), "value"),
+        )
+        def set_phases(
+            source: GraphSource,
+            ensemble: str,
+            current_value: str,
+        ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
+            if ensemble is not None:
+                phases = self._menu_options[ensemble][source]["phases"]
+                options = [{"label": phase.title(), "value": phase} for phase in phases]
+                return options, no_update if current_value in phases else "total"
+            return [], None
+
+        @callback(
             Output(self.component_unique_id(self.Ids.ZONE).to_string(), "options"),
             Output(self.component_unique_id(self.Ids.ZONE).to_string(), "value"),
             Input(self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"),
@@ -287,7 +306,7 @@ class ViewSettings(SettingsGroupABC):
             current_value: str,
         ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
             if ensemble is not None:
-                zones = self._zone_and_region_options[ensemble][source]["zones"]
+                zones = self._menu_options[ensemble][source]["zones"]
                 if len(zones) > 0:
                     options = [{"label": zone.title(), "value": zone} for zone in zones]
                     return options, no_update if current_value in zones else "all"
@@ -306,7 +325,7 @@ class ViewSettings(SettingsGroupABC):
             current_value: str,
         ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
             if ensemble is not None:
-                regions = self._zone_and_region_options[ensemble][source]["regions"]
+                regions = self._menu_options[ensemble][source]["regions"]
                 if len(regions) > 0:
                     options = [{"label": reg.title(), "value": reg} for reg in regions]
                     return options, no_update if current_value in regions else "all"
@@ -723,12 +742,6 @@ class GraphSelectorsLayout(wcc.Selectors):
                             [
                                 "Phase",
                                 wcc.Dropdown(
-                                    options=[
-                                        {"label": "Total", "value": "total"},
-                                        {"label": "Aqueous", "value": "aqueous"},
-                                        {"label": "Gas", "value": "gas"},
-                                    ],
-                                    value="total",
                                     clearable=False,
                                     id=containment_ids[8],
                                 ),
