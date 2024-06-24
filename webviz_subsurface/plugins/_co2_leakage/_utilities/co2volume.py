@@ -9,13 +9,14 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from webviz_subsurface._providers import EnsembleTableProvider
+from webviz_subsurface._utils.enum_shim import StrEnum
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
 )
 
 
-class _Columns(Enum):
+class _Columns(StrEnum):
     REALIZATION = "realization"
     VOLUME = "volume"
     CONTAINMENT = "containment"
@@ -328,6 +329,92 @@ def _add_sort_key_and_real(
     df["real"] = [label] * df.shape[0]
     df["sort_key"] = [sort_value] * df.shape[0]
     df["sort_key_secondary"] = [sort_value_secondary] * df.shape[0]
+
+
+def _add_to_records(
+    records: Dict[str, List[Any]],
+    color_choice: str,
+    mark_choice: str,
+    df: pandas.DataFrame,
+    label: str,
+    containment_info: Dict,
+) -> None:
+    phase = containment_info["phase"]
+    containments = containment_info["containments"]
+    split = _find_split(color_choice, mark_choice)
+    if split == "standard":
+        last = df.iloc[np.argmax(df["date"])]
+        factor = 6 if mark_choice == "phase" else 3
+        records["real"] += [label] * factor
+        if mark_choice == "phase":
+            record = [
+                [last["_".join((p, c))], c, p]
+                for c in containments
+                for p in (containment_info["phases"])
+            ]
+        else:
+            record = [[last["_".join((phase, c))], c] for c in containments]
+        records["amount"] += [r[0] for r in record]
+        records["containment"] += [r[1] for r in record]
+        if mark_choice == "phase":
+            records["phase"] += [r[2] for r in record]
+        records["sort_key"] += [last["total_hazardous"]] * factor
+        records["sort_key_secondary"] += [last["total_outside"]] * factor
+    else:
+        containment = containment_info["containment"]
+        factor = 1 if mark_choice == "none" else 2 if mark_choice == "phase" else 3
+        last_ = df[df["date"] == np.max(df["date"])]
+        records["sort_key"] += (
+            [np.sum(last_["total_hazardous"])] * factor * last_.shape[0]
+        )
+        records["sort_key_secondary"] += (
+            [np.sum(last_["total_outside"])] * factor * last_.shape[0]
+        )
+        for i in range(last_.shape[0]):
+            last = last_.iloc[i]
+            records["real"] += [label] * factor
+            if mark_choice in ["containment", "zone", "region"]:
+                records["amount"] += [last["_".join((phase, c))] for c in containments]
+                records[mark_choice] += (
+                    containments
+                    if mark_choice == "containment"
+                    else [last[split]] * factor
+                )
+            elif mark_choice == "none":
+                if containment == "total":
+                    records["amount"] += (
+                        [last["total"]]
+                        if phase == "total"
+                        else [last["_".join(("total", phase))]]
+                    )
+                else:
+                    records["amount"] += [last["_".join((phase, containment))]]
+            else:  # mark_choice == "phase"
+                if containment == "total":
+                    records["amount"] += [
+                        last["total_aqueous"],
+                        last["total_gas"],
+                    ]
+                else:
+                    records["amount"] += [
+                        last["_".join(("aqueous", containment))],
+                        last["_".join(("gas", containment))],
+                    ]
+                records[mark_choice] += ["aqueous", "gas"]
+            records[color_choice] += (
+                containments
+                if mark_choice in ["zone", "region"]
+                else [last[split]] * factor
+            )
+
+
+def _find_split(color_choice: str, mark_choice: str) -> str:
+    split = "standard"
+    if "zone" in [color_choice, mark_choice]:
+        split = "zone"
+    elif "region" in [color_choice, mark_choice]:
+        split = "region"
+    return split
 
 
 def _read_co2_volumes(

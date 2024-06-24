@@ -1,6 +1,5 @@
-from enum import Enum
+from webviz_subsurface._utils.enum_shim import StrEnum
 
-from webviz_config.utils import StrEnum
 
 
 class MapAttribute(Enum):
@@ -33,7 +32,7 @@ class GraphSource(StrEnum):
     CONTAINMENT_ACTUAL_VOLUME = "Containment Data (volume, actual)"
 
 
-class LayoutLabels(str, Enum):
+class LayoutLabels(StrEnum):
     """Text labels used in layout components"""
 
     SHOW_FAULTPOLYGONS = "Show fault polygons"
