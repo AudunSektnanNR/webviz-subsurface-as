@@ -433,8 +433,7 @@ def generate_co2_volume_figure(
     )
     fig.update_traces(
         hovertemplate="Type: %{customdata[0]}<br>Amount: %{x:.3f}<br>"
-        "Realization: %{y}<br>Proportion: %{customdata[1]}",
-        name="",
+        "Realization: %{y}<br>Proportion: %{customdata[1]}<extra></extra>",
     )
     fig.layout.yaxis.title = "Realization"
     fig.layout.xaxis.title = scale.value
@@ -486,8 +485,7 @@ def generate_co2_time_containment_one_realization_figure(
     )
     fig.update_traces(
         hovertemplate="Type: %{customdata[0]}<br>Date: %{x}<br>"
-        "Amount: %{y:.3f}<br>Proportion: %{customdata[1]}",
-        name="",
+        "Amount: %{y:.3f}<br>Proportion: %{customdata[1]}<extra></extra>",
     )
     _add_hover_info_in_field(fig, df, cat_ord, colors)
     fig.layout.yaxis.range = y_limits
