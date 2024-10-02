@@ -84,7 +84,7 @@ class FilteredMapAttribute:
             f"Plume ({item})": f"{item.lower()}_plume" for item in map_attrs_with_plume
         }
         self.mapping.update(plume_request)
-        self.filtered_values = self.filter_map_attributes()
+        self.filtered_values = self.filter_map_attribute()
 
     def filter_map_attribute(self):
         return {

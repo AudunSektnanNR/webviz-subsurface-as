@@ -70,11 +70,13 @@ def publish_and_get_surface_metadata(
         if not surface:
             warnings.warn(f"Could not find surface file with properties: {address}")
             return None, None, None
-        if MapType[address.attribute].value == "MASS":
+        address_map_attribute = next((key for key, value in map_attribute_names.filtered_values.items()
+                                      if value == address.attribute), None0)
+        if MapType[address_map_attribute.name].value == "MASS":
             surface.values = surface.values / SCALE_DICT[visualization_info["unit"]]
             summed_mass = np.ma.sum(surface.values)
         if (
-            MapType[address.attribute].value != "MIGRATION_TIME"
+            MapType[address_map_attribute.name].value != "MIGRATION_TIME"
             and visualization_info["threshold"] >= 0
         ):
             surface.operation("elile", visualization_info["threshold"])

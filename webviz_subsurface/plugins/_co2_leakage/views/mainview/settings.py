@@ -255,7 +255,7 @@ class ViewSettings(SettingsGroupABC):
             Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
         )
         def set_visualization_threshold(attribute: str) -> bool:
-            return MapType[MapAttribute(attribute.name).value] == "MIGRATION_TIME"
+            return MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME"
 
         @callback(
             Output(
@@ -895,7 +895,7 @@ def _create_left_side_menu(map_group, map_attribute_names):
 def _compile_property_options(map_attribute_names) -> List[Dict[str, Any]]:
     requested_map_groups = [
         MapGroup[key.name].value
-        for key in map_attribute_names.filter_map_attributes().keys()
+        for key in map_attribute_names.filter_map_attribute().keys()
     ]
     unique_requested_map_groups = list(set(requested_map_groups))
     return [

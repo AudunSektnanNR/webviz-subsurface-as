@@ -58,13 +58,11 @@ from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
 def property_origin(
     attribute: MapAttribute, map_attribute_names: Dict[MapAttribute, str]
 ) -> str:
-    if attribute in map_attribute_names:
-        return map_attribute_names[attribute]
     if attribute == MapAttribute.SGAS_PLUME:
         return map_attribute_names[MapAttribute.MAX_SGAS]
     if attribute == MapAttribute.AMFG_PLUME:
         return map_attribute_names[MapAttribute.MAX_AMFG]
-    raise AssertionError(f"Map attribute name not found for property: {attribute}")
+    return map_attribute_names[attribute]
 
 
 @dataclass
