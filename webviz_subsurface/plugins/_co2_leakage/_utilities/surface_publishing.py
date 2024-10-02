@@ -71,7 +71,7 @@ def publish_and_get_surface_metadata(
             warnings.warn(f"Could not find surface file with properties: {address}")
             return None, None, None
         address_map_attribute = next((key for key, value in map_attribute_names.filtered_values.items()
-                                      if value == address.attribute), None0)
+                                      if value == address.attribute), None)
         if MapType[address_map_attribute.name].value == "MASS":
             surface.values = surface.values / SCALE_DICT[visualization_info["unit"]]
             summed_mass = np.ma.sum(surface.values)
