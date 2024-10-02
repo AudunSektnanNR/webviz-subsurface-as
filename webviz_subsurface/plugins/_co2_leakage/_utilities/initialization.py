@@ -15,7 +15,7 @@ from webviz_subsurface._providers import (
 )
 from webviz_subsurface._utils.webvizstore_functions import read_csv
 from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import (
-    ContainmentDataProvider
+    ContainmentDataProvider,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     GraphSource,
@@ -25,7 +25,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     MenuOptions,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider import (
-    UnsmryDataProvider
+    UnsmryDataProvider,
 )
 from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
     WellPickProvider,
@@ -39,15 +39,19 @@ WARNING_THRESHOLD_CSV_FILE_SIZE_MB = 100.0
 
 
 def build_mapping(
-        webviz_settings: WebvizSettings,
-        ensembles: List[str],
+    webviz_settings: WebvizSettings,
+    ensembles: List[str],
 ) -> Dict[MapAttribute, str]:
-    available_attrs_per_ensemble = [discover_per_realization_surface_files(
-        webviz_settings.shared_settings["scratch_ensembles"][ens],
-        "share/results/maps"
-    ) for ens in ensembles]
-    full_attr_list = [[attr.attribute for attr in ens]
-                      for ens in available_attrs_per_ensemble]
+    available_attrs_per_ensemble = [
+        discover_per_realization_surface_files(
+            webviz_settings.shared_settings["scratch_ensembles"][ens],
+            "share/results/maps",
+        )
+        for ens in ensembles
+    ]
+    full_attr_list = [
+        [attr.attribute for attr in ens] for ens in available_attrs_per_ensemble
+    ]
     unique_attributes = set()
     for ens_attr in full_attr_list:
         unique_attributes.update(ens_attr)
@@ -65,13 +69,15 @@ def build_mapping(
 def init_map_attribute_names(
     webviz_settings: WebvizSettings,
     ensembles: List[str],
-    mapping: Optional[Dict[str, str]]
+    mapping: Optional[Dict[str, str]],
 ) -> Dict[MapAttribute, str]:
     if mapping is None:
         # Based on name convention of xtgeoapp_grd3dmaps:
-        mapping = build_mapping(webviz_settings,ensembles)
-    final_attributes = {(MapAttribute[key].value if key in MapAttribute.__members__ else key):
-                        value for key, value in mapping.items()}
+        mapping = build_mapping(webviz_settings, ensembles)
+    final_attributes = {
+        (MapAttribute[key].value if key in MapAttribute.__members__ else key): value
+        for key, value in mapping.items()
+    }
     return FilteredMapAttribute(final_attributes)
 
 
@@ -119,11 +125,7 @@ def init_unsmry_data_providers(
         ens: _init_ensemble_table_provider(factory, ens, ens_path, table_rel_path)
         for ens, ens_path in ensemble_roots.items()
     }
-    return {
-        k: UnsmryDataProvider(v)
-        for k, v in providers.items()
-        if v is not None
-    }
+    return {k: UnsmryDataProvider(v) for k, v in providers.items() if v is not None}
 
 
 def init_containment_data_providers(
@@ -136,9 +138,7 @@ def init_containment_data_providers(
         for ens, ens_path in ensemble_roots.items()
     }
     return {
-        k: ContainmentDataProvider(v)
-        for k, v in providers.items()
-        if v is not None
+        k: ContainmentDataProvider(v) for k, v in providers.items() if v is not None
     }
 
 
@@ -149,9 +149,7 @@ def _init_ensemble_table_provider(
     table_rel_path: str,
 ) -> Optional[EnsembleTableProvider]:
     try:
-        return factory.create_from_per_realization_arrow_file(
-            ens_path, table_rel_path
-        )
+        return factory.create_from_per_realization_arrow_file(ens_path, table_rel_path)
     except (KeyError, ValueError) as exc:
         try:
             return factory.create_from_per_realization_csv_file(
@@ -160,7 +158,7 @@ def _init_ensemble_table_provider(
         except (KeyError, ValueError) as exc2:
             LOGGER.warning(
                 f'Tried reading "{table_rel_path}" for ensemble "{ens}" as csv with'
-                f' error {exc}, and as arrow with error {exc2}'
+                f" error {exc}, and as arrow with error {exc2}"
             )
     return None
 
@@ -175,7 +173,9 @@ def init_menu_options(
     for ens in ensemble_roots.keys():
         options[ens] = {
             GraphSource.CONTAINMENT_MASS: mass_table[ens].menu_options,
-            GraphSource.CONTAINMENT_ACTUAL_VOLUME: actual_volume_table[ens].menu_options,
+            GraphSource.CONTAINMENT_ACTUAL_VOLUME: actual_volume_table[
+                ens
+            ].menu_options,
         }
         if ens in unsmry_providers:
             options[ens][GraphSource.UNSMRY] = unsmry_providers[ens].menu_options

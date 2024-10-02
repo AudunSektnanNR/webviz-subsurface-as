@@ -5,14 +5,14 @@ import plotly.colors
 import plotly.graph_objects as go
 
 from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import (
-    ContainmentDataProvider
+    ContainmentDataProvider,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider import (
-    UnsmryDataProvider
+    UnsmryDataProvider,
 )
 
 
@@ -27,14 +27,26 @@ def generate_summary_figure(
 
     # TODO: expose these directly from data providers?
     r_min = min(df_unsmry.REAL)
-    unsmry_last_total = df_unsmry[df_unsmry.REAL == r_min][unsmry_provider.colname_total].iloc[-1]
-    unsmry_last_mobile = df_unsmry[df_unsmry.REAL == r_min][unsmry_provider.colname_mobile].iloc[-1]
-    unsmry_last_dissolved = df_unsmry[df_unsmry.REAL == r_min][unsmry_provider.colname_dissolved].iloc[-1]
+    unsmry_last_total = df_unsmry[df_unsmry.REAL == r_min][
+        unsmry_provider.colname_total
+    ].iloc[-1]
+    unsmry_last_mobile = df_unsmry[df_unsmry.REAL == r_min][
+        unsmry_provider.colname_mobile
+    ].iloc[-1]
+    unsmry_last_dissolved = df_unsmry[df_unsmry.REAL == r_min][
+        unsmry_provider.colname_dissolved
+    ].iloc[-1]
 
     containment_reference = df_containment[df_containment.REAL == r_min]
-    containment_last_total = containment_reference[containment_reference["phase"] == "total"]["amount"].iloc[-1]
-    containment_last_mobile = containment_reference[containment_reference["phase"] == "free_gas"]["amount"].iloc[-1]
-    containment_last_dissolved = containment_reference[containment_reference["phase"] == "aqueous"]["amount"].iloc[-1]
+    containment_last_total = containment_reference[
+        containment_reference["phase"] == "total"
+    ]["amount"].iloc[-1]
+    containment_last_mobile = containment_reference[
+        containment_reference["phase"] == "free_gas"
+    ]["amount"].iloc[-1]
+    containment_last_dissolved = containment_reference[
+        containment_reference["phase"] == "aqueous"
+    ]["amount"].iloc[-1]
     # ---
     last_total_err_percentage = (
         100.0 * abs(containment_last_total - unsmry_last_total) / unsmry_last_total
@@ -52,10 +64,10 @@ def generate_summary_figure(
     last_dissolved_err_percentage = np.round(last_dissolved_err_percentage, 2)
 
     _colors = {
-        'total': plotly.colors.qualitative.Plotly[3],
-        'mobile': plotly.colors.qualitative.Plotly[2],
-        'dissolved': plotly.colors.qualitative.Plotly[0],
-        'trapped': plotly.colors.qualitative.Plotly[1],
+        "total": plotly.colors.qualitative.Plotly[3],
+        "mobile": plotly.colors.qualitative.Plotly[2],
+        "dissolved": plotly.colors.qualitative.Plotly[0],
+        "trapped": plotly.colors.qualitative.Plotly[1],
     }
 
     fig = go.Figure()

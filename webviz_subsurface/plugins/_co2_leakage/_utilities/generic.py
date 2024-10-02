@@ -65,16 +65,24 @@ class MapNamingConvention(StrEnum):
 
 
 class FilteredMapAttribute:
-    def __init__(self,mapping):
+    def __init__(self, mapping):
         self.mapping = mapping
-        map_types = {key: MapType[key].value for key in MapAttribute.__members__
-                     if MapAttribute[key].value in self.mapping}
-        map_groups = {key: MapGroup[key].value for key in MapAttribute.__members__
-                     if MapAttribute[key].value in self.mapping}
-        map_attrs_with_plume = [map_groups[key] for key, value
-                                in map_types.items() if value == "MAX"]
-        plume_request = {f"Plume ({item})": f"{item.lower()}_plume"
-                         for item in map_attrs_with_plume}
+        map_types = {
+            key: MapType[key].value
+            for key in MapAttribute.__members__
+            if MapAttribute[key].value in self.mapping
+        }
+        map_groups = {
+            key: MapGroup[key].value
+            for key in MapAttribute.__members__
+            if MapAttribute[key].value in self.mapping
+        }
+        map_attrs_with_plume = [
+            map_groups[key] for key, value in map_types.items() if value == "MAX"
+        ]
+        plume_request = {
+            f"Plume ({item})": f"{item.lower()}_plume" for item in map_attrs_with_plume
+        }
         self.mapping.update(plume_request)
         self.filtered_values = self.filter_map_attributes()
 
@@ -89,8 +97,7 @@ class FilteredMapAttribute:
         if isinstance(key, MapAttribute):
             return self.filtered_values[key]
         else:
-            raise KeyError(f"Key must be a MapAttribute, "
-                           f"got {type(key)} instead.")
+            raise KeyError(f"Key must be a MapAttribute, " f"got {type(key)} instead.")
 
     @property
     def values(self):

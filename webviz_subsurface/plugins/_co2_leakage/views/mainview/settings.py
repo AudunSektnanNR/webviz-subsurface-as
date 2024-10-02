@@ -12,7 +12,9 @@ from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_pro
     EnsembleSurfaceProvider,
     SurfaceStatistic,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.initialization import init_map_attribute_names
+from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
+    init_map_attribute_names,
+)
 from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import property_origin
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,
@@ -128,7 +130,7 @@ class ViewSettings(SettingsGroupABC):
                 self.register_component_unique_id(self.Ids.VISUALIZATION_THRESHOLD),
                 self.register_component_unique_id(self.Ids.VISUALIZATION_UPDATE),
                 self.register_component_unique_id(self.Ids.MASS_UNIT),
-                self._map_attribute_names
+                self._map_attribute_names,
             ),
             GraphSelectorsLayout(
                 self.register_component_unique_id(self.Ids.GRAPH_SOURCE),
@@ -499,7 +501,7 @@ class MapSelectorLayout(wcc.Selectors):
         visualization_threshold_id: str,
         visualization_update_id: str,
         mass_unit_id: str,
-        map_attribute_names: Dict[MapAttribute,str],
+        map_attribute_names: Dict[MapAttribute, str],
     ):
         default_colormap = (
             "turbo (Seq)"
@@ -876,20 +878,14 @@ class EnsembleSelectorLayout(wcc.Selectors):
         )
 
 
-def _create_left_side_menu(
-        map_group,
-        map_attribute_names
-):
+def _create_left_side_menu(map_group, map_attribute_names):
     title = {
         "label": html.Span([f"{map_group}:"], style={"text-decoration": "underline"}),
         "value": "",
         "disabled": True,
     }
     map_attribute_list = [
-        {
-            "label": MapAttribute[key.name].value,
-            "value": MapAttribute[key.name].value
-        }
+        {"label": MapAttribute[key.name].value, "value": MapAttribute[key.name].value}
         for key in map_attribute_names.filtered_values.keys()
         if MapGroup[key.name].value == map_group
     ]
@@ -897,12 +893,15 @@ def _create_left_side_menu(
 
 
 def _compile_property_options(map_attribute_names) -> List[Dict[str, Any]]:
-    requested_map_groups = [MapGroup[key.name].value
-                            for key in map_attribute_names.filter_map_attributes().keys()]
+    requested_map_groups = [
+        MapGroup[key.name].value
+        for key in map_attribute_names.filter_map_attributes().keys()
+    ]
     unique_requested_map_groups = list(set(requested_map_groups))
     return [
-        element for group in unique_requested_map_groups for element in
-        _create_left_side_menu(group, map_attribute_names)
+        element
+        for group in unique_requested_map_groups
+        for element in _create_left_side_menu(group, map_attribute_names)
     ]
 
 
@@ -991,9 +990,7 @@ def _make_styles(
             phase["width"] = (
                 "33%"
                 if has_zones and has_regions
-                else "100%"
-                if not has_regions and not has_zones
-                else "50%"
+                else "100%" if not has_regions and not has_zones else "50%"
             )
             phase["display"] = "flex"
         else:  # mark_choice == "zone" / "region"

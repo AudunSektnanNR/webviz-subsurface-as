@@ -28,7 +28,9 @@ from webviz_subsurface.plugins._co2_leakage._utilities.co2volume import (
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import ContainmentDataProvider
+from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import (
+    ContainmentDataProvider,
+)
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
@@ -36,7 +38,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     LayoutLabels,
     MapAttribute,
     MapType,
-    MapGroup
+    MapGroup,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.summary_graphs import (
     generate_summary_figure,
@@ -46,7 +48,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.surface_publishing import
     publish_and_get_surface_metadata,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider import (
-    UnsmryDataProvider
+    UnsmryDataProvider,
 )
 from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
     WellPickProvider,

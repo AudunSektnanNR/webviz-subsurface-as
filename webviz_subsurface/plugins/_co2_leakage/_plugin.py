@@ -33,7 +33,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     GraphSource,
     MapAttribute,
     MapType,
-    FilteredMapAttribute
+    FilteredMapAttribute,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
     init_map_attribute_names,
@@ -43,7 +43,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
     init_well_pick_provider,
     process_files,
     init_containment_data_providers,
-    build_mapping
+    build_mapping,
 )
 from webviz_subsurface.plugins._co2_leakage.views.mainview.mainview import (
     MainView,
@@ -133,9 +133,9 @@ class CO2Leakage(WebvizPluginABC):
             self._surface_server = SurfaceImageServer.instance(app)
             self._polygons_server = FaultPolygonsServer.instance(app)
 
-            self._map_attribute_names = init_map_attribute_names(webviz_settings,
-                                                                 ensembles,
-                                                                 map_attribute_names)
+            self._map_attribute_names = init_map_attribute_names(
+                webviz_settings, ensembles, map_attribute_names
+            )
             # Surfaces
             build_mapping(webviz_settings, ensembles)
             self._ensemble_surface_providers = init_surface_providers(
@@ -227,10 +227,19 @@ class CO2Leakage(WebvizPluginABC):
 
     def _ensemble_dates(self, ens: str) -> List[str]:
         surface_provider = self._ensemble_surface_providers[ens]
-        date_map_attribute = next((k for k in self._map_attribute_names.filtered_values
-                                   if MapType[k.name].value != "MIGRATION_TIME"), None)
-        att_name = self._map_attribute_names[date_map_attribute] \
-            if date_map_attribute is not None else None
+        date_map_attribute = next(
+            (
+                k
+                for k in self._map_attribute_names.filtered_values
+                if MapType[k.name].value != "MIGRATION_TIME"
+            ),
+            None,
+        )
+        att_name = (
+            self._map_attribute_names[date_map_attribute]
+            if date_map_attribute is not None
+            else None
+        )
         dates = surface_provider.surface_dates_for_attribute(att_name)
         if dates is None:
             raise ValueError(f"Failed to fetch dates for attribute '{att_name}'")
@@ -380,7 +389,10 @@ class CO2Leakage(WebvizPluginABC):
         )
         def make_unit_list(
             attribute: str,
-        ) -> Union[Tuple[List[Any], Co2MassScale], Tuple[List[Any], Co2VolumeScale],]:
+        ) -> Union[
+            Tuple[List[Any], Co2MassScale],
+            Tuple[List[Any], Co2VolumeScale],
+        ]:
             if attribute == GraphSource.CONTAINMENT_ACTUAL_VOLUME:
                 return list(Co2VolumeScale), Co2VolumeScale.BILLION_CUBIC_METERS
             return list(Co2MassScale), Co2MassScale.MTONS
@@ -477,7 +489,7 @@ class CO2Leakage(WebvizPluginABC):
             attribute = MapAttribute(attribute)
             if len(realization) == 0 or ensemble is None:
                 raise PreventUpdate
-            if isinstance(date,int):
+            if isinstance(date, int):
                 datestr = self._ensemble_dates(ensemble)[date]
             elif date is None:
                 datestr = None
