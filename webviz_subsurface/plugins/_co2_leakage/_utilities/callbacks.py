@@ -482,8 +482,8 @@ def _parse_polygon_file(filename: str) -> Dict[str, Any]:
 
 
 def process_visualization_info(
-    n_clicks: int,
-    threshold: Optional[float],
+    attribute: str,
+    thresholds: dict,
     unit: str,
     stored_info: Dict[str, Any],
     cache: Cache,
@@ -491,17 +491,23 @@ def process_visualization_info(
     """
     Clear surface cache if the threshold for visualization or mass unit is changed
     """
+    stored_info["attribute"] = attribute
+    if attribute in [
+        MapAttribute.MIGRATION_TIME_SGAS,
+        MapAttribute.MIGRATION_TIME_AMFG,
+        MapAttribute.SGAS_PLUME,
+        MapAttribute.AMFG_PLUME,
+    ]:
+        return stored_info
     stored_info["change"] = False
-    stored_info["n_clicks"] = n_clicks
     if unit != stored_info["unit"]:
         stored_info["unit"] = unit
         stored_info["change"] = True
-    if threshold is not None and threshold != stored_info["threshold"]:
-        stored_info["threshold"] = threshold
+    if thresholds is not None and thresholds[attribute] != stored_info["thresholds"][attribute]:
+        stored_info["thresholds"][attribute] = thresholds[attribute]
         stored_info["change"] = True
     if stored_info["change"]:
         cache.clear()
-    # stored_info["n_clicks"] = n_clicks
     return stored_info
 
 

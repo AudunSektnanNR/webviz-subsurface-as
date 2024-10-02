@@ -19,11 +19,13 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     LayoutLabels,
     LayoutStyle,
     MapAttribute,
+    MapThresholds,
     MenuOptions,
 )
 
 
 class ViewSettings(SettingsGroupABC):
+    threshold_ids = []
     class Ids(StrEnum):
         OPTIONS_DIALOG_BUTTON = "options-dialog-button"
         OPTIONS_DIALOG = "options-dialog"
@@ -65,9 +67,11 @@ class ViewSettings(SettingsGroupABC):
         PLUME_THRESHOLD = "plume-threshold"
         PLUME_SMOOTHING = "plume-smoothing"
 
-        VISUALIZATION_THRESHOLD = "visualization-threshold"
         VISUALIZATION_UPDATE = "visualization-update"
+        VISUALIZATION_THRESHOLD_BUTTON = "visualization-threshold-button"
+        VISUALIZATION_THRESHOLD_DIALOG = "visualization-threshold-dialog"
         MASS_UNIT = "mass-unit"
+        MASS_UNIT_UPDATE = "mass-unit-update"
 
         FEEDBACK_BUTTON = "feedback-button"
         FEEDBACK = "feedback"
@@ -78,6 +82,8 @@ class ViewSettings(SettingsGroupABC):
         ensemble_surface_providers: Dict[str, EnsembleSurfaceProvider],
         initial_surface: Optional[str],
         map_attribute_names: Dict[MapAttribute, str],
+        map_thresholds: Dict[MapAttribute, List[float]],
+        threshold_ids: List[str],
         color_scale_names: List[str],
         well_names_dict: Dict[str, List[str]],
         menu_options: Dict[str, Dict[GraphSource, MenuOptions]],
@@ -86,6 +92,8 @@ class ViewSettings(SettingsGroupABC):
         self._ensemble_paths = ensemble_paths
         self._ensemble_surface_providers = ensemble_surface_providers
         self._map_attribute_names = map_attribute_names
+        self.thresholds = map_thresholds
+        self.threshold_ids = threshold_ids
         self._color_scale_names = color_scale_names
         self._initial_surface = initial_surface
         self._well_names_dict = well_names_dict
@@ -112,6 +120,11 @@ class ViewSettings(SettingsGroupABC):
                 list(self._ensemble_paths.keys()),
             ),
             FilterSelectorLayout(self.register_component_unique_id(self.Ids.FORMATION)),
+            VisualizationThresholdsLayout(
+                self.threshold_ids,
+                self.thresholds,
+                self.register_component_unique_id(self.Ids.VISUALIZATION_UPDATE),
+            ),
             MapSelectorLayout(
                 self._color_scale_names,
                 self.register_component_unique_id(self.Ids.PROPERTY),
@@ -121,9 +134,8 @@ class ViewSettings(SettingsGroupABC):
                 self.register_component_unique_id(self.Ids.CM_MAX),
                 self.register_component_unique_id(self.Ids.CM_MIN_AUTO),
                 self.register_component_unique_id(self.Ids.CM_MAX_AUTO),
-                self.register_component_unique_id(self.Ids.VISUALIZATION_THRESHOLD),
-                self.register_component_unique_id(self.Ids.VISUALIZATION_UPDATE),
                 self.register_component_unique_id(self.Ids.MASS_UNIT),
+                self.register_component_unique_id(self.Ids.MASS_UNIT_UPDATE),
             ),
             GraphSelectorsLayout(
                 self.register_component_unique_id(self.Ids.GRAPH_SOURCE),
@@ -247,17 +259,16 @@ class ViewSettings(SettingsGroupABC):
             return len(min_auto) == 1, len(max_auto) == 1
 
         @callback(
-            Output(
-                self.component_unique_id(self.Ids.VISUALIZATION_THRESHOLD).to_string(),
-                "disabled",
-            ),
-            Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
+            output=[Output(id, "disabled") for id in self.threshold_ids],
+            inputs={
+                "attribute": Input(
+                    self.component_unique_id(self.Ids.PROPERTY).to_string(),
+                    "value",
+                )
+            },
         )
-        def set_visualization_threshold(attribute: str) -> bool:
-            return MapAttribute(attribute) in [
-                MapAttribute.MIGRATION_TIME_SGAS,
-                MapAttribute.MIGRATION_TIME_AMFG,
-            ]
+        def disable_irrelevant_thresholds(attribute: str) -> bool:
+            return [id != attribute for id in self.threshold_ids]
 
         @callback(
             Output(
@@ -487,6 +498,86 @@ class FilterSelectorLayout(wcc.Selectors):
         )
 
 
+class OpenVisualizationThresholdsButton(html.Button):
+    def __init__(self) -> None:
+        super().__init__(
+            LayoutLabels.VISUALIZATION_THRESHOLDS,
+            id=ViewSettings.Ids.VISUALIZATION_THRESHOLD_BUTTON,
+            style=LayoutStyle.THRESHOLDS_BUTTON,
+            n_clicks=0,
+        )
+
+
+class VisualizationThresholdsLayout(wcc.Dialog):
+    """Layout for the visualization thresholds dialog"""
+
+    def __init__(
+        self,
+        ids: List[str],
+        thresholds: MapThresholds,
+        visualization_update_id: str,
+    ) -> None:
+        standard_thresholds = thresholds.get_standard_thresholds()
+
+        fields = [
+            html.Div(
+                "Here you can select a filter for the visualization of the map, "
+                "hiding values smaller than the selected threshold. "
+                "After changing the threshold value, press 'Update' to have the map reappear."
+            ),
+            html.Div("", style={"height": "30px"}),
+            html.Div(
+                [
+                    html.Div("Property:", style={"width": "42%"}),
+                    html.Div("Standard value:", style={"width": "32%"}),
+                    html.Div("Selected value:", style={"width": "25%"}),
+                ],
+                style={"display": "flex", "flex-direction": "row"},
+            )
+        ]
+        fields += [
+            html.Div(
+                [
+                    html.Div(id, style={"width": "42%"}),
+                    html.Div(standard_thresholds[id], style={"width": "32%"}),
+                    dcc.Input(
+                        id=id,
+                        type="number",
+                        value=standard_thresholds[id],
+                        style={"width": "25%"}
+                    ),
+                ],
+                style={"display": "flex", "flex-direction": "row"},
+            )
+            for id in ids
+        ]
+        fields.append(html.Div(style={"height": "20px"}))
+        fields.append(
+            html.Div(
+                [
+                    html.Div(style={"width": "80%"}),
+                    html.Button(
+                        "Update",
+                        id=visualization_update_id,
+                        style=LayoutStyle.VISUALIZATION_BUTTON,
+                        n_clicks=0,
+                    ),
+                ],
+                style={"display": "flex", "flex-direction": "row"},
+            )
+        )
+        super().__init__(
+            title=LayoutLabels.VISUALIZATION_THRESHOLDS,
+            id=ViewSettings.Ids.VISUALIZATION_THRESHOLD_DIALOG,
+            draggable=True,
+            open=False,
+            children = html.Div(
+                fields,
+                style={"flex-direction": "column", "width": "37vw"}
+            )
+        )
+
+
 class MapSelectorLayout(wcc.Selectors):
     _CM_RANGE = {
         "display": "flex",
@@ -504,9 +595,8 @@ class MapSelectorLayout(wcc.Selectors):
         cm_max_id: str,
         cm_min_auto_id: str,
         cm_max_auto_id: str,
-        visualization_threshold_id: str,
-        visualization_update_id: str,
         mass_unit_id: str,
+        mass_unit_update_id: str,
     ):
         default_colormap = (
             "turbo (Seq)"
@@ -571,32 +661,28 @@ class MapSelectorLayout(wcc.Selectors):
                             ],
                             style=self._CM_RANGE,
                         ),
-                        "Visualization threshold",
+                        "Mass unit (for mass maps)",
                         html.Div(
                             [
-                                dcc.Input(
-                                    id=visualization_threshold_id,
-                                    type="number",
-                                    value=-1.0,
-                                    style={"width": "70%"},
+                                html.Div(
+                                    wcc.Dropdown(
+                                        id=mass_unit_id,
+                                        options=["kg", "tons", "M tons"],
+                                        value="kg",
+                                        clearable=False,
+                                    ),
+                                    style={"width": "50%"},
                                 ),
-                                html.Div(style={"width": "5%"}),
                                 html.Button(
-                                    "Update",
-                                    id=visualization_update_id,
+                                    "Update unit",
+                                    id=mass_unit_update_id,
                                     style=LayoutStyle.VISUALIZATION_BUTTON,
                                     n_clicks=0,
                                 ),
                             ],
                             style={"display": "flex"},
                         ),
-                        "Mass unit (for mass maps)",
-                        wcc.Dropdown(
-                            id=mass_unit_id,
-                            options=["kg", "tons", "M tons"],
-                            value="kg",
-                            clearable=False,
-                        ),
+                        OpenVisualizationThresholdsButton(),
                     ],
                 )
             ],

@@ -1,4 +1,4 @@
-from typing import TypedDict, List
+from typing import TypedDict, List, Dict
 
 from webviz_subsurface._utils.enum_shim import StrEnum
 
@@ -44,6 +44,7 @@ class LayoutLabels(StrEnum):
     COMMON_SELECTIONS = "Options and global filters"
     FEEDBACK = "User feedback"
     VISUALIZATION_UPDATE = "Update threshold"
+    VISUALIZATION_THRESHOLDS = "Manage visualization filter"
 
 
 # pylint: disable=too-few-public-methods
@@ -73,8 +74,41 @@ class LayoutStyle:
         "background-color": "lightgrey",
     }
 
+    THRESHOLDS_BUTTON = {
+        "marginTop": "10px",
+        "width": "100%",
+        "height": "30px",
+        "line-height": "30px",
+        "padding": "0",
+        "background-color": "lightgrey",
+    }
+
 
 class MenuOptions(TypedDict):
     zones: List[str]
     regions: List[str]
     phases: List[str]
+
+
+class MapThresholds:
+    _standard_thresholds = {}
+
+    def __init__(self, mapping: Dict[str, str]):
+        self.set_map_thresholds(mapping)
+
+    def get_standard_thresholds(self):
+        return self._standard_thresholds
+
+    def set_map_thresholds(self, mapping):
+        self._standard_thresholds["" + MapAttribute.MAX_SGAS] = 0
+        self._standard_thresholds["" + MapAttribute.MAX_AMFG] = 0.0005
+        self._standard_thresholds["" + MapAttribute.MASS] = 0
+        self._standard_thresholds["" + MapAttribute.DISSOLVED] = 0
+        self._standard_thresholds["" + MapAttribute.FREE] = 0
+
+        for key in mapping.keys():
+            if key not in MapAttribute:
+                self._standard_thresholds[key] = 0
+
+    def get_keys(self):
+        return list(self._standard_thresholds.keys())

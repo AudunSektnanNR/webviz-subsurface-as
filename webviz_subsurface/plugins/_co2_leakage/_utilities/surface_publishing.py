@@ -74,9 +74,9 @@ def publish_and_get_surface_metadata(
                 map_attribute_names[MapAttribute.MIGRATION_TIME_SGAS],
                 map_attribute_names[MapAttribute.MIGRATION_TIME_AMFG],
             ]
-            and visualization_info["threshold"] >= 0
+            and visualization_info["thresholds"][visualization_info["attribute"]] >= 0
         ):
-            surface.operation("elile", visualization_info["threshold"])
+            surface.operation("elile", visualization_info["thresholds"][visualization_info["attribute"]])
         server.publish_surface(qualified_address, surface)
         surf_meta = server.get_surface_metadata(qualified_address)
     return surf_meta, server.encode_partial_url(qualified_address), summed_mass
