@@ -17,7 +17,7 @@ from webviz_subsurface._providers import (
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.generic import MapAttribute
+from webviz_subsurface.plugins._co2_leakage._utilities.generic import MapAttribute, MapType
 from webviz_subsurface.plugins._co2_leakage._utilities.plume_extent import (
     truncate_surfaces,
 )
@@ -52,6 +52,10 @@ def publish_and_get_surface_metadata(
     qualified_address = QualifiedSurfaceAddress(provider_id, address)
     surf_meta = server.get_surface_metadata(qualified_address)
     summed_mass = None
+    requested_map_types = [MapType[key.name].value for key
+                           in map_attribute_names.filtered_values.keys()]
+    requested_map_attributes = [value for key,value
+                                in map_attribute_names.filtered_values.items()]
     if not surf_meta:
         # This means we need to compute the surface
         try:
@@ -61,21 +65,11 @@ def publish_and_get_surface_metadata(
         if not surface:
             warnings.warn(f"Could not find surface file with properties: {address}")
             return None, None, None
-        if address.attribute in [
-            map_attribute_names[MapAttribute.MASS],
-            map_attribute_names[MapAttribute.FREE],
-            map_attribute_names[MapAttribute.DISSOLVED],
-        ]:
+        if MapType[address.attribute].value == "MASS":
             surface.values = surface.values / SCALE_DICT[visualization_info["unit"]]
-        summed_mass = np.ma.sum(surface.values)
-        if (
-            address.attribute
-            not in [
-                map_attribute_names[MapAttribute.MIGRATION_TIME_SGAS],
-                map_attribute_names[MapAttribute.MIGRATION_TIME_AMFG],
-            ]
-            and visualization_info["threshold"] >= 0
-        ):
+            summed_mass = np.ma.sum(surface.values)
+        if MapType[address.attribute].value != "MIGRATION_TIME" \
+                and visualization_info["threshold"] >= 0:
             surface.operation("elile", visualization_info["threshold"])
         server.publish_surface(qualified_address, surface)
         surf_meta = server.get_surface_metadata(qualified_address)

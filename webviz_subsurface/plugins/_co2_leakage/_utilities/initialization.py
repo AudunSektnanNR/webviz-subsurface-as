@@ -20,6 +20,8 @@ from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     GraphSource,
     MapAttribute,
+    MapNamingConvention,
+    FilteredMapAttribute,
     MenuOptions,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider import (
@@ -28,26 +30,49 @@ from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider impo
 from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
     WellPickProvider,
 )
+from webviz_subsurface._providers.ensemble_surface_provider._surface_discovery import (
+    discover_per_realization_surface_files,
+)
 
 LOGGER = logging.getLogger(__name__)
 WARNING_THRESHOLD_CSV_FILE_SIZE_MB = 100.0
 
 
+def build_mapping(
+        webviz_settings: WebvizSettings,
+        ensembles: List[str],
+) -> Dict[MapAttribute, str]:
+    available_attrs_per_ensemble = [discover_per_realization_surface_files(
+        webviz_settings.shared_settings["scratch_ensembles"][ens],
+        "share/results/maps"
+    ) for ens in ensembles]
+    full_attr_list = [[attr.attribute for attr in ens]
+                      for ens in available_attrs_per_ensemble]
+    unique_attributes = set()
+    for ens_attr in full_attr_list:
+        unique_attributes.update(ens_attr)
+    unique_attributes = list(unique_attributes)
+    mapping = {}
+    for attr in unique_attributes:
+        for name_convention in MapNamingConvention:
+            if attr == name_convention.value:
+                attribute_key = MapAttribute[name_convention.name].name
+                mapping[attribute_key] = attr
+                break
+    return mapping
+
+
 def init_map_attribute_names(
+    webviz_settings: WebvizSettings,
+    ensembles: List[str],
     mapping: Optional[Dict[str, str]]
 ) -> Dict[MapAttribute, str]:
     if mapping is None:
         # Based on name convention of xtgeoapp_grd3dmaps:
-        return {
-            MapAttribute.MIGRATION_TIME_SGAS: "migrationtime_sgas",
-            MapAttribute.MIGRATION_TIME_AMFG: "migrationtime_amfg",
-            MapAttribute.MAX_SGAS: "max_sgas",
-            MapAttribute.MAX_AMFG: "max_amfg",
-            MapAttribute.MASS: "co2-mass-total",
-            MapAttribute.DISSOLVED: "co2-mass-aqu-phase",
-            MapAttribute.FREE: "co2-mass-gas-phase",
-        }
-    return {MapAttribute[key]: value for key, value in mapping.items()}
+        mapping = build_mapping(webviz_settings,ensembles)
+    final_attributes = {(MapAttribute[key].value if key in MapAttribute.__members__ else key):
+                        value for key, value in mapping.items()}
+    return FilteredMapAttribute(final_attributes)
 
 
 def init_surface_providers(
