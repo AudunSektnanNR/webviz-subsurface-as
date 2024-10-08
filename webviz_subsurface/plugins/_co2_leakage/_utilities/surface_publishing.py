@@ -76,7 +76,10 @@ def publish_and_get_surface_metadata(
             ]
             and visualization_info["thresholds"][visualization_info["attribute"]] >= 0
         ):
-            surface.operation("elile", visualization_info["thresholds"][visualization_info["attribute"]])
+            surface.operation(
+                "elile",
+                visualization_info["thresholds"][visualization_info["attribute"]],
+            )
         server.publish_surface(qualified_address, surface)
         surf_meta = server.get_surface_metadata(qualified_address)
     return surf_meta, server.encode_partial_url(qualified_address), summed_mass

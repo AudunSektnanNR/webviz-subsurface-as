@@ -28,7 +28,9 @@ from webviz_subsurface.plugins._co2_leakage._utilities.co2volume import (
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import ContainmentDataProvider
+from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import (
+    ContainmentDataProvider,
+)
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
@@ -44,7 +46,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.surface_publishing import
     publish_and_get_surface_metadata,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider import (
-    UnsmryDataProvider
+    UnsmryDataProvider,
 )
 from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
     WellPickProvider,
@@ -503,7 +505,10 @@ def process_visualization_info(
     if unit != stored_info["unit"]:
         stored_info["unit"] = unit
         stored_info["change"] = True
-    if thresholds is not None and thresholds[attribute] != stored_info["thresholds"][attribute]:
+    if (
+        thresholds is not None
+        and thresholds[attribute] != stored_info["thresholds"][attribute]
+    ):
         stored_info["thresholds"][attribute] = thresholds[attribute]
         stored_info["change"] = True
     if stored_info["change"]:

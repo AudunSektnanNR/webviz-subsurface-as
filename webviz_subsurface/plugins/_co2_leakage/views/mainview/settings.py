@@ -26,6 +26,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
 
 class ViewSettings(SettingsGroupABC):
     threshold_ids = []
+
     class Ids(StrEnum):
         OPTIONS_DIALOG_BUTTON = "options-dialog-button"
         OPTIONS_DIALOG = "options-dialog"
@@ -82,8 +83,7 @@ class ViewSettings(SettingsGroupABC):
         ensemble_surface_providers: Dict[str, EnsembleSurfaceProvider],
         initial_surface: Optional[str],
         map_attribute_names: Dict[MapAttribute, str],
-        map_thresholds: Dict[MapAttribute, List[float]],
-        threshold_ids: List[str],
+        map_thresholds: MapThresholds,
         color_scale_names: List[str],
         well_names_dict: Dict[str, List[str]],
         menu_options: Dict[str, Dict[GraphSource, MenuOptions]],
@@ -92,8 +92,8 @@ class ViewSettings(SettingsGroupABC):
         self._ensemble_paths = ensemble_paths
         self._ensemble_surface_providers = ensemble_surface_providers
         self._map_attribute_names = map_attribute_names
-        self.thresholds = map_thresholds
-        self.threshold_ids = threshold_ids
+        self._thresholds = map_thresholds
+        self._threshold_ids = self._thresholds.get_keys()
         self._color_scale_names = color_scale_names
         self._initial_surface = initial_surface
         self._well_names_dict = well_names_dict
@@ -121,8 +121,8 @@ class ViewSettings(SettingsGroupABC):
             ),
             FilterSelectorLayout(self.register_component_unique_id(self.Ids.FORMATION)),
             VisualizationThresholdsLayout(
-                self.threshold_ids,
-                self.thresholds,
+                self._threshold_ids,
+                self._thresholds,
                 self.register_component_unique_id(self.Ids.VISUALIZATION_UPDATE),
             ),
             MapSelectorLayout(
@@ -259,7 +259,7 @@ class ViewSettings(SettingsGroupABC):
             return len(min_auto) == 1, len(max_auto) == 1
 
         @callback(
-            output=[Output(id, "disabled") for id in self.threshold_ids],
+            output=[Output(id, "disabled") for id in self._threshold_ids],
             inputs={
                 "attribute": Input(
                     self.component_unique_id(self.Ids.PROPERTY).to_string(),
@@ -268,7 +268,7 @@ class ViewSettings(SettingsGroupABC):
             },
         )
         def disable_irrelevant_thresholds(attribute: str) -> bool:
-            return [id != attribute for id in self.threshold_ids]
+            return [id != attribute for id in self._threshold_ids]
 
         @callback(
             Output(
@@ -522,18 +522,18 @@ class VisualizationThresholdsLayout(wcc.Dialog):
         fields = [
             html.Div(
                 "Here you can select a filter for the visualization of the map, "
-                "hiding values smaller than the selected threshold. "
+                "hiding values smaller than the selected minimum cutoff. "
                 "After changing the threshold value, press 'Update' to have the map reappear."
             ),
             html.Div("", style={"height": "30px"}),
             html.Div(
                 [
                     html.Div("Property:", style={"width": "42%"}),
-                    html.Div("Standard value:", style={"width": "32%"}),
-                    html.Div("Selected value:", style={"width": "25%"}),
+                    html.Div("Standard cutoff:", style={"width": "32%"}),
+                    html.Div("Minimum cutoff:", style={"width": "25%"}),
                 ],
                 style={"display": "flex", "flex-direction": "row"},
-            )
+            ),
         ]
         fields += [
             html.Div(
@@ -544,7 +544,7 @@ class VisualizationThresholdsLayout(wcc.Dialog):
                         id=id,
                         type="number",
                         value=standard_thresholds[id],
-                        style={"width": "25%"}
+                        style={"width": "25%"},
                     ),
                 ],
                 style={"display": "flex", "flex-direction": "row"},
@@ -571,10 +571,9 @@ class VisualizationThresholdsLayout(wcc.Dialog):
             id=ViewSettings.Ids.VISUALIZATION_THRESHOLD_DIALOG,
             draggable=True,
             open=False,
-            children = html.Div(
-                fields,
-                style={"flex-direction": "column", "width": "37vw"}
-            )
+            children=html.Div(
+                fields, style={"flex-direction": "column", "width": "500px"}
+            ),
         )
 
 
@@ -1095,9 +1094,7 @@ def _make_styles(
             phase["width"] = (
                 "33%"
                 if has_zones and has_regions
-                else "100%"
-                if not has_regions and not has_zones
-                else "50%"
+                else "100%" if not has_regions and not has_zones else "50%"
             )
             phase["display"] = "flex"
         else:  # mark_choice == "zone" / "region"

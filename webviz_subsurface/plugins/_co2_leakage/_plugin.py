@@ -196,7 +196,6 @@ class CO2Leakage(WebvizPluginABC):
                 initial_surface,
                 self._map_attribute_names,
                 self._map_thresholds,
-                self._threshold_ids,
                 [c["name"] for c in self._color_tables],  # type: ignore
                 self._well_pick_names,
                 self._menu_options,
@@ -376,7 +375,10 @@ class CO2Leakage(WebvizPluginABC):
         )
         def make_unit_list(
             attribute: str,
-        ) -> Union[Tuple[List[Any], Co2MassScale], Tuple[List[Any], Co2VolumeScale],]:
+        ) -> Union[
+            Tuple[List[Any], Co2MassScale],
+            Tuple[List[Any], Co2VolumeScale],
+        ]:
             if attribute == GraphSource.CONTAINMENT_ACTUAL_VOLUME:
                 return list(Co2VolumeScale), Co2VolumeScale.BILLION_CUBIC_METERS
             return list(Co2MassScale), Co2MassScale.MTONS
@@ -413,32 +415,66 @@ class CO2Leakage(WebvizPluginABC):
             Output(self._view_component(MapViewElement.Ids.DECKGL_MAP), "children"),
             Output(self._view_component(MapViewElement.Ids.DECKGL_MAP), "views"),
             inputs={
-                "attribute":Input(self._settings_component(ViewSettings.Ids.PROPERTY), "value"),
-                "date":Input(self._view_component(MapViewElement.Ids.DATE_SLIDER), "value"),
-                "formation":Input(self._settings_component(ViewSettings.Ids.FORMATION), "value"),
-                "realization":Input(self._settings_component(ViewSettings.Ids.REALIZATION), "value"),
-                "statistic":Input(self._settings_component(ViewSettings.Ids.STATISTIC), "value"),
-                "color_map_name":Input(self._settings_component(ViewSettings.Ids.COLOR_SCALE), "value"),
-                "cm_min_auto":Input(self._settings_component(ViewSettings.Ids.CM_MIN_AUTO), "value"),
-                "cm_min_val":Input(self._settings_component(ViewSettings.Ids.CM_MIN), "value"),
-                "cm_max_auto":Input(self._settings_component(ViewSettings.Ids.CM_MAX_AUTO), "value"),
-                "cm_max_val":Input(self._settings_component(ViewSettings.Ids.CM_MAX), "value"),
-                "plume_threshold":Input(self._settings_component(ViewSettings.Ids.PLUME_THRESHOLD), "value"),
-                "plume_smoothing":Input(self._settings_component(ViewSettings.Ids.PLUME_SMOOTHING), "value"),
-                "visualization_update":Input(
+                "attribute": Input(
+                    self._settings_component(ViewSettings.Ids.PROPERTY), "value"
+                ),
+                "date": Input(
+                    self._view_component(MapViewElement.Ids.DATE_SLIDER), "value"
+                ),
+                "formation": Input(
+                    self._settings_component(ViewSettings.Ids.FORMATION), "value"
+                ),
+                "realization": Input(
+                    self._settings_component(ViewSettings.Ids.REALIZATION), "value"
+                ),
+                "statistic": Input(
+                    self._settings_component(ViewSettings.Ids.STATISTIC), "value"
+                ),
+                "color_map_name": Input(
+                    self._settings_component(ViewSettings.Ids.COLOR_SCALE), "value"
+                ),
+                "cm_min_auto": Input(
+                    self._settings_component(ViewSettings.Ids.CM_MIN_AUTO), "value"
+                ),
+                "cm_min_val": Input(
+                    self._settings_component(ViewSettings.Ids.CM_MIN), "value"
+                ),
+                "cm_max_auto": Input(
+                    self._settings_component(ViewSettings.Ids.CM_MAX_AUTO), "value"
+                ),
+                "cm_max_val": Input(
+                    self._settings_component(ViewSettings.Ids.CM_MAX), "value"
+                ),
+                "plume_threshold": Input(
+                    self._settings_component(ViewSettings.Ids.PLUME_THRESHOLD), "value"
+                ),
+                "plume_smoothing": Input(
+                    self._settings_component(ViewSettings.Ids.PLUME_SMOOTHING), "value"
+                ),
+                "visualization_update": Input(
                     self._settings_component(ViewSettings.Ids.VISUALIZATION_UPDATE),
                     "n_clicks",
                 ),
-                "mass_unit":Input(self._settings_component(ViewSettings.Ids.MASS_UNIT), "value"),
-                "mass_unit_update":Input(
+                "mass_unit": Input(
+                    self._settings_component(ViewSettings.Ids.MASS_UNIT), "value"
+                ),
+                "mass_unit_update": Input(
                     self._settings_component(ViewSettings.Ids.MASS_UNIT_UPDATE),
                     "n_clicks",
                 ),
-                "options_dialog_options":Input(ViewSettings.Ids.OPTIONS_DIALOG_OPTIONS, "value"),
-                "selected_wells":Input(ViewSettings.Ids.OPTIONS_DIALOG_WELL_FILTER, "value"),
-                "ensemble":Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
-                "current_views":State(self._view_component(MapViewElement.Ids.DECKGL_MAP), "views"),
-                "thresholds":[Input(id, "value") for id in self._threshold_ids],
+                "options_dialog_options": Input(
+                    ViewSettings.Ids.OPTIONS_DIALOG_OPTIONS, "value"
+                ),
+                "selected_wells": Input(
+                    ViewSettings.Ids.OPTIONS_DIALOG_WELL_FILTER, "value"
+                ),
+                "ensemble": Input(
+                    self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"
+                ),
+                "current_views": State(
+                    self._view_component(MapViewElement.Ids.DECKGL_MAP), "views"
+                ),
+                "thresholds": [Input(id, "value") for id in self._threshold_ids],
             },
         )
         def update_map_attribute(
@@ -465,7 +501,7 @@ class CO2Leakage(WebvizPluginABC):
         ) -> Tuple[List[Dict[Any, Any]], List[Any], Dict[Any, Any]]:
             # Unable to clear cache (when needed) without the protected member
             # pylint: disable=protected-access
-            current_thresholds = {id: threshold for id, threshold in zip(self._threshold_ids, thresholds)}
+            current_thresholds = dict(zip(self._threshold_ids, thresholds))
             self._visualization_info = process_visualization_info(
                 attribute,
                 current_thresholds,

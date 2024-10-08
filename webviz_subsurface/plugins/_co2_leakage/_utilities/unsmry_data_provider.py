@@ -67,9 +67,7 @@ class UnsmryDataProvider:
         ]
         full = pd.concat(
             [
-                self._provider.get_column_data(columns, [real]).assign(
-                    realization=real
-                )
+                self._provider.get_column_data(columns, [real]).assign(realization=real)
                 for real in self._provider.realizations()
             ]
         )
@@ -87,7 +85,9 @@ class UnsmryDataProvider:
         return full
 
     @staticmethod
-    def _column_subset_unsmry(provider: EnsembleTableProvider) -> Tuple[str, str, str, str]:
+    def _column_subset_unsmry(
+        provider: EnsembleTableProvider,
+    ) -> Tuple[str, str, str, str]:
         existing = set(provider.column_names())
         # Try PFLOTRAN names
         if set(_PFLOTRAN_COLNAMES).issubset(existing):
@@ -95,7 +95,9 @@ class UnsmryDataProvider:
         # Try Eclipse names
         if set(_ECLIPSE_COLNAMES).issubset(existing):
             return _ECLIPSE_COLNAMES
-        raise KeyError(f"Could not find suitable data columns among: {', '.join(existing)}")
+        raise KeyError(
+            f"Could not find suitable data columns among: {', '.join(existing)}"
+        )
 
     @staticmethod
     def _validate(provider: EnsembleTableProvider):
