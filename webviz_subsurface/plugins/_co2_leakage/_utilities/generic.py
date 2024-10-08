@@ -28,11 +28,11 @@ class MapGroup(StrEnum):
     SGAS_PLUME = "SGAS"
     AMFG_PLUME = "AMFG"
     SGSTRAND_PLUME = "SGSTRAND"
-    MASS = "CO2_MASS"
-    DISSOLVED = "CO2_MASS"
-    FREE = "CO2_MASS"
-    FREE_GAS = "CO2_MASS"
-    TRAPPED_GAS = "CO2_MASS"
+    MASS = "CO2 MASS"
+    DISSOLVED = "CO2 MASS"
+    FREE = "CO2 MASS"
+    FREE_GAS = "CO2 MASS"
+    TRAPPED_GAS = "CO2 MASS"
 
 
 class MapType(StrEnum):
