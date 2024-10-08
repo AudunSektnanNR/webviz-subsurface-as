@@ -12,9 +12,6 @@ from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_pro
     EnsembleSurfaceProvider,
     SurfaceStatistic,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
-    init_map_attribute_names,
-)
 from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import property_origin
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,

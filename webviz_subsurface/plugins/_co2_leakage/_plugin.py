@@ -137,7 +137,6 @@ class CO2Leakage(WebvizPluginABC):
                 webviz_settings, ensembles, map_attribute_names
             )
             # Surfaces
-            build_mapping(webviz_settings, ensembles)
             self._ensemble_surface_providers = init_surface_providers(
                 webviz_settings, ensembles
             )

@@ -70,7 +70,7 @@ def init_map_attribute_names(
     webviz_settings: WebvizSettings,
     ensembles: List[str],
     mapping: Optional[Dict[str, str]],
-) -> Dict[MapAttribute, str]:
+) -> FilteredMapAttribute:
     if mapping is None:
         # Based on name convention of xtgeoapp_grd3dmaps:
         mapping = build_mapping(webviz_settings, ensembles)
