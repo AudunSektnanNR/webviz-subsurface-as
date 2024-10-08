@@ -29,11 +29,11 @@ class ContainmentDataProvider:
         return self._provider.realizations()
 
     def extract_dataframe(
-        self,
-        realization: int,
-        scale: Union[Co2MassScale, Co2VolumeScale]
+        self, realization: int, scale: Union[Co2MassScale, Co2VolumeScale]
     ) -> pd.DataFrame:
-        df = self._provider.get_column_data(self._provider.column_names(), [realization])
+        df = self._provider.get_column_data(
+            self._provider.column_names(), [realization]
+        )
         scale_factor = self._find_scale_factor(scale)
         if scale_factor == 1.0:
             return df

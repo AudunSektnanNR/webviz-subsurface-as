@@ -28,13 +28,17 @@ from webviz_subsurface.plugins._co2_leakage._utilities.co2volume import (
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import ContainmentDataProvider
+from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import (
+    ContainmentDataProvider,
+)
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
     GraphSource,
     LayoutLabels,
     MapAttribute,
+    MapType,
+    MapGroup,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.summary_graphs import (
     generate_summary_figure,
@@ -44,7 +48,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.surface_publishing import
     publish_and_get_surface_metadata,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider import (
-    UnsmryDataProvider
+    UnsmryDataProvider,
 )
 from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
     WellPickProvider,
@@ -54,13 +58,11 @@ from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
 def property_origin(
     attribute: MapAttribute, map_attribute_names: Dict[MapAttribute, str]
 ) -> str:
-    if attribute in map_attribute_names:
-        return map_attribute_names[attribute]
-    if attribute == MapAttribute.SGAS_PLUME:
-        return map_attribute_names[MapAttribute.MAX_SGAS]
-    if attribute == MapAttribute.AMFG_PLUME:
-        return map_attribute_names[MapAttribute.MAX_AMFG]
-    raise AssertionError(f"Map attribute name not found for property: {attribute}")
+    if MapType[MapAttribute(attribute).name].value == "PLUME":
+        return [map_attribute_names[attr] for attr in MapAttribute if
+                MapGroup[attr.name].value == MapGroup[MapAttribute(attribute).name].value and
+                MapType[attr.name] == "MAX"][0]
+    return map_attribute_names[attribute]
 
 
 @dataclass
@@ -123,13 +125,10 @@ def derive_surface_address(
     statistic: str,
     contour_data: Optional[Dict[str, Any]],
 ) -> Union[SurfaceAddress, TruncatedSurfaceAddress]:
-    if attribute in (MapAttribute.SGAS_PLUME, MapAttribute.AMFG_PLUME):
+    if MapType[MapAttribute(attribute).name].value == "PLUME":
+        max_attr_name = f"MAX_{MapGroup[MapAttribute(attribute).name]}"
         assert date is not None
-        basis = (
-            MapAttribute.MAX_SGAS
-            if attribute == MapAttribute.SGAS_PLUME
-            else MapAttribute.MAX_AMFG
-        )
+        basis = getattr(MapAttribute, max_attr_name)
         return TruncatedSurfaceAddress(
             name=surface_name,
             datestr=date,
@@ -140,11 +139,7 @@ def derive_surface_address(
         )
     date = (
         None
-        if attribute
-        in [
-            MapAttribute.MIGRATION_TIME_SGAS,
-            MapAttribute.MIGRATION_TIME_AMFG,
-        ]
+        if MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME"
         else date
     )
     if len(realization) == 1:
@@ -165,12 +160,9 @@ def derive_surface_address(
 
 def readable_name(attribute: MapAttribute) -> str:
     unit = ""
-    if attribute in [
-        MapAttribute.MIGRATION_TIME_SGAS,
-        MapAttribute.MIGRATION_TIME_AMFG,
-    ]:
+    if MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME":
         unit = " [year]"
-    elif attribute in (MapAttribute.AMFG_PLUME, MapAttribute.SGAS_PLUME):
+    elif MapType[MapAttribute(attribute).name].value == "PLUME":
         unit = " [# real.]"
     return f"{attribute.value}{unit}"
 
@@ -215,12 +207,9 @@ def get_plume_polygon(
 
 
 def _find_legend_title(attribute: MapAttribute, unit: str) -> str:
-    if attribute in [
-        MapAttribute.MIGRATION_TIME_SGAS,
-        MapAttribute.MIGRATION_TIME_AMFG,
-    ]:
+    if MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME":
         return "years"
-    if attribute in [MapAttribute.MASS, MapAttribute.DISSOLVED, MapAttribute.FREE]:
+    if MapType[MapAttribute(attribute).name].value == "MASS":
         return unit
     return ""
 
@@ -589,11 +578,7 @@ def process_summed_mass(
 ) -> Tuple[Optional[SurfaceData], Dict[str, float]]:
     summed_co2_key = f"{formation}-{realization[0]}-{datestr}-{attribute}-{unit}"
     if len(realization) == 1:
-        if attribute in [
-            MapAttribute.MASS,
-            MapAttribute.DISSOLVED,
-            MapAttribute.FREE,
-        ]:
+        if MapType[MapAttribute(attribute).name].value == "MASS":
             if summed_mass is not None and summed_co2_key not in summed_co2:
                 summed_co2[summed_co2_key] = summed_mass
             if summed_co2_key in summed_co2 and surf_data is not None:

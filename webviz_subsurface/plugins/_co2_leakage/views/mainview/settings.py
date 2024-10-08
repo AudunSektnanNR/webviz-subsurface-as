@@ -19,6 +19,9 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     LayoutLabels,
     LayoutStyle,
     MapAttribute,
+    MapType,
+    MapGroup,
+    FilteredMapAttribute,
     MenuOptions,
 )
 
@@ -124,6 +127,7 @@ class ViewSettings(SettingsGroupABC):
                 self.register_component_unique_id(self.Ids.VISUALIZATION_THRESHOLD),
                 self.register_component_unique_id(self.Ids.VISUALIZATION_UPDATE),
                 self.register_component_unique_id(self.Ids.MASS_UNIT),
+                self._map_attribute_names,
             ),
             GraphSelectorsLayout(
                 self.register_component_unique_id(self.Ids.GRAPH_SOURCE),
@@ -196,10 +200,7 @@ class ViewSettings(SettingsGroupABC):
             if len(surfaces) == 0:
                 warning = f"Surface not found for property: {prop}.\n"
                 warning += f"Expected name: <formation>--{prop_name}"
-                if MapAttribute(prop) not in [
-                    MapAttribute.MIGRATION_TIME_SGAS,
-                    MapAttribute.MIGRATION_TIME_AMFG,
-                ]:
+                if MapType[MapAttribute(attribute).name].value != "MIGRATION_TIME":
                     warning += "--<date>"
                 warnings.warn(warning + ".gri")
             # Formation names
@@ -228,10 +229,7 @@ class ViewSettings(SettingsGroupABC):
         def toggle_statistics(realizations: List[int], attribute: str) -> bool:
             if len(realizations) <= 1:
                 return True
-            if MapAttribute(attribute) in (
-                MapAttribute.SGAS_PLUME,
-                MapAttribute.AMFG_PLUME,
-            ):
+            if MapType[MapAttribute(attribute).name].value == "PLUME":
                 return True
             return False
 
@@ -254,10 +252,7 @@ class ViewSettings(SettingsGroupABC):
             Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
         )
         def set_visualization_threshold(attribute: str) -> bool:
-            return MapAttribute(attribute) in [
-                MapAttribute.MIGRATION_TIME_SGAS,
-                MapAttribute.MIGRATION_TIME_AMFG,
-            ]
+            return MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME"
 
         @callback(
             Output(
@@ -341,11 +336,7 @@ class ViewSettings(SettingsGroupABC):
             Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
         )
         def toggle_unit(attribute: str) -> bool:
-            if MapAttribute(attribute) not in (
-                MapAttribute.MASS,
-                MapAttribute.FREE,
-                MapAttribute.DISSOLVED,
-            ):
+            if MapType[MapAttribute(attribute).name].value != "MASS":
                 return True
             return False
 
@@ -507,6 +498,7 @@ class MapSelectorLayout(wcc.Selectors):
         visualization_threshold_id: str,
         visualization_update_id: str,
         mass_unit_id: str,
+        map_attribute_names: Dict[MapAttribute, str],
     ):
         default_colormap = (
             "turbo (Seq)"
@@ -522,8 +514,8 @@ class MapSelectorLayout(wcc.Selectors):
                         "Property",
                         wcc.Dropdown(
                             id=property_id,
-                            options=_compile_property_options(),
-                            value=MapAttribute.MIGRATION_TIME_SGAS.value,
+                            options=_compile_property_options(map_attribute_names),
+                            value=next(iter(map_attribute_names.filtered_values)).value,
                             clearable=False,
                         ),
                         "Statistic",
@@ -883,44 +875,30 @@ class EnsembleSelectorLayout(wcc.Selectors):
         )
 
 
-def _compile_property_options() -> List[Dict[str, Any]]:
+def _create_left_side_menu(map_group, map_attribute_names):
+    title = {
+        "label": html.Span([f"{map_group}:"], style={"text-decoration": "underline"}),
+        "value": "",
+        "disabled": True,
+    }
+    map_attribute_list = [
+        {"label": MapAttribute[key.name].value, "value": MapAttribute[key.name].value}
+        for key in map_attribute_names.filtered_values.keys()
+        if MapGroup[key.name].value == map_group
+    ]
+    return [title] + map_attribute_list
+
+
+def _compile_property_options(map_attribute_names) -> List[Dict[str, Any]]:
+    requested_map_groups = [
+        MapGroup[key.name].value
+        for key in map_attribute_names.filtered_values.keys()
+    ]
+    unique_requested_map_groups = list(set(requested_map_groups))
     return [
-        {
-            "label": html.Span(["SGAS:"], style={"text-decoration": "underline"}),
-            "value": "",
-            "disabled": True,
-        },
-        {
-            "label": MapAttribute.MIGRATION_TIME_SGAS.value,
-            "value": MapAttribute.MIGRATION_TIME_SGAS.value,
-        },
-        {"label": MapAttribute.MAX_SGAS.value, "value": MapAttribute.MAX_SGAS.value},
-        {
-            "label": MapAttribute.SGAS_PLUME.value,
-            "value": MapAttribute.SGAS_PLUME.value,
-        },
-        {
-            "label": html.Span(["AMFG:"], style={"text-decoration": "underline"}),
-            "value": "",
-            "disabled": True,
-        },
-        {
-            "label": MapAttribute.MIGRATION_TIME_AMFG.value,
-            "value": MapAttribute.MIGRATION_TIME_AMFG.value,
-        },
-        {"label": MapAttribute.MAX_AMFG.value, "value": MapAttribute.MAX_AMFG.value},
-        {
-            "label": MapAttribute.AMFG_PLUME.value,
-            "value": MapAttribute.AMFG_PLUME.value,
-        },
-        {
-            "label": html.Span(["MASS:"], style={"text-decoration": "underline"}),
-            "value": "",
-            "disabled": True,
-        },
-        {"label": MapAttribute.MASS.value, "value": MapAttribute.MASS.value},
-        {"label": MapAttribute.DISSOLVED.value, "value": MapAttribute.DISSOLVED.value},
-        {"label": MapAttribute.FREE.value, "value": MapAttribute.FREE.value},
+        element
+        for group in unique_requested_map_groups
+        for element in _create_left_side_menu(group, map_attribute_names)
     ]
 
 
@@ -1009,9 +987,7 @@ def _make_styles(
             phase["width"] = (
                 "33%"
                 if has_zones and has_regions
-                else "100%"
-                if not has_regions and not has_zones
-                else "50%"
+                else "100%" if not has_regions and not has_zones else "50%"
             )
             phase["display"] = "flex"
         else:  # mark_choice == "zone" / "region"

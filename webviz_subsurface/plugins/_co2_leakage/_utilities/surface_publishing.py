@@ -17,7 +17,10 @@ from webviz_subsurface._providers import (
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.generic import MapAttribute
+from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
+    MapAttribute,
+    MapType,
+)
 from webviz_subsurface.plugins._co2_leakage._utilities.plume_extent import (
     truncate_surfaces,
 )
@@ -61,19 +64,13 @@ def publish_and_get_surface_metadata(
         if not surface:
             warnings.warn(f"Could not find surface file with properties: {address}")
             return None, None, None
-        if address.attribute in [
-            map_attribute_names[MapAttribute.MASS],
-            map_attribute_names[MapAttribute.FREE],
-            map_attribute_names[MapAttribute.DISSOLVED],
-        ]:
+        address_map_attribute = next((key for key, value in map_attribute_names.filtered_values.items()
+                                      if value == address.attribute), None)
+        if MapType[address_map_attribute.name].value == "MASS":
             surface.values = surface.values / SCALE_DICT[visualization_info["unit"]]
-        summed_mass = np.ma.sum(surface.values)
+            summed_mass = np.ma.sum(surface.values)
         if (
-            address.attribute
-            not in [
-                map_attribute_names[MapAttribute.MIGRATION_TIME_SGAS],
-                map_attribute_names[MapAttribute.MIGRATION_TIME_AMFG],
-            ]
+            MapType[address_map_attribute.name].value != "MIGRATION_TIME"
             and visualization_info["threshold"] >= 0
         ):
             surface.operation("elile", visualization_info["threshold"])
