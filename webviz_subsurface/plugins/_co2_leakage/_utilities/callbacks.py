@@ -58,10 +58,10 @@ from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
 def property_origin(
     attribute: MapAttribute, map_attribute_names: Dict[MapAttribute, str]
 ) -> str:
-    if attribute == MapAttribute.SGAS_PLUME:
-        return map_attribute_names[MapAttribute.MAX_SGAS]
-    if attribute == MapAttribute.AMFG_PLUME:
-        return map_attribute_names[MapAttribute.MAX_AMFG]
+    if MapType[MapAttribute(attribute).name].value == "PLUME":
+        return [map_attribute_names[attr] for attr in MapAttribute if
+                MapGroup[attr.name].value == MapGroup[MapAttribute(attribute).name].value and
+                MapType[attr.name] == "MAX"][0]
     return map_attribute_names[attribute]
 
 

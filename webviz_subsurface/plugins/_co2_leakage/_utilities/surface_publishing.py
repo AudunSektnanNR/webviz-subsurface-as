@@ -55,12 +55,6 @@ def publish_and_get_surface_metadata(
     qualified_address = QualifiedSurfaceAddress(provider_id, address)
     surf_meta = server.get_surface_metadata(qualified_address)
     summed_mass = None
-    requested_map_types = [
-        MapType[key.name].value for key in map_attribute_names.filtered_values.keys()
-    ]
-    requested_map_attributes = [
-        value for key, value in map_attribute_names.filtered_values.items()
-    ]
     if not surf_meta:
         # This means we need to compute the surface
         try:

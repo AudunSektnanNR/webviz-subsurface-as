@@ -895,7 +895,7 @@ def _create_left_side_menu(map_group, map_attribute_names):
 def _compile_property_options(map_attribute_names) -> List[Dict[str, Any]]:
     requested_map_groups = [
         MapGroup[key.name].value
-        for key in map_attribute_names.filter_map_attribute().keys()
+        for key in map_attribute_names.filtered_values.keys()
     ]
     unique_requested_map_groups = list(set(requested_map_groups))
     return [
