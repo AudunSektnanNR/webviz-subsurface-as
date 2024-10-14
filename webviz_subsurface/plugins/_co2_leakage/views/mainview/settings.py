@@ -78,12 +78,13 @@ class ViewSettings(SettingsGroupABC):
         FEEDBACK_BUTTON = "feedback-button"
         FEEDBACK = "feedback"
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         ensemble_paths: Dict[str, str],
         ensemble_surface_providers: Dict[str, EnsembleSurfaceProvider],
         initial_surface: Optional[str],
-        map_attribute_names: Dict[MapAttribute, str],
+        map_attribute_names: FilteredMapAttribute,
         map_thresholds: MapThresholds,
         color_scale_names: List[str],
         well_names_dict: Dict[str, List[str]],
@@ -210,7 +211,7 @@ class ViewSettings(SettingsGroupABC):
             if len(surfaces) == 0:
                 warning = f"Surface not found for property: {prop}.\n"
                 warning += f"Expected name: <formation>--{prop_name}"
-                if MapType[MapAttribute(attribute).name].value != "MIGRATION_TIME":
+                if MapType[MapAttribute(prop).name].value != "MIGRATION_TIME":
                     warning += "--<date>"
                 warnings.warn(warning + ".gri")
             # Formation names
@@ -589,7 +590,7 @@ class MapSelectorLayout(wcc.Selectors):
         cm_max_auto_id: str,
         mass_unit_id: str,
         mass_unit_update_id: str,
-        map_attribute_names: Dict[MapAttribute, str],
+        map_attribute_names: FilteredMapAttribute,
     ):
         default_colormap = (
             "turbo (Seq)"
@@ -688,6 +689,7 @@ class GraphSelectorsLayout(wcc.Selectors):
         "flexDirection": "row",
     }
 
+    # pylint: disable=too-many-arguments
     def __init__(
         self,
         graph_source_id: str,
@@ -962,7 +964,9 @@ class EnsembleSelectorLayout(wcc.Selectors):
         )
 
 
-def _create_left_side_menu(map_group, map_attribute_names):
+def _create_left_side_menu(
+    map_group: str, map_attribute_names: FilteredMapAttribute
+) -> List:
     title = {
         "label": html.Span([f"{map_group}:"], style={"text-decoration": "underline"}),
         "value": "",
@@ -976,10 +980,11 @@ def _create_left_side_menu(map_group, map_attribute_names):
     return [title] + map_attribute_list
 
 
-def _compile_property_options(map_attribute_names) -> List[Dict[str, Any]]:
+def _compile_property_options(
+    map_attribute_names: FilteredMapAttribute,
+) -> List[Dict[str, Any]]:
     requested_map_groups = [
-        MapGroup[key.name].value
-        for key in map_attribute_names.filtered_values.keys()
+        MapGroup[key.name].value for key in map_attribute_names.filtered_values.keys()
     ]
     unique_requested_map_groups = list(set(requested_map_groups))
     return [

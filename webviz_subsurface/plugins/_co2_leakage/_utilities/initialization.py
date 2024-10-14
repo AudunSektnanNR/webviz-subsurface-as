@@ -1,4 +1,3 @@
-import glob
 import logging
 import os
 import warnings
@@ -41,7 +40,7 @@ WARNING_THRESHOLD_CSV_FILE_SIZE_MB = 100.0
 def build_mapping(
     webviz_settings: WebvizSettings,
     ensembles: List[str],
-) -> Dict[MapAttribute, str]:
+) -> Dict[str, str]:
     available_attrs_per_ensemble = [
         discover_per_realization_surface_files(
             webviz_settings.shared_settings["scratch_ensembles"][ens],
@@ -55,9 +54,9 @@ def build_mapping(
     unique_attributes = set()
     for ens_attr in full_attr_list:
         unique_attributes.update(ens_attr)
-    unique_attributes = list(unique_attributes)
+    unique_attributes_list = list(unique_attributes)
     mapping = {}
-    for attr in unique_attributes:
+    for attr in unique_attributes_list:
         for name_convention in MapNamingConvention:
             if attr == name_convention.value:
                 attribute_key = MapAttribute[name_convention.name].name

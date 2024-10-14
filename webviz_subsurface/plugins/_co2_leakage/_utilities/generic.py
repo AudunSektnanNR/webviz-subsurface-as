@@ -65,7 +65,7 @@ class MapNamingConvention(StrEnum):
 
 
 class FilteredMapAttribute:
-    def __init__(self, mapping):
+    def __init__(self, mapping: Dict):
         self.mapping = mapping
         map_types = {
             key: MapType[key].value
@@ -86,21 +86,20 @@ class FilteredMapAttribute:
         self.mapping.update(plume_request)
         self.filtered_values = self.filter_map_attribute()
 
-    def filter_map_attribute(self):
+    def filter_map_attribute(self) -> Dict:
         return {
             MapAttribute[key]: self.mapping[MapAttribute[key].value]
             for key in MapAttribute.__members__
             if MapAttribute[key].value in self.mapping
         }
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: MapAttribute) -> MapAttribute:
         if isinstance(key, MapAttribute):
             return self.filtered_values[key]
-        else:
-            raise KeyError(f"Key must be a MapAttribute, " f"got {type(key)} instead.")
+        raise KeyError(f"Key must be a MapAttribute, " f"got {type(key)} instead.")
 
     @property
-    def values(self):
+    def values(self) -> Dict:
         return self.filtered_values
 
 
@@ -182,15 +181,16 @@ class MenuOptions(TypedDict):
 class MapThresholds:
     def __init__(self, mapping: FilteredMapAttribute):
         self._standard_thresholds = {
-            MapAttribute[key.name].value: 0
+            MapAttribute[key.name].value: 0.0
             for key in mapping.filtered_values.keys()
-            if MapType[MapAttribute[key.name].name].value not in ["PLUME", "MIGRATION_TIME"]
+            if MapType[MapAttribute[key.name].name].value
+            not in ["PLUME", "MIGRATION_TIME"]
         }
         if MapAttribute.MAX_AMFG in self._standard_thresholds.keys():
             self._standard_thresholds[MapAttribute.MAX_AMFG] = 0.0005
 
-    def get_standard_thresholds(self):
+    def get_standard_thresholds(self) -> Dict:
         return self._standard_thresholds
 
-    def get_keys(self):
+    def get_keys(self) -> List:
         return list(self._standard_thresholds.keys())

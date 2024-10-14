@@ -30,7 +30,6 @@ from webviz_subsurface.plugins._co2_leakage._utilities.fault_polygons import (
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
-    FilteredMapAttribute,
     GraphSource,
     MapAttribute,
     MapThresholds,
@@ -44,7 +43,6 @@ from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
     init_unsmry_data_providers,
     init_well_pick_provider,
     process_files,
-    build_mapping,
 )
 from webviz_subsurface.plugins._co2_leakage.views.mainview.mainview import (
     MainView,
@@ -242,7 +240,11 @@ class CO2Leakage(WebvizPluginABC):
             if date_map_attribute is not None
             else None
         )
-        dates = surface_provider.surface_dates_for_attribute(att_name)
+        dates = (
+            None
+            if att_name is None
+            else surface_provider.surface_dates_for_attribute(att_name)
+        )
         if dates is None:
             raise ValueError(f"Failed to fetch dates for attribute '{att_name}'")
         return dates
@@ -372,8 +374,7 @@ class CO2Leakage(WebvizPluginABC):
             }
             if len(dates.keys()) > 0:
                 return dates, max(dates.keys())
-            else:
-                return dates, None
+            return dates, None
 
         @callback(
             Output(self._view_component(MapViewElement.Ids.DATE_WRAPPER), "style"),
@@ -513,11 +514,13 @@ class CO2Leakage(WebvizPluginABC):
             selected_wells: List[str],
             ensemble: str,
             current_views: List[Any],
-            thresholds,
+            thresholds: List[float],
         ) -> Tuple[List[Dict[Any, Any]], List[Any], Dict[Any, Any]]:
             # Unable to clear cache (when needed) without the protected member
             # pylint: disable=protected-access
             current_thresholds = dict(zip(self._threshold_ids, thresholds))
+            assert visualization_update >= 0  # Need the input to trigger callback
+            assert mass_unit_update >= 0  # These are just to silence pylint
             self._visualization_info = process_visualization_info(
                 attribute,
                 current_thresholds,
@@ -639,7 +642,6 @@ class CO2Leakage(WebvizPluginABC):
             if _n_clicks is not None:
                 return _n_clicks > 0
             raise PreventUpdate
-
 
         @callback(
             Output(self._view_component(MapViewElement.Ids.TOP_ELEMENT), "style"),
