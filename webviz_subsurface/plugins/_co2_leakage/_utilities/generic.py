@@ -1,4 +1,4 @@
-from typing import TypedDict, List
+from typing import Dict, List, TypedDict
 
 from webviz_subsurface._utils.enum_shim import StrEnum
 
@@ -65,7 +65,7 @@ class MapNamingConvention(StrEnum):
 
 
 class FilteredMapAttribute:
-    def __init__(self, mapping):
+    def __init__(self, mapping: Dict):
         self.mapping = mapping
         map_types = {
             key: MapType[key].value
@@ -86,21 +86,20 @@ class FilteredMapAttribute:
         self.mapping.update(plume_request)
         self.filtered_values = self.filter_map_attribute()
 
-    def filter_map_attribute(self):
+    def filter_map_attribute(self) -> Dict:
         return {
             MapAttribute[key]: self.mapping[MapAttribute[key].value]
             for key in MapAttribute.__members__
             if MapAttribute[key].value in self.mapping
         }
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: MapAttribute) -> MapAttribute:
         if isinstance(key, MapAttribute):
             return self.filtered_values[key]
-        else:
-            raise KeyError(f"Key must be a MapAttribute, " f"got {type(key)} instead.")
+        raise KeyError(f"Key must be a MapAttribute, " f"got {type(key)} instead.")
 
     @property
-    def values(self):
+    def values(self) -> Dict:
         return self.filtered_values
 
 
@@ -133,6 +132,7 @@ class LayoutLabels(StrEnum):
     COMMON_SELECTIONS = "Options and global filters"
     FEEDBACK = "User feedback"
     VISUALIZATION_UPDATE = "Update threshold"
+    VISUALIZATION_THRESHOLDS = "Manage visualization filter"
 
 
 # pylint: disable=too-few-public-methods
@@ -162,8 +162,29 @@ class LayoutStyle:
         "background-color": "lightgrey",
     }
 
+    THRESHOLDS_BUTTON = {
+        "marginTop": "10px",
+        "width": "100%",
+        "height": "30px",
+        "line-height": "30px",
+        "padding": "0",
+        "background-color": "lightgrey",
+    }
+
 
 class MenuOptions(TypedDict):
     zones: List[str]
     regions: List[str]
     phases: List[str]
+
+
+class MapThresholds:
+    def __init__(self, mapping: FilteredMapAttribute):
+        self.standard_thresholds = {
+            MapAttribute[key.name].value: 0.0
+            for key in mapping.filtered_values.keys()
+            if MapType[MapAttribute[key.name].name].value
+            not in ["PLUME", "MIGRATION_TIME"]
+        }
+        if MapAttribute.MAX_AMFG in self.standard_thresholds.keys():
+            self.standard_thresholds[MapAttribute.MAX_AMFG] = 0.0005

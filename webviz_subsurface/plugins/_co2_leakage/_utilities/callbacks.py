@@ -11,7 +11,6 @@ from flask_caching import Cache
 
 from webviz_subsurface._providers import (
     EnsembleSurfaceProvider,
-    EnsembleTableProvider,
     SimulatedSurfaceAddress,
     StatisticalSurfaceAddress,
     SurfaceAddress,
@@ -34,11 +33,13 @@ from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
+    FilteredMapAttribute,
     GraphSource,
     LayoutLabels,
     MapAttribute,
     MapType,
     MapGroup,
+    MenuOptions,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.summary_graphs import (
     generate_summary_figure,
@@ -56,12 +57,15 @@ from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
 
 
 def property_origin(
-    attribute: MapAttribute, map_attribute_names: Dict[MapAttribute, str]
+    attribute: MapAttribute, map_attribute_names: FilteredMapAttribute
 ) -> str:
     if MapType[MapAttribute(attribute).name].value == "PLUME":
-        return [map_attribute_names[attr] for attr in MapAttribute if
-                MapGroup[attr.name].value == MapGroup[MapAttribute(attribute).name].value and
-                MapType[attr.name] == "MAX"][0]
+        return [
+            map_attribute_names[attr]
+            for attr in MapAttribute
+            if MapGroup[attr.name].value == MapGroup[MapAttribute(attribute).name].value
+            and MapType[attr.name] == "MAX"
+        ][0]
     return map_attribute_names[attribute]
 
 
@@ -83,7 +87,7 @@ class SurfaceData:
         color_map_name: str,
         readable_name_: str,
         visualization_info: Dict[str, Any],
-        map_attribute_names: Dict[MapAttribute, str],
+        map_attribute_names: FilteredMapAttribute,
     ) -> Tuple[Any, Optional[Any]]:
         surf_meta, img_url, summed_mass = publish_and_get_surface_metadata(
             server,
@@ -121,7 +125,7 @@ def derive_surface_address(
     attribute: MapAttribute,
     date: Optional[str],
     realization: List[int],
-    map_attribute_names: Dict[MapAttribute, str],
+    map_attribute_names: FilteredMapAttribute,
     statistic: str,
     contour_data: Optional[Dict[str, Any]],
 ) -> Union[SurfaceAddress, TruncatedSurfaceAddress]:
@@ -471,8 +475,8 @@ def _parse_polygon_file(filename: str) -> Dict[str, Any]:
 
 
 def process_visualization_info(
-    n_clicks: int,
-    threshold: Optional[float],
+    attribute: str,
+    thresholds: dict,
     unit: str,
     stored_info: Dict[str, Any],
     cache: Cache,
@@ -480,17 +484,21 @@ def process_visualization_info(
     """
     Clear surface cache if the threshold for visualization or mass unit is changed
     """
+    stored_info["attribute"] = attribute
+    if MapType[MapAttribute(attribute).name].value in ["PLUME", "MIGRATION_TIME"]:
+        return stored_info
     stored_info["change"] = False
-    stored_info["n_clicks"] = n_clicks
     if unit != stored_info["unit"]:
         stored_info["unit"] = unit
         stored_info["change"] = True
-    if threshold is not None and threshold != stored_info["threshold"]:
-        stored_info["threshold"] = threshold
+    if (
+        thresholds is not None
+        and thresholds[attribute] != stored_info["thresholds"][attribute]
+    ):
+        stored_info["thresholds"][attribute] = thresholds[attribute]
         stored_info["change"] = True
     if stored_info["change"]:
         cache.clear()
-    # stored_info["n_clicks"] = n_clicks
     return stored_info
 
 
@@ -502,7 +510,7 @@ def process_containment_info(
     color_choice: str,
     mark_choice: Optional[str],
     sorting: str,
-    menu_options: Dict[str, List[str]],
+    menu_options: MenuOptions,
 ) -> Dict[str, Union[str, None, List[str], int]]:
     if mark_choice is None:
         mark_choice = "phase"

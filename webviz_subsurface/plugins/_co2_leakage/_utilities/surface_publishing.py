@@ -18,7 +18,7 @@ from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_pro
     SurfaceStatistic,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
-    MapAttribute,
+    FilteredMapAttribute,
     MapType,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.plume_extent import (
@@ -47,7 +47,7 @@ def publish_and_get_surface_metadata(
     provider: EnsembleSurfaceProvider,
     address: Union[SurfaceAddress, TruncatedSurfaceAddress],
     visualization_info: Dict[str, Any],
-    map_attribute_names: Dict[MapAttribute, str],
+    map_attribute_names: FilteredMapAttribute,
 ) -> Tuple[Optional[SurfaceImageMeta], Optional[str], Optional[Any]]:
     if isinstance(address, TruncatedSurfaceAddress):
         return _publish_and_get_truncated_surface_metadata(server, provider, address)
@@ -64,16 +64,26 @@ def publish_and_get_surface_metadata(
         if not surface:
             warnings.warn(f"Could not find surface file with properties: {address}")
             return None, None, None
-        address_map_attribute = next((key for key, value in map_attribute_names.filtered_values.items()
-                                      if value == address.attribute), None)
+        address_map_attribute = next(
+            (
+                key
+                for key, value in map_attribute_names.filtered_values.items()
+                if value == address.attribute
+            ),
+            None,
+        )
+        assert address_map_attribute is not None
         if MapType[address_map_attribute.name].value == "MASS":
             surface.values = surface.values / SCALE_DICT[visualization_info["unit"]]
             summed_mass = np.ma.sum(surface.values)
         if (
             MapType[address_map_attribute.name].value != "MIGRATION_TIME"
-            and visualization_info["threshold"] >= 0
+            and visualization_info["thresholds"][visualization_info["attribute"]] >= 0
         ):
-            surface.operation("elile", visualization_info["threshold"])
+            surface.operation(
+                "elile",
+                visualization_info["thresholds"][visualization_info["attribute"]],
+            )
         server.publish_surface(qualified_address, surface)
         surf_meta = server.get_surface_metadata(qualified_address)
     return surf_meta, server.encode_partial_url(qualified_address), summed_mass

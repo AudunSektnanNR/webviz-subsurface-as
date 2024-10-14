@@ -1,4 +1,4 @@
-from typing import Union
+from typing import List, Union
 
 import pandas as pd
 
@@ -25,7 +25,7 @@ class ContainmentDataProvider:
         return self._menu_options
 
     @property
-    def realizations(self):
+    def realizations(self) -> List[int]:
         return self._provider.realizations()
 
     def extract_dataframe(
@@ -89,7 +89,7 @@ class ContainmentDataProvider:
         }
 
     @staticmethod
-    def _validate(provider: EnsembleTableProvider):
+    def _validate(provider: EnsembleTableProvider) -> None:
         col_names = provider.column_names()
         required_columns = ["date", "amount", "phase", "containment", "zone", "region"]
         missing_columns = [col for col in required_columns if col not in col_names]

@@ -43,19 +43,19 @@ class UnsmryDataProvider:
         return self._colname_date
 
     @property
-    def colname_dissolved(self):
+    def colname_dissolved(self) -> str:
         return self._colname_dissolved
 
     @property
-    def colname_trapped(self):
+    def colname_trapped(self) -> str:
         return self._colname_trapped
 
     @property
-    def colname_mobile(self):
+    def colname_mobile(self) -> str:
         return self._colname_mobile
 
     @property
-    def colname_total(self):
+    def colname_total(self) -> str:
         return self._colname_total
 
     def extract(self, scale: Union[Co2MassScale, Co2VolumeScale]) -> pd.DataFrame:
@@ -100,7 +100,7 @@ class UnsmryDataProvider:
         )
 
     @staticmethod
-    def _validate(provider: EnsembleTableProvider):
+    def _validate(provider: EnsembleTableProvider) -> None:
         try:
             UnsmryDataProvider._column_subset_unsmry(provider)
         except KeyError as e:
