@@ -95,7 +95,7 @@ class ViewSettings(SettingsGroupABC):
         self._ensemble_surface_providers = ensemble_surface_providers
         self._map_attribute_names = map_attribute_names
         self._thresholds = map_thresholds
-        self._threshold_ids = self._thresholds.get_keys()
+        self._threshold_ids = list(self._thresholds.standard_thresholds.keys())
         self._color_scale_names = color_scale_names
         self._initial_surface = initial_surface
         self._well_names_dict = well_names_dict
@@ -510,7 +510,7 @@ class VisualizationThresholdsLayout(wcc.Dialog):
         thresholds: MapThresholds,
         visualization_update_id: str,
     ) -> None:
-        standard_thresholds = thresholds.get_standard_thresholds()
+        standard_thresholds = thresholds.standard_thresholds
 
         fields = [
             html.Div(

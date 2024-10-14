@@ -180,17 +180,11 @@ class MenuOptions(TypedDict):
 
 class MapThresholds:
     def __init__(self, mapping: FilteredMapAttribute):
-        self._standard_thresholds = {
+        self.standard_thresholds = {
             MapAttribute[key.name].value: 0.0
             for key in mapping.filtered_values.keys()
             if MapType[MapAttribute[key.name].name].value
             not in ["PLUME", "MIGRATION_TIME"]
         }
-        if MapAttribute.MAX_AMFG in self._standard_thresholds.keys():
-            self._standard_thresholds[MapAttribute.MAX_AMFG] = 0.0005
-
-    def get_standard_thresholds(self) -> Dict:
-        return self._standard_thresholds
-
-    def get_keys(self) -> List:
-        return list(self._standard_thresholds.keys())
+        if MapAttribute.MAX_AMFG in self.standard_thresholds.keys():
+            self.standard_thresholds[MapAttribute.MAX_AMFG] = 0.0005

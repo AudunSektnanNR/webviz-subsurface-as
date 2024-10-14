@@ -135,7 +135,7 @@ class CO2Leakage(WebvizPluginABC):
                 webviz_settings, ensembles, map_attribute_names
             )
             self._map_thresholds = MapThresholds(self._map_attribute_names)
-            self._threshold_ids = self._map_thresholds.get_keys()
+            self._threshold_ids = list(self._map_thresholds.standard_thresholds.keys())
             # Surfaces
             self._ensemble_surface_providers = init_surface_providers(
                 webviz_settings, ensembles
@@ -181,7 +181,7 @@ class CO2Leakage(WebvizPluginABC):
 
         self._summed_co2: Dict[str, Any] = {}
         self._visualization_info = {
-            "thresholds": self._map_thresholds.get_standard_thresholds(),
+            "thresholds": self._map_thresholds.standard_thresholds,
             "n_clicks": 0,
             "change": False,
             "unit": "kg",
