@@ -21,12 +21,17 @@ from webviz_subsurface._providers import (
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
 )
-from webviz_subsurface._utils.webvizstore_functions import read_csv
 from webviz_subsurface.plugins._co2_leakage._utilities import plume_extent
 from webviz_subsurface.plugins._co2_leakage._utilities.co2volume import (
     generate_co2_time_containment_figure,
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
+)
+from webviz_subsurface.plugins._co2_leakage._utilities.ensemble_polygon_provider import (
+    EnsemblePolygonProvider,
+)
+from webviz_subsurface.plugins._co2_leakage._utilities.ensemble_well_picks import (
+    EnsembleWellPicks,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,
@@ -41,9 +46,6 @@ from webviz_subsurface.plugins._co2_leakage._utilities.summary_graphs import (
 from webviz_subsurface.plugins._co2_leakage._utilities.surface_publishing import (
     TruncatedSurfaceAddress,
     publish_and_get_surface_metadata,
-)
-from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
-    WellPickProvider,
 )
 
 
@@ -283,12 +285,13 @@ def create_map_viewports() -> Dict:
 
 # pylint: disable=too-many-arguments
 def create_map_layers(
+    realizations: List[int],
     formation: str,
     surface_data: Optional[SurfaceData],
     fault_polygon_url: Optional[str],
-    file_containment_boundary: Optional[str],
-    file_hazardous_boundary: Optional[str],
-    well_pick_provider: Optional[WellPickProvider],
+    containment_bounds_provider: Optional[EnsemblePolygonProvider],
+    haz_bounds_provider: Optional[EnsemblePolygonProvider],
+    well_pick_provider: Optional[EnsembleWellPicks],
     plume_extent_data: Optional[geojson.FeatureCollection],
     options_dialog_options: List[int],
     selected_wells: List[str],
@@ -322,72 +325,37 @@ def create_map_layers(
                 "data": fault_polygon_url,
             }
         )
+
     if (
-        file_containment_boundary is not None
+        containment_bounds_provider is not None
+        and len(realizations) > 0
         and LayoutLabels.SHOW_CONTAINMENT_POLYGON in options_dialog_options
     ):
-        layers.append(
-            {
-                "@@type": "GeoJsonLayer",
-                "name": "Containment Polygon",
-                "id": "license-boundary-layer",
-                "data": _parse_polygon_file(file_containment_boundary),
-                "stroked": False,
-                "getFillColor": [0, 172, 0, 120],
-                "visible": True,
-            }
-        )
+        layer = containment_bounds_provider.geojson_layer(realizations[0])
+        if layer is not None:
+            layers.append(layer)
+
     if (
-        file_hazardous_boundary is not None
+        haz_bounds_provider is not None
+        and len(realizations) > 0
         and LayoutLabels.SHOW_HAZARDOUS_POLYGON in options_dialog_options
     ):
-        layers.append(
-            {
-                "@@type": "GeoJsonLayer",
-                "name": "Hazardous Polygon",
-                "id": "hazardous-boundary-layer",
-                "data": _parse_polygon_file(file_hazardous_boundary),
-                "stroked": False,
-                "getFillColor": [200, 0, 0, 120],
-                "visible": True,
-            }
-        )
+        layer = haz_bounds_provider.geojson_layer(realizations[0])
+        if layer is not None:
+            layers.append(layer)
+
     if (
         well_pick_provider is not None
         and formation is not None
+        and len(realizations) > 0
         and LayoutLabels.SHOW_WELLS in options_dialog_options
     ):
-        well_data = dict(well_pick_provider.get_geojson(selected_wells, formation))
-        if "features" in well_data:
-            if len(well_data["features"]) == 0:
-                wellstring = "well: " if len(selected_wells) == 1 else "wells: "
-                wellstring += ", ".join(selected_wells)
-                warnings.warn(
-                    f"Combination of formation: {formation} and "
-                    f"{wellstring} not found in well picks file."
-                )
-            for i in range(len(well_data["features"])):
-                current_attribute = well_data["features"][i]["properties"]["attribute"]
-                well_data["features"][i]["properties"]["attribute"] = (
-                    " " + current_attribute
-                )
-        layers.append(
-            {
-                "@@type": "GeoJsonLayer",
-                "name": "Well Picks",
-                "id": "well-picks-layer",
-                "data": well_data,
-                "visible": True,
-                "getText": "@@=properties.attribute",
-                "getTextSize": 12,
-                "getTextAnchor": "start",
-                "pointType": "circle+text",
-                "lineWidthMinPixels": 2,
-                "pointRadiusMinPixels": 2,
-                "pickable": True,
-                "parameters": {"depthTest": False},
-            }
+        layer = well_pick_provider.geojson_layer(
+            realizations[0], selected_wells, formation
         )
+        if layer is not None:
+            layers.append(layer)
+
     if plume_extent_data is not None:
         layers.append(
             {
@@ -445,40 +413,6 @@ def generate_unsmry_figures(
             table_provider_containment.realizations(),
         ),
     )
-
-
-def _parse_polygon_file(filename: str) -> Dict[str, Any]:
-    df = read_csv(filename)
-    if "x" in df.columns:
-        xyz = df[["x", "y"]].values
-    elif "X_UTME" in df.columns:
-        if "POLY_ID" in df.columns:
-            xyz = [gf[["X_UTME", "Y_UTMN"]].values for _, gf in df.groupby("POLY_ID")]
-        else:
-            xyz = df[["X_UTME", "Y_UTMN"]].values
-    else:
-        # Attempt to use the first two columns as the x and y coordinates
-        xyz = df.values[:, :2]
-    if isinstance(xyz, list):
-        poly_type = "MultiPolygon"
-        coords = [[arr.tolist()] for arr in xyz]
-    else:
-        poly_type = "Polygon"
-        coords = [xyz.tolist()]
-    as_geojson = {
-        "type": "FeatureCollection",
-        "features": [
-            {
-                "type": "Feature",
-                "properties": {},
-                "geometry": {
-                    "type": poly_type,
-                    "coordinates": coords,
-                },
-            }
-        ],
-    }
-    return as_geojson
 
 
 def process_visualization_info(
