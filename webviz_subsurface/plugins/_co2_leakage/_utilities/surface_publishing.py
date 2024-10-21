@@ -77,7 +77,7 @@ def publish_and_get_surface_metadata(
             surface.values = surface.values / SCALE_DICT[visualization_info["unit"]]
             summed_mass = np.ma.sum(surface.values)
         if (
-            MapType[address_map_attribute.name].value != "MIGRATION_TIME"
+            MapType[address_map_attribute.name].value not in ["PLUME", "MIGRATION_TIME"]
             and visualization_info["thresholds"][visualization_info["attribute"]] >= 0
         ):
             surface.operation(
