@@ -4,6 +4,7 @@ import warnings
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from fmu.ensemble import ScratchEnsemble
 from webviz_config import WebvizSettings
 
 from webviz_subsurface._providers import (
@@ -12,15 +13,18 @@ from webviz_subsurface._providers import (
     EnsembleTableProvider,
     EnsembleTableProviderFactory,
 )
+from webviz_subsurface._providers.ensemble_surface_provider._surface_discovery import (
+    discover_per_realization_surface_files,
+)
 from webviz_subsurface._utils.webvizstore_functions import read_csv
 from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import (
     ContainmentDataProvider,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
+    FilteredMapAttribute,
     GraphSource,
     MapAttribute,
     MapNamingConvention,
-    FilteredMapAttribute,
     MenuOptions,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider import (
@@ -29,11 +33,12 @@ from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider impo
 from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
     WellPickProvider,
 )
-from webviz_subsurface._providers.ensemble_surface_provider._surface_discovery import (
-    discover_per_realization_surface_files,
-)
 
 LOGGER = logging.getLogger(__name__)
+LOGGER_TO_SUPPRESS = logging.getLogger(
+    "webviz_subsurface._providers.ensemble_summary_provider._arrow_unsmry_import"
+)
+LOGGER_TO_SUPPRESS.setLevel(logging.ERROR)  # We replace the given warning with our own
 WARNING_THRESHOLD_CSV_FILE_SIZE_MB = 100.0
 
 
@@ -156,10 +161,20 @@ def _init_ensemble_table_provider(
             )
         except (KeyError, ValueError) as exc2:
             LOGGER.warning(
-                f'Tried reading "{table_rel_path}" for ensemble "{ens}" as csv with'
-                f" error {exc}, and as arrow with error {exc2}"
+                f'\nTried reading "{table_rel_path}" for ensemble "{ens}" as csv with'
+                f" error \n- {exc2}, \nand as arrow with error \n- {exc}"
             )
     return None
+
+
+def init_realizations(ensemble_paths: Dict[str, str]) -> Dict[str, List[int]]:
+    realization_per_ens = {}
+    for ens, ens_path in ensemble_paths.items():
+        scratch_ensemble = ScratchEnsemble("dummyEnsembleName", paths=ens_path).filter(
+            "OK"
+        )
+        realization_per_ens[ens] = sorted(list(scratch_ensemble.realizations.keys()))
+    return realization_per_ens
 
 
 def init_menu_options(
@@ -170,15 +185,44 @@ def init_menu_options(
 ) -> Dict[str, Dict[GraphSource, MenuOptions]]:
     options: Dict[str, Dict[GraphSource, MenuOptions]] = {}
     for ens in ensemble_roots.keys():
-        options[ens] = {
-            GraphSource.CONTAINMENT_MASS: mass_table[ens].menu_options,
-            GraphSource.CONTAINMENT_ACTUAL_VOLUME: actual_volume_table[
+        options[ens] = {}
+        if ens in mass_table:
+            options[ens][GraphSource.CONTAINMENT_MASS] = mass_table[ens].menu_options
+        if ens in actual_volume_table:
+            options[ens][GraphSource.CONTAINMENT_ACTUAL_VOLUME] = actual_volume_table[
                 ens
-            ].menu_options,
-        }
+            ].menu_options
         if ens in unsmry_providers:
             options[ens][GraphSource.UNSMRY] = unsmry_providers[ens].menu_options
     return options
+
+
+def init_dictionary_of_content(
+    menu_options: Dict[str, Dict[GraphSource, MenuOptions]],
+    has_maps: bool,
+) -> Dict[str, bool]:
+    options = next(iter(menu_options.values()))
+    content = {
+        "mass": GraphSource.CONTAINMENT_MASS in options,
+        "volume": GraphSource.CONTAINMENT_ACTUAL_VOLUME in options,
+        "unsmry": GraphSource.UNSMRY in options,
+    }
+    content["any_table"] = max(content.values())
+    content["maps"] = has_maps
+    content["zones"] = False
+    content["regions"] = False
+    if content["mass"] or content["volume"]:
+        content["zones"] = max(
+            len(inner_dict["zones"]) > 0
+            for outer_dict in menu_options.values()
+            for inner_dict in outer_dict.values()
+        )
+        content["regions"] = max(
+            len(inner_dict["regions"]) > 0
+            for outer_dict in menu_options.values()
+            for inner_dict in outer_dict.values()
+        )
+    return content
 
 
 def process_files(

@@ -13,9 +13,9 @@ class MainView(ViewABC):
     class Ids(StrEnum):
         MAIN_ELEMENT = "main-element"
 
-    def __init__(self, color_scales: List[Dict[str, Any]]):
+    def __init__(self, color_scales: List[Dict[str, Any]], content: Dict[str, bool]):
         super().__init__("Main View")
-        self._view_element = MapViewElement(color_scales)
+        self._view_element = MapViewElement(color_scales, content)
         self.add_view_element(self._view_element, self.Ids.MAIN_ELEMENT)
 
 
@@ -33,13 +33,17 @@ class MapViewElement(ViewElementABC):
         TOP_ELEMENT = "top-element"
         BOTTOM_ELEMENT = "bottom-element"
 
-    def __init__(self, color_scales: List[Dict[str, Any]]) -> None:
+    def __init__(
+        self, color_scales: List[Dict[str, Any]], content: Dict[str, bool]
+    ) -> None:
         super().__init__()
         self._color_scales = color_scales
+        self._content = content
 
     def inner_layout(self) -> Component:
-        return html.Div(
-            [
+        layout_elements = []
+        if self._content["maps"]:
+            layout_elements.append(
                 wcc.Frame(
                     # id=self.register_component_unique_id(LayoutElements.MAP_VIEW),
                     id=self.register_component_unique_id(self.Ids.TOP_ELEMENT),
@@ -78,14 +82,17 @@ class MapViewElement(ViewElementABC):
                         ),
                     ],
                     style={
-                        "height": "43vh",
+                        "height": "43vh" if self._content["any_table"] else "100%",
                     },
-                ),
+                )
+            )
+        if self._content["any_table"]:
+            layout_elements.append(
                 wcc.Frame(
                     # id=get_uuid(LayoutElements.PLOT_VIEW),
                     id=self.register_component_unique_id(self.Ids.BOTTOM_ELEMENT),
                     style={
-                        "height": "37vh",
+                        "height": "37vh" if self._content["maps"] else "100%",
                     },
                     children=[
                         html.Div(
@@ -98,7 +105,10 @@ class MapViewElement(ViewElementABC):
                             )
                         ),
                     ],
-                ),
+                )
+            )
+        if self._content["maps"] and self._content["any_table"]:
+            layout_elements.append(
                 html.Div(
                     [
                         wcc.Slider(
@@ -118,8 +128,10 @@ class MapViewElement(ViewElementABC):
                     style={
                         "width": "100%",
                     },
-                ),
-            ],
+                )
+            )
+        return html.Div(
+            layout_elements,
             style={
                 "display": "flex",
                 "flexDirection": "column",

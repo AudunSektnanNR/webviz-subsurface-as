@@ -15,6 +15,7 @@ from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_pro
 from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import property_origin
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,
+    Co2VolumeScale,
     FilteredMapAttribute,
     GraphSource,
     LayoutLabels,
@@ -82,6 +83,7 @@ class ViewSettings(SettingsGroupABC):
     def __init__(
         self,
         ensemble_paths: Dict[str, str],
+        realizations_per_ensemble: Dict[str, List[int]],
         ensemble_surface_providers: Dict[str, EnsembleSurfaceProvider],
         initial_surface: Optional[str],
         map_attribute_names: FilteredMapAttribute,
@@ -89,9 +91,11 @@ class ViewSettings(SettingsGroupABC):
         color_scale_names: List[str],
         well_names_dict: Dict[str, List[str]],
         menu_options: Dict[str, Dict[GraphSource, MenuOptions]],
+        content: Dict[str, bool],
     ):
         super().__init__("Settings")
         self._ensemble_paths = ensemble_paths
+        self._realizations_per_ensemble = realizations_per_ensemble
         self._ensemble_surface_providers = ensemble_surface_providers
         self._map_attribute_names = map_attribute_names
         self._thresholds = map_thresholds
@@ -100,82 +104,88 @@ class ViewSettings(SettingsGroupABC):
         self._initial_surface = initial_surface
         self._well_names_dict = well_names_dict
         self._menu_options = menu_options
-        self._has_zones = max(
-            len(inner_dict["zones"]) > 0
-            for outer_dict in menu_options.values()
-            for inner_dict in outer_dict.values()
-        )
-        self._has_regions = max(
-            len(inner_dict["regions"]) > 0
-            for outer_dict in menu_options.values()
-            for inner_dict in outer_dict.values()
-        )
-        self._has_unsmry = GraphSource.UNSMRY in next(iter(self._menu_options.values()))
+        self._content = content
 
     def layout(self) -> List[Component]:
-        return [
-            DialogLayout(self._well_names_dict, list(self._ensemble_paths.keys())),
-            OpenDialogButton(),
+        menu_layout = []
+        if self._content["maps"]:
+            menu_layout += [
+                DialogLayout(self._well_names_dict, list(self._ensemble_paths.keys())),
+                OpenDialogButton(),
+            ]
+        menu_layout.append(
             EnsembleSelectorLayout(
                 self.register_component_unique_id(self.Ids.ENSEMBLE),
                 self.register_component_unique_id(self.Ids.REALIZATION),
                 list(self._ensemble_paths.keys()),
-            ),
-            FilterSelectorLayout(self.register_component_unique_id(self.Ids.FORMATION)),
-            VisualizationThresholdsLayout(
-                self._threshold_ids,
-                self._thresholds,
-                self.register_component_unique_id(self.Ids.VISUALIZATION_UPDATE),
-            ),
-            MapSelectorLayout(
-                self._color_scale_names,
-                self.register_component_unique_id(self.Ids.PROPERTY),
-                self.register_component_unique_id(self.Ids.STATISTIC),
-                self.register_component_unique_id(self.Ids.COLOR_SCALE),
-                self.register_component_unique_id(self.Ids.CM_MIN),
-                self.register_component_unique_id(self.Ids.CM_MAX),
-                self.register_component_unique_id(self.Ids.CM_MIN_AUTO),
-                self.register_component_unique_id(self.Ids.CM_MAX_AUTO),
-                self.register_component_unique_id(self.Ids.MASS_UNIT),
-                self.register_component_unique_id(self.Ids.MASS_UNIT_UPDATE),
-                self._map_attribute_names,
-            ),
-            GraphSelectorsLayout(
-                self.register_component_unique_id(self.Ids.GRAPH_SOURCE),
-                self.register_component_unique_id(self.Ids.CO2_SCALE),
-                [
-                    self.register_component_unique_id(self.Ids.Y_MIN_GRAPH),
-                    self.register_component_unique_id(self.Ids.Y_MIN_AUTO_GRAPH),
-                ],
-                [
-                    self.register_component_unique_id(self.Ids.Y_MAX_GRAPH),
-                    self.register_component_unique_id(self.Ids.Y_MAX_AUTO_GRAPH),
-                ],
-                [
-                    self.register_component_unique_id(self.Ids.COLOR_BY),
-                    self.register_component_unique_id(self.Ids.MARK_BY),
-                    self.register_component_unique_id(self.Ids.SORT_PLOT),
-                    self.register_component_unique_id(self.Ids.ZONE),
-                    self.register_component_unique_id(self.Ids.ZONE_COL),
-                    self.register_component_unique_id(self.Ids.REGION),
-                    self.register_component_unique_id(self.Ids.REGION_COL),
-                    self.register_component_unique_id(self.Ids.ZONE_REGION),
-                    self.register_component_unique_id(self.Ids.PHASE),
-                    self.register_component_unique_id(self.Ids.PHASE_MENU),
-                    self.register_component_unique_id(self.Ids.CONTAINMENT),
-                    self.register_component_unique_id(self.Ids.CONTAINMENT_MENU),
-                ],
-                self._has_zones,
-                self._has_regions,
-                self._has_unsmry,
-            ),
-            ExperimentalFeaturesLayout(
-                self.register_component_unique_id(self.Ids.PLUME_THRESHOLD),
-                self.register_component_unique_id(self.Ids.PLUME_SMOOTHING),
-            ),
+            )
+        )
+        if self._content["maps"]:
+            menu_layout += [
+                FilterSelectorLayout(
+                    self.register_component_unique_id(self.Ids.FORMATION)
+                ),
+                VisualizationThresholdsLayout(
+                    self._threshold_ids,
+                    self._thresholds,
+                    self.register_component_unique_id(self.Ids.VISUALIZATION_UPDATE),
+                ),
+                MapSelectorLayout(
+                    self._color_scale_names,
+                    self.register_component_unique_id(self.Ids.PROPERTY),
+                    self.register_component_unique_id(self.Ids.STATISTIC),
+                    self.register_component_unique_id(self.Ids.COLOR_SCALE),
+                    self.register_component_unique_id(self.Ids.CM_MIN),
+                    self.register_component_unique_id(self.Ids.CM_MAX),
+                    self.register_component_unique_id(self.Ids.CM_MIN_AUTO),
+                    self.register_component_unique_id(self.Ids.CM_MAX_AUTO),
+                    self.register_component_unique_id(self.Ids.MASS_UNIT),
+                    self.register_component_unique_id(self.Ids.MASS_UNIT_UPDATE),
+                    self._map_attribute_names,
+                ),
+            ]
+        if self._content["any_table"]:
+            menu_layout.append(
+                GraphSelectorsLayout(
+                    self.register_component_unique_id(self.Ids.GRAPH_SOURCE),
+                    self.register_component_unique_id(self.Ids.CO2_SCALE),
+                    [
+                        self.register_component_unique_id(self.Ids.Y_MIN_GRAPH),
+                        self.register_component_unique_id(self.Ids.Y_MIN_AUTO_GRAPH),
+                    ],
+                    [
+                        self.register_component_unique_id(self.Ids.Y_MAX_GRAPH),
+                        self.register_component_unique_id(self.Ids.Y_MAX_AUTO_GRAPH),
+                    ],
+                    [
+                        self.register_component_unique_id(self.Ids.COLOR_BY),
+                        self.register_component_unique_id(self.Ids.MARK_BY),
+                        self.register_component_unique_id(self.Ids.SORT_PLOT),
+                        self.register_component_unique_id(self.Ids.ZONE),
+                        self.register_component_unique_id(self.Ids.ZONE_COL),
+                        self.register_component_unique_id(self.Ids.REGION),
+                        self.register_component_unique_id(self.Ids.REGION_COL),
+                        self.register_component_unique_id(self.Ids.ZONE_REGION),
+                        self.register_component_unique_id(self.Ids.PHASE),
+                        self.register_component_unique_id(self.Ids.PHASE_MENU),
+                        self.register_component_unique_id(self.Ids.CONTAINMENT),
+                        self.register_component_unique_id(self.Ids.CONTAINMENT_MENU),
+                    ],
+                    self._content,
+                )
+            )
+        if self._content["maps"]:
+            menu_layout.append(
+                ExperimentalFeaturesLayout(
+                    self.register_component_unique_id(self.Ids.PLUME_THRESHOLD),
+                    self.register_component_unique_id(self.Ids.PLUME_SMOOTHING),
+                ),
+            )
+        menu_layout += [
             FeedbackLayout(),
             FeedbackButton(),
         ]
+        return menu_layout
 
     def set_callbacks(self) -> None:
         @callback(
@@ -188,7 +198,7 @@ class ViewSettings(SettingsGroupABC):
         def set_realizations(ensemble: str) -> Tuple[List[Dict[str, Any]], List[int]]:
             rlz = [
                 {"value": r, "label": str(r)}
-                for r in self._ensemble_surface_providers[ensemble].realizations()
+                for r in self._realizations_per_ensemble[ensemble]
             ]
             return rlz, [rlz[0]["value"]]  # type: ignore
 
@@ -230,173 +240,223 @@ class ViewSettings(SettingsGroupABC):
                     )
             return formations, picked_formation
 
-        @callback(
-            Output(
-                self.component_unique_id(self.Ids.STATISTIC).to_string(), "disabled"
-            ),
-            Input(self.component_unique_id(self.Ids.REALIZATION).to_string(), "value"),
-            Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
-        )
-        def toggle_statistics(realizations: List[int], attribute: str) -> bool:
-            if len(realizations) <= 1:
-                return True
-            if MapType[MapAttribute(attribute).name].value == "PLUME":
-                return True
-            return False
+        if self._content["maps"]:
 
-        @callback(
-            Output(self.component_unique_id(self.Ids.CM_MIN).to_string(), "disabled"),
-            Output(self.component_unique_id(self.Ids.CM_MAX).to_string(), "disabled"),
-            Input(self.component_unique_id(self.Ids.CM_MIN_AUTO).to_string(), "value"),
-            Input(self.component_unique_id(self.Ids.CM_MAX_AUTO).to_string(), "value"),
-        )
-        def set_color_range_data(
-            min_auto: List[str], max_auto: List[str]
-        ) -> Tuple[bool, bool]:
-            return len(min_auto) == 1, len(max_auto) == 1
-
-        @callback(
-            output=[Output(id, "disabled") for id in self._threshold_ids],
-            inputs={
-                "attribute": Input(
-                    self.component_unique_id(self.Ids.PROPERTY).to_string(),
-                    "value",
-                )
-            },
-        )
-        def disable_irrelevant_thresholds(attribute: str) -> List[bool]:
-            return [id != attribute for id in self._threshold_ids]
-
-        @callback(
-            Output(
-                self.component_unique_id(self.Ids.Y_MIN_GRAPH).to_string(), "disabled"
-            ),
-            Output(
-                self.component_unique_id(self.Ids.Y_MAX_GRAPH).to_string(), "disabled"
-            ),
-            Input(
-                self.component_unique_id(self.Ids.Y_MIN_AUTO_GRAPH).to_string(), "value"
-            ),
-            Input(
-                self.component_unique_id(self.Ids.Y_MAX_AUTO_GRAPH).to_string(), "value"
-            ),
-        )
-        def set_y_min_max(
-            min_auto: List[str], max_auto: List[str]
-        ) -> Tuple[bool, bool]:
-            return len(min_auto) == 1, len(max_auto) == 1
-
-        @callback(
-            Output(self.component_unique_id(self.Ids.PHASE).to_string(), "options"),
-            Output(self.component_unique_id(self.Ids.PHASE).to_string(), "value"),
-            Input(self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"),
-            Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
-            State(self.component_unique_id(self.Ids.PHASE).to_string(), "value"),
-        )
-        def set_phases(
-            source: GraphSource,
-            ensemble: str,
-            current_value: str,
-        ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
-            if ensemble is not None:
-                phases = self._menu_options[ensemble][source]["phases"]
-                options = [{"label": phase.title(), "value": phase} for phase in phases]
-                return options, no_update if current_value in phases else "total"
-            return [{"label": "Total", "value": "total"}], "total"
-
-        @callback(
-            Output(self.component_unique_id(self.Ids.ZONE).to_string(), "options"),
-            Output(self.component_unique_id(self.Ids.ZONE).to_string(), "value"),
-            Input(self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"),
-            Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
-            State(self.component_unique_id(self.Ids.ZONE).to_string(), "value"),
-        )
-        def set_zones(
-            source: GraphSource,
-            ensemble: str,
-            current_value: str,
-        ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
-            if ensemble is not None:
-                zones = self._menu_options[ensemble][source]["zones"]
-                if len(zones) > 0:
-                    options = [{"label": zone.title(), "value": zone} for zone in zones]
-                    return options, no_update if current_value in zones else "all"
-            return [{"label": "All", "value": "all"}], "all"
-
-        @callback(
-            Output(self.component_unique_id(self.Ids.REGION).to_string(), "options"),
-            Output(self.component_unique_id(self.Ids.REGION).to_string(), "value"),
-            Input(self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"),
-            Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
-            State(self.component_unique_id(self.Ids.REGION).to_string(), "value"),
-        )
-        def set_regions(
-            source: GraphSource,
-            ensemble: str,
-            current_value: str,
-        ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
-            if ensemble is not None:
-                regions = self._menu_options[ensemble][source]["regions"]
-                if len(regions) > 0:
-                    options = [{"label": reg.title(), "value": reg} for reg in regions]
-                    return options, no_update if current_value in regions else "all"
-            return [{"label": "All", "value": "all"}], "all"
-
-        @callback(
-            Output(
-                self.component_unique_id(self.Ids.MASS_UNIT).to_string(), "disabled"
-            ),
-            Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
-        )
-        def toggle_unit(attribute: str) -> bool:
-            if MapType[MapAttribute(attribute).name].value != "MASS":
-                return True
-            return False
-
-        @callback(
-            Output(self.component_unique_id(self.Ids.MARK_BY).to_string(), "options"),
-            Output(self.component_unique_id(self.Ids.MARK_BY).to_string(), "value"),
-            Output(self.component_unique_id(self.Ids.ZONE_COL).to_string(), "style"),
-            Output(self.component_unique_id(self.Ids.REGION_COL).to_string(), "style"),
-            Output(self.component_unique_id(self.Ids.PHASE_MENU).to_string(), "style"),
-            Output(
-                self.component_unique_id(self.Ids.CONTAINMENT_MENU).to_string(),
-                "style",
-            ),
-            Input(self.component_unique_id(self.Ids.COLOR_BY).to_string(), "value"),
-            Input(self.component_unique_id(self.Ids.MARK_BY).to_string(), "value"),
-        )
-        def organize_color_and_mark_menus(
-            color_choice: str,
-            mark_choice: str,
-        ) -> Tuple[List[Dict], str, Dict, Dict, Dict, Dict]:
-            mark_options = [
-                {"label": "Phase", "value": "phase"},
-                {"label": "None", "value": "none"},
-            ]
-            if self._has_zones and color_choice == "containment":
-                mark_options.append({"label": "Zone", "value": "zone"})
-            if self._has_regions and color_choice == "containment":
-                mark_options.append({"label": "Region", "value": "region"})
-            if color_choice in ["zone", "region"]:
-                mark_options.append({"label": "Containment", "value": "containment"})
-            if mark_choice is None or mark_choice == color_choice:
-                mark_choice = "phase"
-            if mark_choice in ["zone", "region"] and color_choice in ["zone", "region"]:
-                mark_choice = "phase"
-            zone, region, phase, containment = _make_styles(
-                color_choice, mark_choice, self._has_zones, self._has_regions
+            @callback(
+                Output(
+                    self.component_unique_id(self.Ids.STATISTIC).to_string(), "disabled"
+                ),
+                Input(
+                    self.component_unique_id(self.Ids.REALIZATION).to_string(), "value"
+                ),
+                Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
             )
-            return mark_options, mark_choice, zone, region, phase, containment
+            def toggle_statistics(realizations: List[int], attribute: str) -> bool:
+                if len(realizations) <= 1:
+                    return True
+                if MapType[MapAttribute(attribute).name].value == "PLUME":
+                    return True
+                return False
 
-        @callback(
-            Output(self.component_unique_id(self.Ids.ZONE).to_string(), "disabled"),
-            Output(self.component_unique_id(self.Ids.REGION).to_string(), "disabled"),
-            Input(self.component_unique_id(self.Ids.ZONE).to_string(), "value"),
-            Input(self.component_unique_id(self.Ids.REGION).to_string(), "value"),
-        )
-        def disable_zone_or_region(zone: str, region: str) -> Tuple[bool, bool]:
-            return region != "all", zone != "all"
+            @callback(
+                Output(
+                    self.component_unique_id(self.Ids.CM_MIN).to_string(), "disabled"
+                ),
+                Output(
+                    self.component_unique_id(self.Ids.CM_MAX).to_string(), "disabled"
+                ),
+                Input(
+                    self.component_unique_id(self.Ids.CM_MIN_AUTO).to_string(), "value"
+                ),
+                Input(
+                    self.component_unique_id(self.Ids.CM_MAX_AUTO).to_string(), "value"
+                ),
+            )
+            def set_color_range_data(
+                min_auto: List[str], max_auto: List[str]
+            ) -> Tuple[bool, bool]:
+                return len(min_auto) == 1, len(max_auto) == 1
+
+            @callback(
+                output=[Output(id, "disabled") for id in self._threshold_ids],
+                inputs={
+                    "attribute": Input(
+                        self.component_unique_id(self.Ids.PROPERTY).to_string(),
+                        "value",
+                    )
+                },
+            )
+            def disable_irrelevant_thresholds(attribute: str) -> List[bool]:
+                return [id != attribute for id in self._threshold_ids]
+
+            @callback(
+                Output(
+                    self.component_unique_id(self.Ids.MASS_UNIT).to_string(), "disabled"
+                ),
+                Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
+            )
+            def toggle_unit(attribute: str) -> bool:
+                if MapType[MapAttribute(attribute).name].value != "MASS":
+                    return True
+                return False
+
+        if self._content["any_table"]:
+
+            @callback(
+                Output(
+                    self.component_unique_id(self.Ids.Y_MIN_GRAPH).to_string(),
+                    "disabled",
+                ),
+                Output(
+                    self.component_unique_id(self.Ids.Y_MAX_GRAPH).to_string(),
+                    "disabled",
+                ),
+                Input(
+                    self.component_unique_id(self.Ids.Y_MIN_AUTO_GRAPH).to_string(),
+                    "value",
+                ),
+                Input(
+                    self.component_unique_id(self.Ids.Y_MAX_AUTO_GRAPH).to_string(),
+                    "value",
+                ),
+            )
+            def set_y_min_max(
+                min_auto: List[str], max_auto: List[str]
+            ) -> Tuple[bool, bool]:
+                return len(min_auto) == 1, len(max_auto) == 1
+
+            @callback(
+                Output(self.component_unique_id(self.Ids.PHASE).to_string(), "options"),
+                Output(self.component_unique_id(self.Ids.PHASE).to_string(), "value"),
+                Input(
+                    self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"
+                ),
+                Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
+                State(self.component_unique_id(self.Ids.PHASE).to_string(), "value"),
+            )
+            def set_phases(
+                source: GraphSource,
+                ensemble: str,
+                current_value: str,
+            ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
+                if ensemble is not None:
+                    phases = self._menu_options[ensemble][source]["phases"]
+                    options = [
+                        {"label": phase.title(), "value": phase} for phase in phases
+                    ]
+                    return options, no_update if current_value in phases else "total"
+                return [{"label": "Total", "value": "total"}], "total"
+
+            @callback(
+                Output(self.component_unique_id(self.Ids.ZONE).to_string(), "options"),
+                Output(self.component_unique_id(self.Ids.ZONE).to_string(), "value"),
+                Input(
+                    self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"
+                ),
+                Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
+                State(self.component_unique_id(self.Ids.ZONE).to_string(), "value"),
+            )
+            def set_zones(
+                source: GraphSource,
+                ensemble: str,
+                current_value: str,
+            ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
+                if ensemble is not None:
+                    zones = self._menu_options[ensemble][source]["zones"]
+                    if len(zones) > 0:
+                        options = [
+                            {"label": zone.title(), "value": zone} for zone in zones
+                        ]
+                        return options, no_update if current_value in zones else "all"
+                return [{"label": "All", "value": "all"}], "all"
+
+            @callback(
+                Output(
+                    self.component_unique_id(self.Ids.REGION).to_string(), "options"
+                ),
+                Output(self.component_unique_id(self.Ids.REGION).to_string(), "value"),
+                Input(
+                    self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"
+                ),
+                Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
+                State(self.component_unique_id(self.Ids.REGION).to_string(), "value"),
+            )
+            def set_regions(
+                source: GraphSource,
+                ensemble: str,
+                current_value: str,
+            ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
+                if ensemble is not None:
+                    regions = self._menu_options[ensemble][source]["regions"]
+                    if len(regions) > 0:
+                        options = [
+                            {"label": reg.title(), "value": reg} for reg in regions
+                        ]
+                        return options, no_update if current_value in regions else "all"
+                return [{"label": "All", "value": "all"}], "all"
+
+            @callback(
+                Output(
+                    self.component_unique_id(self.Ids.MARK_BY).to_string(), "options"
+                ),
+                Output(self.component_unique_id(self.Ids.MARK_BY).to_string(), "value"),
+                Output(
+                    self.component_unique_id(self.Ids.ZONE_COL).to_string(), "style"
+                ),
+                Output(
+                    self.component_unique_id(self.Ids.REGION_COL).to_string(), "style"
+                ),
+                Output(
+                    self.component_unique_id(self.Ids.PHASE_MENU).to_string(), "style"
+                ),
+                Output(
+                    self.component_unique_id(self.Ids.CONTAINMENT_MENU).to_string(),
+                    "style",
+                ),
+                Input(self.component_unique_id(self.Ids.COLOR_BY).to_string(), "value"),
+                Input(self.component_unique_id(self.Ids.MARK_BY).to_string(), "value"),
+            )
+            def organize_color_and_mark_menus(
+                color_choice: str,
+                mark_choice: str,
+            ) -> Tuple[List[Dict], str, Dict, Dict, Dict, Dict]:
+                mark_options = [
+                    {"label": "Phase", "value": "phase"},
+                    {"label": "None", "value": "none"},
+                ]
+                if self._content["zones"] and color_choice == "containment":
+                    mark_options.append({"label": "Zone", "value": "zone"})
+                if self._content["regions"] and color_choice == "containment":
+                    mark_options.append({"label": "Region", "value": "region"})
+                if color_choice in ["zone", "region"]:
+                    mark_options.append(
+                        {"label": "Containment", "value": "containment"}
+                    )
+                if mark_choice is None or mark_choice == color_choice:
+                    mark_choice = "phase"
+                if mark_choice in ["zone", "region"] and color_choice in [
+                    "zone",
+                    "region",
+                ]:
+                    mark_choice = "phase"
+                zone, region, phase, containment = _make_styles(
+                    color_choice,
+                    mark_choice,
+                    self._content["zones"],
+                    self._content["regions"],
+                )
+                return mark_options, mark_choice, zone, region, phase, containment
+
+            @callback(
+                Output(self.component_unique_id(self.Ids.ZONE).to_string(), "disabled"),
+                Output(
+                    self.component_unique_id(self.Ids.REGION).to_string(), "disabled"
+                ),
+                Input(self.component_unique_id(self.Ids.ZONE).to_string(), "value"),
+                Input(self.component_unique_id(self.Ids.REGION).to_string(), "value"),
+            )
+            def disable_zone_or_region(zone: str, region: str) -> Tuple[bool, bool]:
+                return region != "all", zone != "all"
 
 
 class OpenDialogButton(html.Button):
@@ -689,7 +749,6 @@ class GraphSelectorsLayout(wcc.Selectors):
         "flexDirection": "row",
     }
 
-    # pylint: disable=too-many-arguments
     def __init__(
         self,
         graph_source_id: str,
@@ -697,47 +756,51 @@ class GraphSelectorsLayout(wcc.Selectors):
         y_min_ids: List[str],
         y_max_ids: List[str],
         containment_ids: List[str],
-        has_zones: bool,
-        has_regions: bool,
-        has_unsmry: bool,
+        content: Dict[str, bool],
     ):
-        disp_zone = "flex" if has_zones else "none"
-        disp_region = "flex" if has_regions else "none"
+        disp_zone = "flex" if content["zones"] else "none"
+        disp_region = "flex" if content["regions"] else "none"
         header = "Containment for specific"
-        if has_zones and not has_regions:
+        if content["zones"] and not content["regions"]:
             header += " zone"
-        elif has_regions and not has_zones:
+        elif content["regions"] and not content["zones"]:
             header += " region"
         color_options = [{"label": "Containment (standard)", "value": "containment"}]
         mark_options = [{"label": "Phase", "value": "phase"}]
-        if has_zones:
+        if content["zones"]:
             color_options.append({"label": "Zone", "value": "zone"})
             mark_options.append({"label": "Zone", "value": "zone"})
-        if has_regions:
+        if content["regions"]:
             color_options.append({"label": "Region", "value": "region"})
             mark_options.append({"label": "Region", "value": "region"})
-        source_options = [
-            GraphSource.CONTAINMENT_MASS,
-            GraphSource.CONTAINMENT_ACTUAL_VOLUME,
-        ]
-        if has_unsmry:
+        source_options = []
+        if content["mass"]:
+            source_options.append(GraphSource.CONTAINMENT_MASS)
+        if content["volume"]:
+            source_options.append(GraphSource.CONTAINMENT_ACTUAL_VOLUME)
+        if content["unsmry"]:
             source_options.append(GraphSource.UNSMRY)
+        unit_options, init_unit = (
+            (list(Co2VolumeScale), Co2VolumeScale.BILLION_CUBIC_METERS)
+            if source_options[0] == GraphSource.CONTAINMENT_ACTUAL_VOLUME
+            else (list(Co2MassScale), Co2MassScale.MTONS)
+        )
         super().__init__(
             label="Graph Settings",
-            open_details=False,
+            open_details=not content["maps"],
             children=[
                 "Source",
                 wcc.Dropdown(
                     id=graph_source_id,
                     options=source_options,
-                    value=GraphSource.CONTAINMENT_MASS,
+                    value=source_options[0],
                     clearable=False,
                 ),
                 "Unit",
                 wcc.Dropdown(
                     id=co2_scale_id,
-                    options=list(Co2MassScale),
-                    value=Co2MassScale.MTONS,
+                    options=unit_options,
+                    value=init_unit,
                     clearable=False,
                 ),
                 html.Div(
@@ -774,7 +837,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                         ),
                     ],
                     style={
-                        "display": "flex",  # disp,
+                        "display": "flex",
                         "flex-direction": "row",
                         "margin-top": "10px",
                         "margin-bottom": "1px",
@@ -811,7 +874,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             id=containment_ids[4],
                             style={
-                                "width": "50%" if has_regions else "100%",
+                                "width": "50%" if content["regions"] else "100%",
                                 "display": disp_zone,
                                 "flex-direction": "column",
                             },
@@ -828,7 +891,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             id=containment_ids[6],
                             style={
-                                "width": "50%" if has_zones else "100%",
+                                "width": "50%" if content["zones"] else "100%",
                                 "display": disp_region,
                                 "flex-direction": "column",
                             },
