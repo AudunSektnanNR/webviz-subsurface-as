@@ -37,13 +37,13 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
     init_containment_data_providers,
+    init_containment_boundary_providers,
+    init_hazardous_boundary_providers,
     init_map_attribute_names,
     init_menu_options,
     init_surface_providers,
     init_unsmry_data_providers,
     init_well_pick_provider,
-    init_hazardous_boundary_providers,
-    init_containment_boundary_providers,
 )
 from webviz_subsurface.plugins._co2_leakage.views.mainview.mainview import (
     MainView,
