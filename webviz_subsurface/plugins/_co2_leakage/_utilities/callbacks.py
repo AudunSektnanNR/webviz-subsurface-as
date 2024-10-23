@@ -20,7 +20,6 @@ from webviz_subsurface._providers import (
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
 )
-from webviz_subsurface._utils.webvizstore_functions import read_csv
 from webviz_subsurface.plugins._co2_leakage._utilities import plume_extent
 from webviz_subsurface.plugins._co2_leakage._utilities.co2volume import (
     generate_co2_time_containment_figure,
@@ -56,9 +55,6 @@ from webviz_subsurface.plugins._co2_leakage._utilities.surface_publishing import
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider import (
     UnsmryDataProvider,
-)
-from webviz_subsurface.plugins._map_viewer_fmu._tmp_well_pick_provider import (
-    WellPickProvider,
 )
 
 
