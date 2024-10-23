@@ -42,8 +42,8 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     GraphSource,
     LayoutLabels,
     MapAttribute,
-    MapType,
     MapGroup,
+    MapType,
     MenuOptions,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.summary_graphs import (

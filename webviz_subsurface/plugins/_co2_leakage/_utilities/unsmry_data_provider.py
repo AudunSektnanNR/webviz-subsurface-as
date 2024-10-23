@@ -1,4 +1,4 @@
-from typing import Union, Tuple
+from typing import Tuple, Union
 
 import pandas as pd
 
@@ -8,7 +8,6 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2VolumeScale,
     MenuOptions,
 )
-
 
 _PFLOTRAN_COLNAMES = ("DATE", "FGMDS", "FGMTR", "FGMGP")
 _ECLIPSE_COLNAMES = ("DATE", "FWCD", "FGCDI", "FGCDM")
