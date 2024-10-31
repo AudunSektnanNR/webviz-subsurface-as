@@ -25,7 +25,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.plume_extent import (
     truncate_surfaces,
 )
 
-SCALE_DICT = {"kg": 1, "tons": 1000, "M tons": 1000000}
+SCALE_DICT = {"kg": 0.001, "tons": 1, "M tons": 1e6}
 
 
 @dataclass

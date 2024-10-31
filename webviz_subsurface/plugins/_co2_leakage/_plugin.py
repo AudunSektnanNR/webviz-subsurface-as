@@ -190,7 +190,7 @@ class CO2Leakage(WebvizPluginABC):
             "thresholds": self._map_thresholds.standard_thresholds,
             "n_clicks": 0,
             "change": False,
-            "unit": "kg",
+            "unit": "tons",
         }
         self._color_tables = co2leakage_color_tables()
         self._well_pick_names: Dict[str, List[str]] = {

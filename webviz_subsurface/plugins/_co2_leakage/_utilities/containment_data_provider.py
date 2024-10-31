@@ -56,9 +56,13 @@ class ContainmentDataProvider:
         self,
         scale: Union[Co2MassScale, Co2VolumeScale],
     ) -> float:
-        if scale in (Co2MassScale.KG, Co2VolumeScale.CUBIC_METERS):
+        if scale == Co2MassScale.KG:
+            return 0.001
+        if scale in (Co2MassScale.TONS, Co2VolumeScale.CUBIC_METERS):
             return 1.0
-        if scale in (Co2MassScale.MTONS, Co2VolumeScale.BILLION_CUBIC_METERS):
+        if scale == Co2MassScale.MTONS:
+            return 1e6
+        if scale == Co2VolumeScale.BILLION_CUBIC_METERS:
             return 1e9
         if scale in (Co2MassScale.NORMALIZE, Co2VolumeScale.NORMALIZE):
             df = self._provider.get_column_data(["amount"])
