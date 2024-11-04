@@ -194,20 +194,6 @@ def _prepare_line_type_and_color_options(
     return options
 
 
-def _find_scale_factor(
-    table_provider: EnsembleTableProvider,
-    scale: Union[Co2MassScale, Co2VolumeScale],
-) -> float:
-    if scale in (Co2MassScale.KG, Co2VolumeScale.CUBIC_METERS):
-        return 1.0
-    if scale in (Co2MassScale.MTONS, Co2VolumeScale.BILLION_CUBIC_METERS):
-        return 1e9
-    if scale in (Co2MassScale.NORMALIZE, Co2VolumeScale.NORMALIZE):
-        df = table_provider.get_column_data(table_provider.column_names())
-        return df["amount"].max()
-    return 1.0
-
-
 def _read_terminal_co2_volumes(
     table_provider: ContainmentDataProvider,
     realizations: List[int],

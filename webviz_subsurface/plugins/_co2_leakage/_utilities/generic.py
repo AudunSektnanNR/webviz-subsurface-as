@@ -105,8 +105,9 @@ class FilteredMapAttribute:
 
 class Co2MassScale(StrEnum):
     NORMALIZE = "Fraction"
+    KG = "kg"
+    TONS = "tons"
     MTONS = "M tons"
-    KG = "Kg"
 
 
 class Co2VolumeScale(StrEnum):

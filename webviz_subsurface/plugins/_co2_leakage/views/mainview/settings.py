@@ -440,7 +440,10 @@ class ViewSettings(SettingsGroupABC):
                 ]:
                     mark_choice = "phase"
                 zone, region, phase, containment = _make_styles(
-                    color_choice, mark_choice, self._content["zones"], self._content["regions"]
+                    color_choice,
+                    mark_choice,
+                    self._content["zones"],
+                    self._content["regions"],
                 )
                 return mark_options, mark_choice, zone, region, phase, containment
 
@@ -719,7 +722,7 @@ class MapSelectorLayout(wcc.Selectors):
                                     wcc.Dropdown(
                                         id=mass_unit_id,
                                         options=["kg", "tons", "M tons"],
-                                        value="kg",
+                                        value="tons",
                                         clearable=False,
                                     ),
                                     style={"width": "50%"},
@@ -1139,7 +1142,9 @@ def _make_styles(
             phase["width"] = (
                 "33%"
                 if has_zones and has_regions
-                else "100%" if not has_regions and not has_zones else "50%"
+                else "100%"
+                if not has_regions and not has_zones
+                else "50%"
             )
             phase["display"] = "flex"
         else:  # mark_choice == "zone" / "region"
