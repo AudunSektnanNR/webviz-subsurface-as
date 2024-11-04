@@ -278,18 +278,6 @@ class ViewSettings(SettingsGroupABC):
                 return len(min_auto) == 1, len(max_auto) == 1
 
             @callback(
-                output=[Output(id, "disabled") for id in self._threshold_ids],
-                inputs={
-                    "attribute": Input(
-                        self.component_unique_id(self.Ids.PROPERTY).to_string(),
-                        "value",
-                    )
-                },
-            )
-            def disable_irrelevant_thresholds(attribute: str) -> List[bool]:
-                return [id != attribute for id in self._threshold_ids]
-
-            @callback(
                 Output(
                     self.component_unique_id(self.Ids.MASS_UNIT).to_string(), "disabled"
                 ),
@@ -598,6 +586,7 @@ class VisualizationThresholdsLayout(wcc.Dialog):
                         id=id,
                         type="number",
                         value=standard_thresholds[id],
+                        step="0.0005",
                         style={"width": "25%"},
                     ),
                 ],

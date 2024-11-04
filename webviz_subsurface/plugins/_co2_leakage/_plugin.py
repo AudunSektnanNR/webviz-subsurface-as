@@ -557,7 +557,7 @@ class CO2Leakage(WebvizPluginABC):
                     self._surface_server._image_cache,
                 )
                 if self._visualization_info["change"]:
-                    return [], no_update, no_update
+                    return [], None, no_update
                 attribute = MapAttribute(attribute)
                 if len(realization) == 0 or ensemble is None:
                     raise PreventUpdate
