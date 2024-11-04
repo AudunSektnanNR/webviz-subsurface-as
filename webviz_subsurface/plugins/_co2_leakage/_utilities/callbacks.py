@@ -233,7 +233,8 @@ def create_map_annotations(
         and surface_data.color_map_range[0] is not None
         and surface_data.color_map_range[1] is not None
     ):
-        num_digits = np.ceil(np.log(surface_data.color_map_range[1]) / np.log(10))
+        max_value = surface_data.color_map_range[1]
+        num_digits = 4 if max_value < 1 else np.ceil(np.log(max_value) / np.log(10))
         numbersize = max((6, min((17 - num_digits, 11))))
         annotations.append(
             wsc.ViewAnnotation(
@@ -425,12 +426,11 @@ def process_visualization_info(
     if unit != stored_info["unit"]:
         stored_info["unit"] = unit
         stored_info["change"] = True
-    if (
-        thresholds is not None
-        and thresholds[attribute] != stored_info["thresholds"][attribute]
-    ):
-        stored_info["thresholds"][attribute] = thresholds[attribute]
-        stored_info["change"] = True
+    if thresholds is not None:
+        for att in stored_info["thresholds"].keys():
+            if stored_info["thresholds"][att] != thresholds[att]:
+                stored_info["change"] = True
+                stored_info["thresholds"][att] = thresholds[att]
     if stored_info["change"]:
         cache.clear()
     return stored_info
