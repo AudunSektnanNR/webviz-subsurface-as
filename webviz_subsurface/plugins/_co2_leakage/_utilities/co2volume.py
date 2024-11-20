@@ -110,8 +110,6 @@ def _prepare_pattern_and_color_options(
     color_choice: str,
     mark_choice: str,
 ) -> Tuple[Dict, List, List]:
-    print("\n_prepare_pattern_and_color_options")
-    print(containment_info)
     mark_options = [] if mark_choice == "none" else containment_info[f"{mark_choice}s"]
     color_options = containment_info[f"{color_choice}s"]
     num_colors = len(color_options)
@@ -529,11 +527,9 @@ def generate_co2_time_containment_figure(
     options = _prepare_line_type_and_color_options(
         df, containment_info, color_choice, mark_choice
     )
-    # NBNB-AS: Missing total for plume groups
     active_cols_at_startup = list(
         options[options["line_type"].isin(["solid", "0px"])]["name"]
     )
-    print(f"\nactive_cols_at_startup: {active_cols_at_startup}")
     fig = go.Figure()
     # Generate dummy scatters for legend entries
     dummy_args = {"x": df["date"], "mode": "lines", "hoverinfo": "none"}

@@ -86,6 +86,13 @@ class ContainmentDataProvider:
         for plume_group in list(df["plume_group"]):
             if plume_group not in plume_groups:
                 plume_groups.append(plume_group)
+        def plume_sort_key(name: str):
+            if name == "?":
+                return 999
+            else:
+                return name.count("+")
+        plume_groups = sorted(plume_groups, key=plume_sort_key)
+
         if "free_gas" in list(df["phase"]):
             phases = ["total", "free_gas", "trapped_gas", "aqueous"]
         else:

@@ -389,6 +389,32 @@ class ViewSettings(SettingsGroupABC):
 
             @callback(
                 Output(
+                    self.component_unique_id(self.Ids.PLUME_GROUP).to_string(), "options"
+                ),
+                Output(self.component_unique_id(self.Ids.PLUME_GROUP).to_string(), "value"),
+                Input(
+                    self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"
+                ),
+                Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
+                State(self.component_unique_id(self.Ids.PLUME_GROUP).to_string(), "value"),
+            )
+            def set_plume_groups(
+                source: GraphSource,
+                ensemble: str,
+                current_value: str,
+            ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
+                if ensemble is not None:
+                    plume_groups = self._menu_options[ensemble][source]["plume_groups"]
+                    if len(plume_groups) > 0:
+                        options = [
+                            {"label": x.title(), "value": x} for x in plume_groups
+                        ]
+                        return options, no_update if current_value in plume_groups else "all"
+                return [{"label": "All", "value": "all"}], "all"
+
+
+            @callback(
+                Output(
                     self.component_unique_id(self.Ids.MARK_BY).to_string(), "options"
                 ),
                 Output(self.component_unique_id(self.Ids.MARK_BY).to_string(), "value"),
@@ -451,7 +477,6 @@ class ViewSettings(SettingsGroupABC):
                     self._content["regions"],
                     self._content["plume_groups"],
                 )
-                print("CCCCCCCCCCCC")
                 return mark_options, mark_choice, zone, region, phase, containment, plume_group
 
             @callback(
@@ -766,8 +791,6 @@ class GraphSelectorsLayout(wcc.Selectors):
         containment_ids: List[str],
         content: Dict[str, bool],
     ):
-        print("\n\ncontent:")
-        print(content)
         disp_zone = "flex" if content["zones"] else "none"
         disp_region = "flex" if content["regions"] else "none"
         disp_plume_group = "flex" if content["plume_groups"] else "none"
@@ -1153,7 +1176,6 @@ def _make_styles(
     has_regions: bool,
     has_plume_groups: bool,
 ) -> List[Dict[str, str]]:
-    print("\n_make_styles()")
     zone = {"display": "none", "flex-direction": "column", "width": "100%"}
     region = {"display": "none", "flex-direction": "column", "width": "100%"}
     phase = {"display": "none", "flex-direction": "column", "width": "100%"}

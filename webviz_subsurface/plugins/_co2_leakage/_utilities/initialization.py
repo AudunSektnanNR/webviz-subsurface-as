@@ -246,7 +246,6 @@ def init_menu_options(
     actual_volume_table: Dict[str, ContainmentDataProvider],
     unsmry_providers: Dict[str, UnsmryDataProvider],
 ) -> Dict[str, Dict[GraphSource, MenuOptions]]:
-    print("\n\nBBB")
     options: Dict[str, Dict[GraphSource, MenuOptions]] = {}
     for ens in ensemble_roots.keys():
         options[ens] = {}
@@ -276,7 +275,6 @@ def init_dictionary_of_content(
     content["zones"] = False
     content["regions"] = False
     content["plume_groups"] = False
-    print(menu_options)
     if content["mass"] or content["volume"]:
         content["zones"] = max(
             len(inner_dict["zones"]) > 0
@@ -293,8 +291,6 @@ def init_dictionary_of_content(
             for outer_dict in menu_options.values()
             for inner_dict in outer_dict.values()
         )
-    print("AA")
-    print(content)
     return content
 
 
