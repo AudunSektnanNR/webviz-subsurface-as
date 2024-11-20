@@ -451,7 +451,7 @@ class ViewSettings(SettingsGroupABC):
                 if self._content["regions"] and color_choice == "containment":
                     mark_options.append({"label": "Region", "value": "region"})
                 if self._content["plume_groups"] and color_choice == "containment":
-                    mark_options.append({"label": "Plume groups", "value": "plume_group"})
+                    mark_options.append({"label": "Plume group", "value": "plume_group"})
                 if color_choice in ["zone", "region", "plume_group"]:
                     mark_options.append(
                         {"label": "Containment", "value": "containment"}
