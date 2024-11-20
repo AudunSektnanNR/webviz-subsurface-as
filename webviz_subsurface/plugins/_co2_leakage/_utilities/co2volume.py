@@ -75,7 +75,7 @@ def _get_marks(num_marks: int, mark_choice: str) -> List[str]:
         return [""] * num_marks
     if mark_choice == "containment":
         return ["x", "/", ""]
-    if mark_choice in ["zone", "region"]:
+    if mark_choice in ["zone", "region", "plume_group"]:
         base_pattern = ["", "/", "x", "-", "\\", "+", "|", "."]
         if num_marks > len(base_pattern):
             base_pattern *= int(np.ceil(num_marks / len(base_pattern)))
@@ -92,7 +92,7 @@ def _get_line_types(mark_options: List[str], mark_choice: str) -> List[str]:
         return ["solid"]
     if mark_choice == "containment":
         return ["dash", "dot", "solid"]
-    if mark_choice in ["zone", "region"]:
+    if mark_choice in ["zone", "region", "plume_group"]:
         if len(mark_options) > 8:
             warnings.warn(
                 f"Large number of {mark_choice}s might make it hard "
@@ -110,6 +110,8 @@ def _prepare_pattern_and_color_options(
     color_choice: str,
     mark_choice: str,
 ) -> Tuple[Dict, List, List]:
+    print("\n_prepare_pattern_and_color_options")
+    print(containment_info)  # NBNB-AS: Mangler plume_groups, har bare plume_group
     mark_options = [] if mark_choice == "none" else containment_info[f"{mark_choice}s"]
     color_options = containment_info[f"{color_choice}s"]
     num_colors = len(color_options)
@@ -239,7 +241,7 @@ def _filter_columns(
 ) -> None:
     filter_columns = [
         col
-        for col in ["phase", "containment", "zone", "region"]
+        for col in ["phase", "containment", "zone", "region", "plume_group"]
         if col not in [mark_choice, color_choice]
     ]
     for col in filter_columns:
@@ -269,6 +271,7 @@ def _add_sort_key_and_real(
             & (df["containment"] == "hazardous")
             & (df["zone"] == containment_info["zone"])
             & (df["region"] == containment_info["region"])
+            & (df["plume_group"] == containment_info["plume_group"])
         ]["amount"]
     )
     sort_value_secondary = np.sum(
@@ -277,6 +280,7 @@ def _add_sort_key_and_real(
             & (df["containment"] == "outside")
             & (df["zone"] == containment_info["zone"])
             & (df["region"] == containment_info["region"])
+            & (df["plume_group"] == containment_info["plume_group"])
         ]["amount"]
     )
     df["real"] = [label] * df.shape[0]

@@ -441,6 +441,7 @@ def process_containment_info(
     region: Optional[str],
     phase: str,
     containment: str,
+    plume_group: str,
     color_choice: str,
     mark_choice: Optional[str],
     sorting: str,
@@ -450,10 +451,13 @@ def process_containment_info(
         mark_choice = "phase"
     zones = menu_options["zones"]
     regions = menu_options["regions"]
+    plume_groups = menu_options["plume_groups"]
     if len(zones) > 0:
         zones = [zone_name for zone_name in zones if zone_name != "all"]
     if len(regions) > 0:
         regions = [reg_name for reg_name in regions if reg_name != "all"]
+    if len(plume_groups) > 0:
+        plume_groups = [pg_name for pg_name in plume_groups if pg_name != "all"]
     containments = ["hazardous", "outside", "contained"]
     phases = [phase for phase in menu_options["phases"] if phase != "total"]
     if "zone" in [mark_choice, color_choice]:
@@ -467,11 +471,13 @@ def process_containment_info(
         "regions": regions,
         "phase": phase,
         "containment": containment,
+        "plume_group": plume_group,
         "color_choice": color_choice,
         "mark_choice": mark_choice,
         "sorting": sorting,
         "phases": phases,
         "containments": containments,
+        "plume_groups": plume_groups,
     }
 
 
@@ -482,6 +488,7 @@ def set_plot_ids(
     containment_info: Dict,
     realizations: List[int],
 ) -> None:
+    # NBNB-AS
     if figs[0] != no_update:
         zone_str = (
             containment_info["zone"] if containment_info["zone"] is not None else "None"
