@@ -495,7 +495,6 @@ def set_plot_ids(
     containment_info: Dict,
     realizations: List[int],
 ) -> None:
-    # NBNB-AS
     if figs[0] != no_update:
         zone_str = (
             containment_info["zone"] if containment_info["zone"] is not None else "None"
@@ -505,12 +504,18 @@ def set_plot_ids(
             if containment_info["region"] is not None
             else "None"
         )
+        plume_group_str = (
+            containment_info["plume_group"]
+            if containment_info["plume_group"] is not None
+            else "None"
+        )
         plot_id = "-".join(
             (
                 source,
                 scale,
                 zone_str,
                 region_str,
+                plume_group_str,
                 str(containment_info["phase"]),
                 str(containment_info["containment"]),
                 containment_info["color_choice"],

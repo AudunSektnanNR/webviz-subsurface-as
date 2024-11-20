@@ -906,8 +906,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             id=containment_ids[4],
                             style={
-                                # "width": "50%" if content["regions"] else "100%",
-                                "width": "33%" if (content["regions"] + content["plume_groups"]) else "100%",  # NBNB-AS
+                                "width": "33%" if (content["regions"] and content["plume_groups"]) else ("50%" if (content["regions"] or content["plume_groups"]) else "100%"),
                                 "display": disp_zone,
                                 "flex-direction": "column",
                             },
@@ -924,8 +923,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             id=containment_ids[6],
                             style={
-                                # "width": "50%" if content["zones"] else "100%",
-                                "width": "33%" if (content["zones"] + content["plume_groups"]) else "100%",  # NBNB-AS
+                                "width": "33%" if (content["zones"] and content["plume_groups"]) else ("50%" if (content["zones"] or content["plume_groups"]) else "100%"),
                                 "display": disp_region,
                                 "flex-direction": "column",
                             },
@@ -973,7 +971,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             id=containment_ids[13],
                             style={
-                                "width": "33%" if (content["zones"]+content["regions"]) else "100%",  # NBNB-AS
+                                "width": "33%" if (content["zones"] and content["regions"]) else ("50%" if (content["zones"] or content["regions"]) else "100%"),
                                 "display": disp_plume_group,
                                 "flex-direction": "column",
                             },
