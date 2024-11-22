@@ -426,6 +426,10 @@ def generate_co2_time_containment_one_realization_figure(
         color_choice,
         mark_choice,
     )
+    # if "plume_group" in df:
+    #     df.loc[(df["plume_group"] == "W3") & (df["date"] != "2200-01-01"), "amount"] *= 0.6
+    #     df.loc[(df["plume_group"] == "W4") & (df["date"] != "2200-01-01"), "amount"] *= 0.85
+    #     df.loc[(df["plume_group"] == "SJ"), "amount"] *= 1.2
     fig = px.area(
         df,
         x="date",
@@ -532,17 +536,77 @@ def generate_co2_time_containment_figure(
     )
     print(f"\ndf ({len(df)}):")
     print(df)
-    if "plume_group" in df:
-        df.loc[(df["plume_group"] != "all") & (df["amount"] == 0.0), "amount"] = np.nan
+    if "plume_group" in df:  # NBNB-AS: And is the color choice...
+        df.loc[(df["plume_group"] == "W3") & (df["date"] != "2200-01-01"), "amount"] *= 0.6
+        df.loc[(df["plume_group"] == "W4") & (df["date"] != "2200-01-01"), "amount"] *= 0.85
+        df.loc[(df["plume_group"] == "SJ"), "amount"] *= 1.2
+        # df.loc[df["plume_group"] == "W3+W4", "amount"] *= 0.7
         print(f"\ndf ({len(df)}):")
         print(df)
         # Find last point for plume groups that merge:
         # Find first point for new plume groups:
+        print("\nAAAAAAAAAAAA")
+        end_points = []
+        start_points = []
         for name, df_sub in df.groupby("plume_group"):
             if name == "?":
                 continue
             print(name)
-            print(df_sub)
+            # print(df_sub)
+            for col in df_sub:
+                if col in ["REAL", "date", "amount", "plume_group", "realization", "name"]:
+                    continue
+                for name2, df_sub2 in df_sub.groupby(col):
+                    print(name2)
+                    # print(df_sub2)
+                    mask_end = (df_sub2["amount"] == 0.0) & (df_sub2["amount"].shift(1) > 0.0) & (df_sub2.index > 0)
+                    mask_start = (df_sub2["amount"] > 0.0) & (df_sub2["amount"].shift(1) == 0.0) & (df_sub2.index > 0)
+                    # print(mask_end)
+                    first_index_end = mask_end.idxmax() if mask_end.any() else None  # NBNB-AS: Can have more indices
+                    first_index_start = mask_start.idxmax() if mask_start.any() else None  # NBNB-AS: Can have more indices
+                    transition_row_end = df_sub2.loc[first_index_end] if first_index_end is not None else None
+                    transition_row_start = df_sub2.loc[first_index_start] if first_index_start is not None else None
+                    if transition_row_end is not None:
+                        print("\nEND")
+                        # print(transition_row_end)
+                        end_points.append(transition_row_end)
+                    if transition_row_start is not None:
+                        print("\nSTART")
+                        # print(transition_row_start)
+                        start_points.append(transition_row_start)
+        print(len(end_points))
+        print(len(start_points))
+        print(end_points[0])
+        print(start_points[0])
+        print("\n\nTry to connect:")
+        for end_point in end_points:
+            # print(end_point)
+            # print(type(end_point))
+            name = end_point["plume_group"]
+            # print(f"{name}")
+            row1 = end_point.drop(["amount", "plume_group", "name"])
+            for start_point in start_points:
+                name2 = start_point["plume_group"]
+                # print(f"  {name2}")
+                if name in name2 and len(name) < len(name2):
+                    row2 = start_point.drop(["amount", "plume_group", "name"])
+                    bingo = row1.equals(row2)
+                    if bingo:
+                        # print("    BINGO")
+                        # print(row1)
+                        # print(end_point["amount"])
+                        # print(start_point["amount"])
+                        row_to_change = df.eq(end_point).all(axis=1)
+                        # print(len(row_to_change))
+                        matching_rows = df[row_to_change]
+                        # print(len(matching_rows))
+                        if sum(row_to_change) == 1:
+                            print("CHANGE")
+                            # matching_rows["amount"] = start_point["amount"]
+                            df.loc[row_to_change == True, "amount"] = start_point["amount"]
+            # for row in df_sub.iterrows():
+            #     print(row)
+        df.loc[(df["plume_group"] != "all") & (df["amount"] == 0.0), "amount"] = np.nan
 
     fig = go.Figure()
     # Generate dummy scatters for legend entries
@@ -571,6 +635,7 @@ def generate_co2_time_containment_figure(
         for name, color, line_type in zip(
             options["name"], options["color"], options["line_type"]
         ):
+            # print(f"color: {color}")
             args = {
                 "line_dash": line_type,
                 "marker_color": color,
@@ -586,13 +651,41 @@ def generate_co2_time_containment_figure(
             fig.add_scatter(
                 y=sub_df[sub_df["name"] == name]["amount"], **args, **common_args
             )
-        fig.add_scatter(
-            x=[2200, 2300, 2400],
-            y=[7, 12, 13],
-            mode='markers',
-            name='Markers',
-            marker=dict(symbol='triangle-left', size=12),
-        )
+        # fig.add_scatter(
+        #     x=[2150, 2150, 2150],
+        #     y=[3.74, 2.58, 1.16],
+        #     mode='markers',
+        #     name='Markers',
+        #     marker=dict(symbol="triangle-left", size=12, color="#84bc04"),
+        # )
+        # fig.add_scatter(
+        #     x=[2200, 2200, 2200],
+        #     y=[7.49, 2.66, 4.82],
+        #     mode='markers',
+        #     name='Markers',
+        #     marker=dict(symbol="triangle-right", size=12, color="#e91451"),
+        # )
+        # fig.add_scatter(
+        #     x=[2150, 2150, 2150],
+        #     y=[3.74*0.85, 2.58*0.85, 1.16*0.85],
+        #     mode='markers',
+        #     name='Markers',
+        #     marker=dict(symbol="triangle-left", size=12, color="#84bc04"),
+        # )
+        # fig.add_scatter(
+        #     x=[2150, 2150, 2150],
+        #     y=[3.74*0.6, 2.58*0.6, 1.16*0.6],
+        #     mode='markers',
+        #     name='Markers',
+        #     marker=dict(symbol="triangle-left", size=12, color="#208eb7"),
+        # )
+        # fig.add_scatter(
+        #     x=[2200, 2200, 2200],
+        #     y=[7.49, 2.66, 4.82],
+        #     mode='markers',
+        #     name='Markers',
+        #     marker=dict(symbol="triangle-right", size=12, color="#e91451"),
+        # )
     fig.layout.legend.tracegroupgap = 0
     fig.layout.xaxis.title = "Time"
     fig.layout.yaxis.title = scale.value
