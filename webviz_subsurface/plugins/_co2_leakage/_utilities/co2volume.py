@@ -530,6 +530,20 @@ def generate_co2_time_containment_figure(
     active_cols_at_startup = list(
         options[options["line_type"].isin(["solid", "0px"])]["name"]
     )
+    print(f"\ndf ({len(df)}):")
+    print(df)
+    if "plume_group" in df:
+        df.loc[(df["plume_group"] != "all") & (df["amount"] == 0.0), "amount"] = np.nan
+        print(f"\ndf ({len(df)}):")
+        print(df)
+        # Find last point for plume groups that merge:
+        # Find first point for new plume groups:
+        for name, df_sub in df.groupby("plume_group"):
+            if name == "?":
+                continue
+            print(name)
+            print(df_sub)
+
     fig = go.Figure()
     # Generate dummy scatters for legend entries
     dummy_args = {"x": df["date"], "mode": "lines", "hoverinfo": "none"}
@@ -572,6 +586,13 @@ def generate_co2_time_containment_figure(
             fig.add_scatter(
                 y=sub_df[sub_df["name"] == name]["amount"], **args, **common_args
             )
+        fig.add_scatter(
+            x=[2200, 2300, 2400],
+            y=[7, 12, 13],
+            mode='markers',
+            name='Markers',
+            marker=dict(symbol='triangle-left', size=12),
+        )
     fig.layout.legend.tracegroupgap = 0
     fig.layout.xaxis.title = "Time"
     fig.layout.yaxis.title = scale.value
