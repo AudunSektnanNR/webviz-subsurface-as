@@ -551,9 +551,6 @@ def _connect_plume_groups(df, mark_choice):
                 transition_row_end = df_sub2.loc[first_index_end] if first_index_end is not None else None
                 transition_row_start = df_sub2.loc[first_index_start] if first_index_start is not None else None
                 if transition_row_end is not None:
-                    print("\nA")
-                    print(transition_row_end)
-                    print(type(transition_row_end))
                     if "dummy_col" in transition_row_end:
                         transition_row_end = transition_row_end.drop("dummy_col")
                     end_points.append(transition_row_end)
@@ -573,7 +570,6 @@ def _connect_plume_groups(df, mark_choice):
         row1 = end_point.drop(["amount", "plume_group", "name"])
         for start_point in start_points:
             name2 = start_point["plume_group"]
-            print("?")
             if name in name2 and len(name) < len(name2):
                 print("maybe")
                 row2 = start_point.drop(["amount", "plume_group", "name"])

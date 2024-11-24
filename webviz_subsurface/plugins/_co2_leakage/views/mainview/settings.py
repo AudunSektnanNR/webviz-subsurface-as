@@ -461,8 +461,10 @@ class ViewSettings(SettingsGroupABC):
                             {"label": "Plume group", "value": "plume_group"}
                         )
                     if color_choice == "plume_group":
-                        mark_options.append({"label": "Zone", "value": "zone"})
-                        mark_options.append({"label": "Region", "value": "region"})
+                        if self._content["zones"]:
+                            mark_options.append({"label": "Zone", "value": "zone"})
+                        if self._content["regions"]:
+                            mark_options.append({"label": "Region", "value": "region"})
                 if mark_choice is None or mark_choice == color_choice:
                     mark_choice = "phase"
                 if mark_choice in ["zone", "region"] and color_choice in [
