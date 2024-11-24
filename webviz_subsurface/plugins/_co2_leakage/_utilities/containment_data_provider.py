@@ -101,7 +101,7 @@ class ContainmentDataProvider:
             "zones": zones if len(zones) > 1 else [],
             "regions": regions if len(regions) > 1 else [],
             "phases": phases,
-            "plume_groups": plume_groups,
+            "plume_groups": plume_groups if len(plume_groups) > 1 else [],
         }
 
     @staticmethod
