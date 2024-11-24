@@ -513,49 +513,47 @@ def _add_hover_info_in_field(
             prev_vals[date] = prev_val + amount
 
 
-def _connect_plume_groups(df, mark_choice):
-    print(f"\ndf ({len(df)}):")
-    print(df)
+def _connect_plume_groups(df, color_choice, mark_choice):
+    # print(f"\ndf ({len(df)}):")
+    # print(df)
     temp_change = True
     if temp_change:
         df.loc[(df["plume_group"] == "W3") & (df["date"] != "2200-01-01"), "amount"] *= 0.6
         df.loc[(df["plume_group"] == "W4") & (df["date"] != "2200-01-01"), "amount"] *= 0.85
         df.loc[(df["plume_group"] == "SJ"), "amount"] *= 1.2
         # df.loc[df["plume_group"] == "W3+W4", "amount"] *= 0.7
-    print(f"\ndf ({len(df)}):")
-    print(df)
+    # print(f"\ndf ({len(df)}):")
+    # print(df)
+
+    print(f"color_choice: {color_choice}")
+    print(f"mark_choice : {mark_choice}")
+    cols = ["realization"]
+    if color_choice == "plume_group" and mark_choice != "none":
+        cols.append(mark_choice)
+    elif mark_choice == "plume_group":
+        cols.append(color_choice)
+    print(f"cols: {cols}")
     # Find points where plumes start or end, to connect the lines
     end_points = []
     start_points = []
     for name, df_sub in df.groupby("plume_group"):
         if name == "?":
             continue
-        if mark_choice == "none":
-            df_sub["dummy_col"] = 0
-        for col in df_sub:
-            if col in ["REAL", "date", "amount", "plume_group", "realization", "name"]:
-                continue
-            for name2, df_sub2 in df_sub.groupby(col):
-                # Assumes the data frame is sorted on date
-                mask_end = (df_sub2["amount"] == 0.0) & (df_sub2["amount"].shift(1) > 0.0) & (df_sub2.index > 0)
-                mask_start = (df_sub2["amount"] > 0.0) & (df_sub2["amount"].shift(1) == 0.0) & (df_sub2.index > 0)
-                first_index_end = mask_end.idxmax() if mask_end.any() else None
-                first_index_start = mask_start.idxmax() if mask_start.any() else None
-                transition_row_end = df_sub2.loc[first_index_end] if first_index_end is not None else None
-                transition_row_start = df_sub2.loc[first_index_start] if first_index_start is not None else None
-                if transition_row_end is not None:
-                    if "dummy_col" in transition_row_end:
-                        transition_row_end = transition_row_end.drop("dummy_col")
-                    end_points.append(transition_row_end)
-                    # Replace 0 with np.nan for all dates after this
-                    if col != "dummy_col":
-                        df.loc[(df["plume_group"] == name) & (df[col] == name2) & (df["amount"] == 0.0) & (df["date"] > transition_row_end["date"]), "amount"] = np.nan
-                    else:
-                        df.loc[(df["plume_group"] == name) & (df["amount"] == 0.0) & (df["date"] > transition_row_end["date"]), "amount"] = np.nan
-                if transition_row_start is not None:
-                    if "dummy_col" in transition_row_start:
-                        transition_row_start = transition_row_start.drop("dummy_col")
-                    start_points.append(transition_row_start)
+        for name2, df_sub2 in df_sub.groupby(cols):
+            # Assumes the data frame is sorted on date
+            mask_end = (df_sub2["amount"] == 0.0) & (df_sub2["amount"].shift(1) > 0.0) & (df_sub2.index > 0)
+            mask_start = (df_sub2["amount"] > 0.0) & (df_sub2["amount"].shift(1) == 0.0) & (df_sub2.index > 0)
+            first_index_end = mask_end.idxmax() if mask_end.any() else None
+            first_index_start = mask_start.idxmax() if mask_start.any() else None
+            transition_row_end = df_sub2.loc[first_index_end] if first_index_end is not None else None
+            transition_row_start = df_sub2.loc[first_index_start] if first_index_start is not None else None
+            if transition_row_end is not None:
+                end_points.append(transition_row_end)
+                # Replace 0 with np.nan for all dates after this
+                date = str(transition_row_end["date"])
+                df.loc[(df["plume_group"] == name) & (df["amount"] == 0.0) & (df["date"] > date), "amount"] = np.nan
+            if transition_row_start is not None:
+                start_points.append(transition_row_start)
     for end_point in end_points:
         name = end_point["plume_group"]
         row1 = end_point.drop(["amount", "plume_group", "name"])
@@ -591,7 +589,7 @@ def generate_co2_time_containment_figure(
         options[options["line_type"].isin(["solid", "0px"])]["name"]
     )
     if "plume_group" in df:
-        _connect_plume_groups(df, mark_choice)
+        _connect_plume_groups(df, color_choice, mark_choice)
         # try:
         #     _connect_plume_groups(df, mark_choice)
         # except Exception:
