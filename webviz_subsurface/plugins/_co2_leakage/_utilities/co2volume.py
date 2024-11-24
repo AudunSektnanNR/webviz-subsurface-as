@@ -536,9 +536,9 @@ def _connect_plume_groups(df, mark_choice):
             if col in ["REAL", "date", "amount", "plume_group", "realization", "name"]:
                 continue
             for name2, df_sub2 in df_sub.groupby(col):
+                # Assumes the data frame is sorted on date
                 mask_end = (df_sub2["amount"] == 0.0) & (df_sub2["amount"].shift(1) > 0.0) & (df_sub2.index > 0)
                 mask_start = (df_sub2["amount"] > 0.0) & (df_sub2["amount"].shift(1) == 0.0) & (df_sub2.index > 0)
-                # NBNB-AS: Can have more indices? :
                 first_index_end = mask_end.idxmax() if mask_end.any() else None
                 first_index_start = mask_start.idxmax() if mask_start.any() else None
                 transition_row_end = df_sub2.loc[first_index_end] if first_index_end is not None else None
@@ -547,6 +547,11 @@ def _connect_plume_groups(df, mark_choice):
                     if "dummy_col" in transition_row_end:
                         transition_row_end = transition_row_end.drop("dummy_col")
                     end_points.append(transition_row_end)
+                    # Replace 0 with np.nan for all dates after this
+                    if col != "dummy_col":
+                        df.loc[(df["plume_group"] == name) & (df[col] == name2) & (df["amount"] == 0.0) & (df["date"] > transition_row_end["date"]), "amount"] = np.nan
+                    else:
+                        df.loc[(df["plume_group"] == name) & (df["amount"] == 0.0) & (df["date"] > transition_row_end["date"]), "amount"] = np.nan
                 if transition_row_start is not None:
                     if "dummy_col" in transition_row_start:
                         transition_row_start = transition_row_start.drop("dummy_col")
@@ -563,7 +568,9 @@ def _connect_plume_groups(df, mark_choice):
                     row_to_change = df.eq(end_point).all(axis=1)
                     if sum(row_to_change) == 1:
                         df.loc[row_to_change == True, "amount"] = start_point["amount"]
-    df.loc[(df["plume_group"] != "all") & (df["amount"] == 0.0), "amount"] = np.nan
+    df["is_merged"] = ["+" in x for x in df["plume_group"].values]
+    df.loc[(df["plume_group"] != "all") & (df["is_merged"] == True) & (df["amount"] == 0.0), "amount"] = np.nan
+    df.drop(columns="is_merged", inplace=True)
 
 
 # pylint: disable=too-many-locals
@@ -585,6 +592,10 @@ def generate_co2_time_containment_figure(
     )
     if "plume_group" in df:
         _connect_plume_groups(df, mark_choice)
+        # try:
+        #     _connect_plume_groups(df, mark_choice)
+        # except Exception:
+        #     pass
 
     fig = go.Figure()
     # Generate dummy scatters for legend entries
