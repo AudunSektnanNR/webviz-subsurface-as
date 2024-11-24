@@ -517,7 +517,7 @@ def _add_hover_info_in_field(
             prev_vals[date] = prev_val + amount
 
 
-def _connect_plume_groups(df):
+def _connect_plume_groups(df, mark_choice):
     print(f"\ndf ({len(df)}):")
     print(df)
     temp_change = True
@@ -534,9 +534,14 @@ def _connect_plume_groups(df):
     for name, df_sub in df.groupby("plume_group"):
         if name == "?":
             continue
+        print("\nADD DUMMY COL?")
+        if mark_choice == "none":
+            print("YES")
+            df_sub["dummy_col"] = 0
         for col in df_sub:
             if col in ["REAL", "date", "amount", "plume_group", "realization", "name"]:
                 continue
+            print(f"col = {col}")
             for name2, df_sub2 in df_sub.groupby(col):
                 mask_end = (df_sub2["amount"] == 0.0) & (df_sub2["amount"].shift(1) > 0.0) & (df_sub2.index > 0)
                 mask_start = (df_sub2["amount"] > 0.0) & (df_sub2["amount"].shift(1) == 0.0) & (df_sub2.index > 0)
@@ -546,26 +551,40 @@ def _connect_plume_groups(df):
                 transition_row_end = df_sub2.loc[first_index_end] if first_index_end is not None else None
                 transition_row_start = df_sub2.loc[first_index_start] if first_index_start is not None else None
                 if transition_row_end is not None:
+                    print("\nA")
+                    print(transition_row_end)
+                    print(type(transition_row_end))
+                    if "dummy_col" in transition_row_end:
+                        transition_row_end = transition_row_end.drop("dummy_col")
                     end_points.append(transition_row_end)
                 if transition_row_start is not None:
+                    if "dummy_col" in transition_row_start:
+                        transition_row_start = transition_row_start.drop("dummy_col")
                     start_points.append(transition_row_start)
     print("A")
     print(len(end_points))
     print(len(start_points))
+    # print("\n\n\n")
+    # print(end_points)
+    # print("\n\n\n")
+    # print(start_points)
     for end_point in end_points:
         name = end_point["plume_group"]
         row1 = end_point.drop(["amount", "plume_group", "name"])
         for start_point in start_points:
             name2 = start_point["plume_group"]
+            print("?")
             if name in name2 and len(name) < len(name2):
+                print("maybe")
                 row2 = start_point.drop(["amount", "plume_group", "name"])
                 bingo = row1.equals(row2)
                 if bingo:
+                    print("bingo")
                     row_to_change = df.eq(end_point).all(axis=1)
                     if sum(row_to_change) == 1:
                         print("CHANGE")
-                        print(end_point)
-                        print(f"amount: {start_point['amount']}")
+                        # print(end_point)
+                        # print(f"amount: {start_point['amount']}")
                         df.loc[row_to_change == True, "amount"] = start_point["amount"]
     df.loc[(df["plume_group"] != "all") & (df["amount"] == 0.0), "amount"] = np.nan
 
@@ -588,7 +607,9 @@ def generate_co2_time_containment_figure(
         options[options["line_type"].isin(["solid", "0px"])]["name"]
     )
     if "plume_group" in df:
-        _connect_plume_groups(df)
+        print(f"color_choice: {color_choice}")
+        print(f"mark_choice : {mark_choice}")
+        _connect_plume_groups(df, mark_choice)
 
     fig = go.Figure()
     # Generate dummy scatters for legend entries
