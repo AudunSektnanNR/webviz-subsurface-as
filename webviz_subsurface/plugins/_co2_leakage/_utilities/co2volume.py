@@ -426,10 +426,6 @@ def generate_co2_time_containment_one_realization_figure(
         color_choice,
         mark_choice,
     )
-    # if "plume_group" in df:
-    #     df.loc[(df["plume_group"] == "W3") & (df["date"] != "2200-01-01"), "amount"] *= 0.6
-    #     df.loc[(df["plume_group"] == "W4") & (df["date"] != "2200-01-01"), "amount"] *= 0.85
-    #     df.loc[(df["plume_group"] == "SJ"), "amount"] *= 1.2
     fig = px.area(
         df,
         x="date",
@@ -534,14 +530,11 @@ def _connect_plume_groups(df, mark_choice):
     for name, df_sub in df.groupby("plume_group"):
         if name == "?":
             continue
-        print("\nADD DUMMY COL?")
         if mark_choice == "none":
-            print("YES")
             df_sub["dummy_col"] = 0
         for col in df_sub:
             if col in ["REAL", "date", "amount", "plume_group", "realization", "name"]:
                 continue
-            print(f"col = {col}")
             for name2, df_sub2 in df_sub.groupby(col):
                 mask_end = (df_sub2["amount"] == 0.0) & (df_sub2["amount"].shift(1) > 0.0) & (df_sub2.index > 0)
                 mask_start = (df_sub2["amount"] > 0.0) & (df_sub2["amount"].shift(1) == 0.0) & (df_sub2.index > 0)
@@ -558,29 +551,17 @@ def _connect_plume_groups(df, mark_choice):
                     if "dummy_col" in transition_row_start:
                         transition_row_start = transition_row_start.drop("dummy_col")
                     start_points.append(transition_row_start)
-    print("A")
-    print(len(end_points))
-    print(len(start_points))
-    # print("\n\n\n")
-    # print(end_points)
-    # print("\n\n\n")
-    # print(start_points)
     for end_point in end_points:
         name = end_point["plume_group"]
         row1 = end_point.drop(["amount", "plume_group", "name"])
         for start_point in start_points:
             name2 = start_point["plume_group"]
             if name in name2 and len(name) < len(name2):
-                print("maybe")
                 row2 = start_point.drop(["amount", "plume_group", "name"])
                 bingo = row1.equals(row2)
                 if bingo:
-                    print("bingo")
                     row_to_change = df.eq(end_point).all(axis=1)
                     if sum(row_to_change) == 1:
-                        print("CHANGE")
-                        # print(end_point)
-                        # print(f"amount: {start_point['amount']}")
                         df.loc[row_to_change == True, "amount"] = start_point["amount"]
     df.loc[(df["plume_group"] != "all") & (df["amount"] == 0.0), "amount"] = np.nan
 
@@ -603,8 +584,6 @@ def generate_co2_time_containment_figure(
         options[options["line_type"].isin(["solid", "0px"])]["name"]
     )
     if "plume_group" in df:
-        print(f"color_choice: {color_choice}")
-        print(f"mark_choice : {mark_choice}")
         _connect_plume_groups(df, mark_choice)
 
     fig = go.Figure()
