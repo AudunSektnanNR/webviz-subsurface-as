@@ -513,9 +513,7 @@ def _add_hover_info_in_field(
             prev_vals[date] = prev_val + amount
 
 
-def _connect_plume_groups(df, color_choice, mark_choice):
-    # print(f"\ndf ({len(df)}):")
-    # print(df)
+def _connect_plume_groups(df: pd.DataFrame, color_choice: str, mark_choice: str):
     temp_change = True
     if temp_change:
         df.loc[
@@ -526,24 +524,19 @@ def _connect_plume_groups(df, color_choice, mark_choice):
         ] *= 0.85
         df.loc[(df["plume_group"] == "SJ"), "amount"] *= 1.2
         # df.loc[df["plume_group"] == "W3+W4", "amount"] *= 0.7
-    # print(f"\ndf ({len(df)}):")
-    # print(df)
 
-    print(f"color_choice: {color_choice}")
-    print(f"mark_choice : {mark_choice}")
     cols = ["realization"]
     if color_choice == "plume_group" and mark_choice != "none":
         cols.append(mark_choice)
     elif mark_choice == "plume_group":
         cols.append(color_choice)
-    print(f"cols: {cols}")
     # Find points where plumes start or end, to connect the lines
     end_points = []
     start_points = []
-    for name, df_sub in df.groupby("plume_group"):
-        if name == "?":
+    for plume_name, df_sub in df.groupby("plume_group"):
+        if plume_name == "?":
             continue
-        for name2, df_sub2 in df_sub.groupby(cols):
+        for _, df_sub2 in df_sub.groupby(cols):
             # Assumes the data frame is sorted on date
             mask_end = (
                 (df_sub2["amount"] == 0.0)
@@ -570,7 +563,7 @@ def _connect_plume_groups(df, color_choice, mark_choice):
                 # Replace 0 with np.nan for all dates after this
                 date = str(transition_row_end["date"])
                 df.loc[
-                    (df["plume_group"] == name)
+                    (df["plume_group"] == plume_name)
                     & (df["amount"] == 0.0)
                     & (df["date"] > date),
                     "amount",
@@ -578,14 +571,13 @@ def _connect_plume_groups(df, color_choice, mark_choice):
             if transition_row_start is not None:
                 start_points.append(transition_row_start)
     for end_point in end_points:
-        name = end_point["plume_group"]
+        plume1 = end_point["plume_group"]
         row1 = end_point.drop(["amount", "plume_group", "name"])
         for start_point in start_points:
-            name2 = start_point["plume_group"]
-            if name in name2 and len(name) < len(name2):
+            plume2 = start_point["plume_group"]
+            if plume1 in plume2 and len(plume1) < len(plume2):
                 row2 = start_point.drop(["amount", "plume_group", "name"])
-                bingo = row1.equals(row2)
-                if bingo:
+                if row1.equals(row2):
                     row_to_change = df.eq(end_point).all(axis=1)
                     if sum(row_to_change) == 1:
                         df.loc[row_to_change == True, "amount"] = start_point["amount"]
