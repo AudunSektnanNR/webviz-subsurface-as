@@ -514,17 +514,6 @@ def _add_hover_info_in_field(
 
 
 def _connect_plume_groups(df: pd.DataFrame, color_choice: str, mark_choice: str):
-    temp_change = True
-    if temp_change:
-        df.loc[
-            (df["plume_group"] == "W3") & (df["date"] != "2200-01-01"), "amount"
-        ] *= 0.6
-        df.loc[
-            (df["plume_group"] == "W4") & (df["date"] != "2200-01-01"), "amount"
-        ] *= 0.85
-        df.loc[(df["plume_group"] == "SJ"), "amount"] *= 1.2
-        # df.loc[df["plume_group"] == "W3+W4", "amount"] *= 0.7
-
     cols = ["realization"]
     if color_choice == "plume_group" and mark_choice != "none":
         cols.append(mark_choice)
@@ -609,11 +598,10 @@ def generate_co2_time_containment_figure(
         options[options["line_type"].isin(["solid", "0px"])]["name"]
     )
     if "plume_group" in df:
-        _connect_plume_groups(df, color_choice, mark_choice)
-        # try:
-        #     _connect_plume_groups(df, mark_choice)
-        # except Exception:
-        #     pass
+        try:
+            _connect_plume_groups(df, color_choice, mark_choice)
+        except Exception:
+            pass
 
     fig = go.Figure()
     # Generate dummy scatters for legend entries
