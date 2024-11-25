@@ -389,14 +389,19 @@ class ViewSettings(SettingsGroupABC):
 
             @callback(
                 Output(
-                    self.component_unique_id(self.Ids.PLUME_GROUP).to_string(), "options"
+                    self.component_unique_id(self.Ids.PLUME_GROUP).to_string(),
+                    "options",
                 ),
-                Output(self.component_unique_id(self.Ids.PLUME_GROUP).to_string(), "value"),
+                Output(
+                    self.component_unique_id(self.Ids.PLUME_GROUP).to_string(), "value"
+                ),
                 Input(
                     self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"
                 ),
                 Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
-                State(self.component_unique_id(self.Ids.PLUME_GROUP).to_string(), "value"),
+                State(
+                    self.component_unique_id(self.Ids.PLUME_GROUP).to_string(), "value"
+                ),
             )
             def set_plume_groups(
                 source: GraphSource,
@@ -409,9 +414,11 @@ class ViewSettings(SettingsGroupABC):
                         options = [
                             {"label": x.title(), "value": x} for x in plume_groups
                         ]
-                        return options, no_update if current_value in plume_groups else "all"
+                        return (
+                            options,
+                            no_update if current_value in plume_groups else "all",
+                        )
                 return [{"label": "All", "value": "all"}], "all"
-
 
             @callback(
                 Output(
@@ -451,12 +458,17 @@ class ViewSettings(SettingsGroupABC):
                 if self._content["regions"] and color_choice == "containment":
                     mark_options.append({"label": "Region", "value": "region"})
                 if self._content["plume_groups"] and color_choice == "containment":
-                    mark_options.append({"label": "Plume group", "value": "plume_group"})
+                    mark_options.append(
+                        {"label": "Plume group", "value": "plume_group"}
+                    )
                 if color_choice in ["zone", "region", "plume_group"]:
                     mark_options.append(
                         {"label": "Containment", "value": "containment"}
                     )
-                    if color_choice in ["zone", "region"] and self._content["plume_groups"]:
+                    if (
+                        color_choice in ["zone", "region"]
+                        and self._content["plume_groups"]
+                    ):
                         mark_options.append(
                             {"label": "Plume group", "value": "plume_group"}
                         )
@@ -479,7 +491,15 @@ class ViewSettings(SettingsGroupABC):
                     self._content["regions"],
                     self._content["plume_groups"],
                 )
-                return mark_options, mark_choice, zone, region, phase, containment, plume_group
+                return (
+                    mark_options,
+                    mark_choice,
+                    zone,
+                    region,
+                    phase,
+                    containment,
+                    plume_group,
+                )
 
             @callback(
                 Output(self.component_unique_id(self.Ids.ZONE).to_string(), "disabled"),
@@ -908,7 +928,13 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             id=containment_ids[4],
                             style={
-                                "width": "33%" if (content["regions"] and content["plume_groups"]) else ("50%" if (content["regions"] or content["plume_groups"]) else "100%"),
+                                "width": "33%"
+                                if (content["regions"] and content["plume_groups"])
+                                else (
+                                    "50%"
+                                    if (content["regions"] or content["plume_groups"])
+                                    else "100%"
+                                ),
                                 "display": disp_zone,
                                 "flex-direction": "column",
                             },
@@ -925,7 +951,13 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             id=containment_ids[6],
                             style={
-                                "width": "33%" if (content["zones"] and content["plume_groups"]) else ("50%" if (content["zones"] or content["plume_groups"]) else "100%"),
+                                "width": "33%"
+                                if (content["zones"] and content["plume_groups"])
+                                else (
+                                    "50%"
+                                    if (content["zones"] or content["plume_groups"])
+                                    else "100%"
+                                ),
                                 "display": disp_region,
                                 "flex-direction": "column",
                             },
@@ -973,7 +1005,13 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             id=containment_ids[13],
                             style={
-                                "width": "33%" if (content["zones"] and content["regions"]) else ("50%" if (content["zones"] or content["regions"]) else "100%"),
+                                "width": "33%"
+                                if (content["zones"] and content["regions"])
+                                else (
+                                    "50%"
+                                    if (content["zones"] or content["regions"])
+                                    else "100%"
+                                ),
                                 "display": disp_plume_group,
                                 "flex-direction": "column",
                             },
@@ -1211,13 +1249,21 @@ def _make_styles(
             phase["display"] = "flex"
             n_categories = 1 + has_regions + has_zones + has_plume_groups
             if n_categories == 4:
-                phase["width"] = zone["width"] = region["width"] = plume_group["width"] = "25%"
+                phase["width"] = zone["width"] = region["width"] = plume_group[
+                    "width"
+                ] = "25%"
             elif n_categories == 3:
-                phase["width"] = zone["width"] = region["width"] = plume_group["width"] = "33%"
+                phase["width"] = zone["width"] = region["width"] = plume_group[
+                    "width"
+                ] = "33%"
             elif n_categories == 2:
-                phase["width"] = zone["width"] = region["width"] = plume_group["width"] = "50%"
+                phase["width"] = zone["width"] = region["width"] = plume_group[
+                    "width"
+                ] = "50%"
             else:
-                phase["width"] = zone["width"] = region["width"] = plume_group["width"] = "100%"
+                phase["width"] = zone["width"] = region["width"] = plume_group[
+                    "width"
+                ] = "100%"
         else:  # mark_choice == "zone" / "region"
             plume_group["display"] = "flex" if has_plume_groups else "none"
             n_categories = 1 + has_plume_groups
@@ -1256,13 +1302,21 @@ def _make_styles(
             containment["display"] = "flex"
             n_categories = 2 + has_zones + has_regions
             if n_categories == 4:
-                zone["width"] = region["width"] = phase["width"] = containment["width"] = "25%"
+                zone["width"] = region["width"] = phase["width"] = containment[
+                    "width"
+                ] = "25%"
             elif n_categories == 3:
-                zone["width"] = region["width"] = phase["width"] = containment["width"] = "33%"
+                zone["width"] = region["width"] = phase["width"] = containment[
+                    "width"
+                ] = "33%"
             elif n_categories == 2:
-                zone["width"] = region["width"] = phase["width"] = containment["width"] = "50%"
+                zone["width"] = region["width"] = phase["width"] = containment[
+                    "width"
+                ] = "50%"
             else:
-                zone["width"] = region["width"] = phase["width"] = containment["width"] = "100%"
+                zone["width"] = region["width"] = phase["width"] = containment[
+                    "width"
+                ] = "100%"
         else:  # mark == "zone/region"
             phase["display"] = "flex"
             containment["display"] = "flex"

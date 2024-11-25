@@ -45,7 +45,11 @@ class ContainmentDataProvider:
         co2_scale: Union[Co2MassScale, Co2VolumeScale],
     ) -> pd.DataFrame:
         df = self._provider.get_column_data(self._provider.column_names())
-        df = df.loc[(df["zone"] == "all") & (df["region"] == "all") & (df["plume_group"] == "all")]
+        df = df.loc[
+            (df["zone"] == "all")
+            & (df["region"] == "all")
+            & (df["plume_group"] == "all")
+        ]
         if co2_scale == Co2MassScale.MTONS:
             df.loc[:, "amount"] /= 1e9
         elif co2_scale == Co2MassScale.NORMALIZE:
@@ -86,11 +90,13 @@ class ContainmentDataProvider:
         for plume_group in list(df["plume_group"]):
             if plume_group not in plume_groups:
                 plume_groups.append(plume_group)
+
         def plume_sort_key(name: str):
             if name == "?":
                 return 999
             else:
                 return name.count("+")
+
         plume_groups = sorted(plume_groups, key=plume_sort_key)
 
         if "free_gas" in list(df["phase"]):
@@ -107,7 +113,15 @@ class ContainmentDataProvider:
     @staticmethod
     def _validate(provider: EnsembleTableProvider) -> None:
         col_names = provider.column_names()
-        required_columns = ["date", "amount", "phase", "containment", "zone", "region", "plume_group"]
+        required_columns = [
+            "date",
+            "amount",
+            "phase",
+            "containment",
+            "zone",
+            "region",
+            "plume_group",
+        ]
         missing_columns = [col for col in required_columns if col not in col_names]
         realization = provider.realizations()[0]
         if len(missing_columns) == 0:

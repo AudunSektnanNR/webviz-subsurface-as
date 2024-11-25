@@ -518,8 +518,12 @@ def _connect_plume_groups(df, color_choice, mark_choice):
     # print(df)
     temp_change = True
     if temp_change:
-        df.loc[(df["plume_group"] == "W3") & (df["date"] != "2200-01-01"), "amount"] *= 0.6
-        df.loc[(df["plume_group"] == "W4") & (df["date"] != "2200-01-01"), "amount"] *= 0.85
+        df.loc[
+            (df["plume_group"] == "W3") & (df["date"] != "2200-01-01"), "amount"
+        ] *= 0.6
+        df.loc[
+            (df["plume_group"] == "W4") & (df["date"] != "2200-01-01"), "amount"
+        ] *= 0.85
         df.loc[(df["plume_group"] == "SJ"), "amount"] *= 1.2
         # df.loc[df["plume_group"] == "W3+W4", "amount"] *= 0.7
     # print(f"\ndf ({len(df)}):")
@@ -541,17 +545,36 @@ def _connect_plume_groups(df, color_choice, mark_choice):
             continue
         for name2, df_sub2 in df_sub.groupby(cols):
             # Assumes the data frame is sorted on date
-            mask_end = (df_sub2["amount"] == 0.0) & (df_sub2["amount"].shift(1) > 0.0) & (df_sub2.index > 0)
-            mask_start = (df_sub2["amount"] > 0.0) & (df_sub2["amount"].shift(1) == 0.0) & (df_sub2.index > 0)
+            mask_end = (
+                (df_sub2["amount"] == 0.0)
+                & (df_sub2["amount"].shift(1) > 0.0)
+                & (df_sub2.index > 0)
+            )
+            mask_start = (
+                (df_sub2["amount"] > 0.0)
+                & (df_sub2["amount"].shift(1) == 0.0)
+                & (df_sub2.index > 0)
+            )
             first_index_end = mask_end.idxmax() if mask_end.any() else None
             first_index_start = mask_start.idxmax() if mask_start.any() else None
-            transition_row_end = df_sub2.loc[first_index_end] if first_index_end is not None else None
-            transition_row_start = df_sub2.loc[first_index_start] if first_index_start is not None else None
+            transition_row_end = (
+                df_sub2.loc[first_index_end] if first_index_end is not None else None
+            )
+            transition_row_start = (
+                df_sub2.loc[first_index_start]
+                if first_index_start is not None
+                else None
+            )
             if transition_row_end is not None:
                 end_points.append(transition_row_end)
                 # Replace 0 with np.nan for all dates after this
                 date = str(transition_row_end["date"])
-                df.loc[(df["plume_group"] == name) & (df["amount"] == 0.0) & (df["date"] > date), "amount"] = np.nan
+                df.loc[
+                    (df["plume_group"] == name)
+                    & (df["amount"] == 0.0)
+                    & (df["date"] > date),
+                    "amount",
+                ] = np.nan
             if transition_row_start is not None:
                 start_points.append(transition_row_start)
     for end_point in end_points:
@@ -567,7 +590,12 @@ def _connect_plume_groups(df, color_choice, mark_choice):
                     if sum(row_to_change) == 1:
                         df.loc[row_to_change == True, "amount"] = start_point["amount"]
     df["is_merged"] = ["+" in x for x in df["plume_group"].values]
-    df.loc[(df["plume_group"] != "all") & (df["is_merged"] == True) & (df["amount"] == 0.0), "amount"] = np.nan
+    df.loc[
+        (df["plume_group"] != "all")
+        & (df["is_merged"] == True)
+        & (df["amount"] == 0.0),
+        "amount",
+    ] = np.nan
     df.drop(columns="is_merged", inplace=True)
 
 

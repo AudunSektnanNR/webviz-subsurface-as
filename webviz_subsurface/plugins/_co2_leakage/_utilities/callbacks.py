@@ -458,11 +458,13 @@ def process_containment_info(
         regions = [reg_name for reg_name in regions if reg_name != "all"]
     if len(plume_groups) > 0:
         plume_groups = [pg_name for pg_name in plume_groups if pg_name != "all"]
+
         def plume_sort_key(name: str):
             if name == "?":
                 return 999
             else:
                 return name.count("+")
+
         plume_groups = sorted(plume_groups, key=plume_sort_key)
 
     containments = ["hazardous", "outside", "contained"]
