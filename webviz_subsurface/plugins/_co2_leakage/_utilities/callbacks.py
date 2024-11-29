@@ -441,6 +441,7 @@ def process_containment_info(
     region: Optional[str],
     phase: str,
     containment: str,
+    plume_group: str,
     color_choice: str,
     mark_choice: Optional[str],
     sorting: str,
@@ -450,10 +451,22 @@ def process_containment_info(
         mark_choice = "phase"
     zones = menu_options["zones"]
     regions = menu_options["regions"]
+    plume_groups = menu_options["plume_groups"]
     if len(zones) > 0:
         zones = [zone_name for zone_name in zones if zone_name != "all"]
     if len(regions) > 0:
         regions = [reg_name for reg_name in regions if reg_name != "all"]
+    if len(plume_groups) > 0:
+        plume_groups = [pg_name for pg_name in plume_groups if pg_name != "all"]
+
+        def plume_sort_key(name: str):
+            if name == "?":
+                return 999
+            else:
+                return name.count("+")
+
+        plume_groups = sorted(plume_groups, key=plume_sort_key)
+
     containments = ["hazardous", "outside", "contained"]
     phases = [phase for phase in menu_options["phases"] if phase != "total"]
     if "zone" in [mark_choice, color_choice]:
@@ -467,11 +480,13 @@ def process_containment_info(
         "regions": regions,
         "phase": phase,
         "containment": containment,
+        "plume_group": plume_group,
         "color_choice": color_choice,
         "mark_choice": mark_choice,
         "sorting": sorting,
         "phases": phases,
         "containments": containments,
+        "plume_groups": plume_groups,
     }
 
 
@@ -491,12 +506,18 @@ def set_plot_ids(
             if containment_info["region"] is not None
             else "None"
         )
+        plume_group_str = (
+            containment_info["plume_group"]
+            if containment_info["plume_group"] is not None
+            else "None"
+        )
         plot_id = "-".join(
             (
                 source,
                 scale,
                 zone_str,
                 region_str,
+                plume_group_str,
                 str(containment_info["phase"]),
                 str(containment_info["containment"]),
                 containment_info["color_choice"],

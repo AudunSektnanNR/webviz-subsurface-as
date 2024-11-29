@@ -177,6 +177,7 @@ class MenuOptions(TypedDict):
     zones: List[str]
     regions: List[str]
     phases: List[str]
+    plume_groups: List[str]
 
 
 class MapThresholds:
