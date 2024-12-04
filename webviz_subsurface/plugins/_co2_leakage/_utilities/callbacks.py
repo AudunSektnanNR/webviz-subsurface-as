@@ -374,7 +374,7 @@ def generate_containment_figures(
     realizations: List[int],
     y_limits: List[Optional[float]],
     containment_info: Dict[str, Union[str, None, List[str], int]],
-) -> Tuple[go.Figure, go.Figure, go.Figure]:
+) -> Tuple[go.Figure, go.Figure]:  # , go.Figure]: # NBNB-third-tab
     try:
         fig0 = (
             no_update
@@ -402,12 +402,12 @@ def generate_containment_figures(
                 containment_info,
             )
         )
-        #fig2 = go.Figure()
+        # fig2 = go.Figure()
         # NBNB-third-tab
     except KeyError as exc:
         warnings.warn(f"Could not generate CO2 figures: {exc}")
         raise exc
-    return fig0, fig1#, fig2 # NBNB-third-tab
+    return fig0, fig1  # , fig2 # NBNB-third-tab
 
 
 def generate_unsmry_figures(
@@ -474,11 +474,10 @@ def process_containment_info(
     if len(plume_groups) > 0:
         plume_groups = [pg_name for pg_name in plume_groups if pg_name != "all"]
 
-        def plume_sort_key(name: str):
+        def plume_sort_key(name: str) -> int:
             if name == "?":
                 return 999
-            else:
-                return name.count("+")
+            return name.count("+")
 
         plume_groups = sorted(plume_groups, key=plume_sort_key)
 
@@ -502,7 +501,7 @@ def process_containment_info(
         "phases": phases,
         "containments": containments,
         "plume_groups": plume_groups,
-        "lines_to_show": lines_to_show,
+        "use_stats": lines_to_show == "stat",
     }
 
 
@@ -519,9 +518,7 @@ def make_plot_ids(
         containment_info["zone"] if containment_info["zone"] is not None else "None"
     )
     region_str = (
-        containment_info["region"]
-        if containment_info["region"] is not None
-        else "None"
+        containment_info["region"] if containment_info["region"] is not None else "None"
     )
     plume_group_str = (
         containment_info["plume_group"]
@@ -556,11 +553,11 @@ def make_plot_ids(
 
 def set_plot_ids(
     figs: List[go.Figure],
-    ids: List[str],
-):
-    for fig, id in zip(figs, ids):
+    plot_ids: List[str],
+) -> None:
+    for fig, plot_id in zip(figs, plot_ids):
         if fig != no_update:
-            fig["layout"]["uirevision"] = id
+            fig["layout"]["uirevision"] = plot_id
 
 
 def process_summed_mass(

@@ -50,7 +50,10 @@ def publish_and_get_surface_metadata(
     map_attribute_names: FilteredMapAttribute,
 ) -> Tuple[Optional[SurfaceImageMeta], Optional[str], Optional[Any]]:
     if isinstance(address, TruncatedSurfaceAddress):
-        return *_publish_and_get_truncated_surface_metadata(server, provider, address), None
+        return (
+            *_publish_and_get_truncated_surface_metadata(server, provider, address),
+            None,
+        )
     provider_id: str = provider.provider_id()
     qualified_address = QualifiedSurfaceAddress(provider_id, address)
     surf_meta = server.get_surface_metadata(qualified_address)

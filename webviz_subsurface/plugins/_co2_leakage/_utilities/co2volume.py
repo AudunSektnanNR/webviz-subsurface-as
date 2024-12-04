@@ -513,7 +513,11 @@ def _add_hover_info_in_field(
             prev_vals[date] = prev_val + amount
 
 
-def _connect_plume_groups(df: pd.DataFrame, color_choice: str, mark_choice: str):
+def _connect_plume_groups(
+    df: pd.DataFrame,
+    color_choice: str,
+    mark_choice: str,
+) -> None:
     cols = ["realization"]
     if color_choice == "plume_group" and mark_choice != "none":
         cols.append(mark_choice)
@@ -619,29 +623,40 @@ def generate_co2_time_containment_figure(
             args["visible"] = "legendonly"
         fig.add_scatter(y=[0.0], **dummy_args, **args)
 
-    hover_template = ("Type: %{meta[1]}<br>Date: %{x}<br>Amount: %{y:.3f}<br>"
-                      "Realization: %{meta[0]}<br>Proportion: %{customdata}")
-    use_stats = containment_info["lines_to_show"] == "stat"
+    hover_template = (
+        "Type: %{meta[1]}<br>Date: %{x}<br>Amount: %{y:.3f}<br>"
+        "Realization: %{meta[0]}<br>Proportion: %{customdata}"
+    )
 
-    if use_stats:
+    if containment_info["use_stats"]:
         df_no_real = df.drop(columns=["REAL", "realization"]).reset_index(drop=True)
         if mark_choice == "none":
-            df_grouped = df_no_real.groupby(["date", "name", color_choice], as_index=False)
+            df_grouped = df_no_real.groupby(
+                ["date", "name", color_choice], as_index=False
+            )
         else:
-            df_grouped = df_no_real.groupby(["date", "name", color_choice, mark_choice], as_index=False)
-        df_mean = df_grouped.agg(lambda x: np.mean(x))
+            df_grouped = df_no_real.groupby(
+                ["date", "name", color_choice, mark_choice], as_index=False
+            )
+        df_mean = df_grouped.agg(np.mean)
         df_mean["realization"] = ["mean"] * df_mean.shape[0]
-        df_p10 = df_grouped.agg(lambda x : np.quantile(x, 0.1))
+        df_p10 = df_grouped.agg(lambda x: np.quantile(x, 0.1))
         df_p10["realization"] = ["p10"] * df_p10.shape[0]
-        df_p90 = df_grouped.agg(lambda x : np.quantile(x, 0.9))
+        df_p90 = df_grouped.agg(lambda x: np.quantile(x, 0.9))
         df_p90["realization"] = ["p90"] * df_p90.shape[0]
-        df = pd.concat([df_mean, df_p10, df_p90]).sort_values(["name", "date"]).reset_index(drop=True)
-        realizations = ["p10", "mean", "p90"]
-        hover_template = ("Type: %{meta[1]}<br>Date: %{x}<br>Amount: %{y:.3f}<br>"
-                          "Statistic: %{meta[0]}")
+        df = (
+            pd.concat([df_mean, df_p10, df_p90])
+            .sort_values(["name", "date"])
+            .reset_index(drop=True)
+        )
+        realizations = ["p10", "mean", "p90"]  # type: ignore
+        hover_template = (
+            "Type: %{meta[1]}<br>Date: %{x}<br>Amount: %{y:.3f}<br>"
+            "Statistic: %{meta[0]}"
+        )
     for rlz in realizations:
         sub_df = df[df["realization"] == rlz].copy().reset_index(drop=True)
-        if not use_stats:
+        if not containment_info["use_stats"]:
             _add_prop_to_df(
                 sub_df, np.unique(df["date"]), "date", [color_choice, mark_choice]
             )
@@ -660,7 +675,7 @@ def generate_co2_time_containment_figure(
                 "meta": [rlz, name],
                 "hovertemplate": hover_template,
             }
-            if not use_stats:
+            if not containment_info["use_stats"]:
                 args["customdata"] = sub_df[sub_df["name"] == name]["prop"]
             if name not in active_cols_at_startup:
                 args["visible"] = "legendonly"

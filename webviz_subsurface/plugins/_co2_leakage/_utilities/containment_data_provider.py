@@ -77,8 +77,8 @@ class ContainmentDataProvider:
     def _get_menu_options(provider: EnsembleTableProvider) -> MenuOptions:
         col_names = provider.column_names()
         realization = provider.realizations()[0]
-        #NBNB: Check that these are the same for all realizations????
-        #NBNB: WARNING and empty for zones / regions, and Error if phases are different?
+        # NBNB: Check that these are the same for all realizations????
+        # NBNB: WARNING and empty for zones / regions, and Error if phases are different?
         df = provider.get_column_data(col_names, [realization])
         zones = ["all"]
         for zone in list(df["zone"]):
@@ -93,11 +93,10 @@ class ContainmentDataProvider:
             if plume_group not in plume_groups:
                 plume_groups.append(plume_group)
 
-        def plume_sort_key(name: str):
+        def plume_sort_key(name: str) -> int:
             if name == "?":
                 return 999
-            else:
-                return name.count("+")
+            return name.count("+")
 
         plume_groups = sorted(plume_groups, key=plume_sort_key)
 

@@ -197,7 +197,9 @@ class ViewSettings(SettingsGroupABC):
         ]
         return menu_layout
 
+    # pylint: disable=too-many-statements
     def set_callbacks(self) -> None:
+        # pylint: disable=unused-argument
         @callback(
             Output(
                 self.component_unique_id(self.Ids.REALIZATION).to_string(), "options"
@@ -939,12 +941,17 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             id=containment_ids[4],
                             style={
-                                "width": "33%"
-                                if (content["regions"] and content["plume_groups"])
-                                else (
-                                    "50%"
-                                    if (content["regions"] or content["plume_groups"])
-                                    else "100%"
+                                "width": (
+                                    "33%"
+                                    if (content["regions"] and content["plume_groups"])
+                                    else (
+                                        "50%"
+                                        if (
+                                            content["regions"]
+                                            or content["plume_groups"]
+                                        )
+                                        else "100%"
+                                    )
                                 ),
                                 "display": disp_zone,
                                 "flex-direction": "column",
@@ -962,12 +969,14 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             id=containment_ids[6],
                             style={
-                                "width": "33%"
-                                if (content["zones"] and content["plume_groups"])
-                                else (
-                                    "50%"
-                                    if (content["zones"] or content["plume_groups"])
-                                    else "100%"
+                                "width": (
+                                    "33%"
+                                    if (content["zones"] and content["plume_groups"])
+                                    else (
+                                        "50%"
+                                        if (content["zones"] or content["plume_groups"])
+                                        else "100%"
+                                    )
                                 ),
                                 "display": disp_region,
                                 "flex-direction": "column",
@@ -1016,12 +1025,14 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             id=containment_ids[13],
                             style={
-                                "width": "33%"
-                                if (content["zones"] and content["regions"])
-                                else (
-                                    "50%"
-                                    if (content["zones"] or content["regions"])
-                                    else "100%"
+                                "width": (
+                                    "33%"
+                                    if (content["zones"] and content["regions"])
+                                    else (
+                                        "50%"
+                                        if (content["zones"] or content["regions"])
+                                        else "100%"
+                                    )
                                 ),
                                 "display": disp_plume_group,
                                 "flex-direction": "column",
@@ -1040,7 +1051,8 @@ class GraphSelectorsLayout(wcc.Selectors):
                         dcc.RadioItems(
                             options=[
                                 {"label": "Realizations", "value": "real"},
-                                {"label": "Mean/P10/P90", "value": "stat"}],
+                                {"label": "Mean/P10/P90", "value": "stat"},
+                            ],
                             value="real",
                             id=containment_ids[14],
                             inline=True,
@@ -1131,11 +1143,11 @@ class ExperimentalFeaturesLayout(wcc.Selectors):
 
 class EnsembleSelectorLayout(wcc.Selectors):
     def __init__(
-            self,
-            ensemble_id: str,
-            realization_id: str,
-            all_real_id: str,
-            ensembles: List[str],
+        self,
+        ensemble_id: str,
+        realization_id: str,
+        all_real_id: str,
+        ensembles: List[str],
     ):
         super().__init__(
             label="Ensemble",
@@ -1156,12 +1168,12 @@ class EnsembleSelectorLayout(wcc.Selectors):
                             options=["Select all"],
                             value=[],
                             id=all_real_id,
-                        )
+                        ),
                     ],
                     style={
                         "display": "flex",
                         "flex-direction": "row",
-                    }
+                    },
                 ),
                 wcc.SelectWithLabel(
                     id=realization_id,
@@ -1263,6 +1275,7 @@ def get_emails() -> str:
     return ";".join(emails[:2]) + "?cc=" + ";".join(emails[2:])
 
 
+# pylint: disable=too-many-statements, too-many-branches
 def _make_styles(
     color_choice: str,
     mark_choice: str,

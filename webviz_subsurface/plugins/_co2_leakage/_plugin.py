@@ -274,10 +274,10 @@ class CO2Leakage(WebvizPluginABC):
                 Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
                 Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
                 # NBNB-third-tab
-                #Output(
+                # Output(
                 #    self._view_component(MapViewElement.Ids.TIME_PLOT_ONE_REAL),
                 #    "figure",
-                #),
+                # ),
                 Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
                 Input(self._settings_component(ViewSettings.Ids.GRAPH_SOURCE), "value"),
                 Input(self._settings_component(ViewSettings.Ids.CO2_SCALE), "value"),
@@ -321,7 +321,7 @@ class CO2Leakage(WebvizPluginABC):
                 lines_to_show: str,
             ) -> Tuple[Dict, go.Figure, go.Figure, go.Figure]:
                 # pylint: disable=too-many-locals
-                figs = [no_update] * 2 # 3 # NBNB-third-tab
+                figs = [no_update] * 2  # 3 # NBNB-third-tab
                 cont_info = process_containment_info(
                     zone,
                     region,
@@ -386,7 +386,7 @@ class CO2Leakage(WebvizPluginABC):
                                 self._co2_table_providers[ensemble],
                             )
                             # NBNB-third-tab
-                            #figs[2] = go.Figure()
+                            # figs[2] = go.Figure()
                     else:
                         LOGGER.warning(
                             """UNSMRY file has not been specified as input.
@@ -410,11 +410,17 @@ class CO2Leakage(WebvizPluginABC):
                 return list(Co2MassScale), Co2MassScale.MTONS
 
             @callback(
-                Output(self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "style"),
-                Output(self._settings_component(ViewSettings.Ids.Y_LIM_OPTIONS), "style"),
+                Output(
+                    self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "style"
+                ),
+                Output(
+                    self._settings_component(ViewSettings.Ids.Y_LIM_OPTIONS), "style"
+                ),
                 Input(self._settings_component(ViewSettings.Ids.REALIZATION), "value"),
             )
-            def toggle_time_plot_options_visibility(realizations: List[int]) -> List[Dict[str, str]]:
+            def toggle_time_plot_options_visibility(
+                realizations: List[int],
+            ) -> Tuple[Dict[str, str], Dict[str, str]]:
                 if len(realizations) == 1:
                     return (
                         {"display": "none"},
@@ -580,7 +586,7 @@ class CO2Leakage(WebvizPluginABC):
                 ensemble: str,
                 current_views: List[Any],
                 thresholds: List[float],
-            ) -> Tuple[List[Dict[Any, Any]], List[Any], Dict[Any, Any]]:
+            ) -> Tuple[List[Dict[Any, Any]], Optional[List[Any]], Dict[Any, Any]]:
                 # Unable to clear cache (when needed) without the protected member
                 # pylint: disable=protected-access
                 current_thresholds = dict(zip(self._threshold_ids, thresholds))
@@ -724,9 +730,9 @@ class CO2Leakage(WebvizPluginABC):
                 ),
                 Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "style"),
                 Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "style"),
-                #Output(
+                # Output(
                 #    self._view_component(MapViewElement.Ids.TIME_PLOT_ONE_REAL), "style"
-                #), # NBNB-third-tab
+                # ), # NBNB-third-tab
                 Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
                 Input(self._view_component(MapViewElement.Ids.SIZE_SLIDER), "value"),
                 State(self._view_component(MapViewElement.Ids.TOP_ELEMENT), "style"),
@@ -743,18 +749,20 @@ class CO2Leakage(WebvizPluginABC):
                 bottom_style["height"] = f"{slider_value}vh"
                 top_style["height"] = f"{80 - slider_value}vh"
 
-                styles = [{"height": f"{slider_value * 0.9 - 4}vh", "width": "90%"}] * 2 # 3 # NBNB-third-tab
+                styles = [
+                    {"height": f"{slider_value * 0.9 - 4}vh", "width": "90%"}
+                ] * 2  # 3 # NBNB-third-tab
                 if source == GraphSource.UNSMRY and self._unsmry_providers is None:
-                    styles = [{"display": "none"}] * 2 # 3 # NBNB-third-tab
+                    styles = [{"display": "none"}] * 2  # 3 # NBNB-third-tab
                 elif (
                     source == GraphSource.CONTAINMENT_MASS
                     and ensemble not in self._co2_table_providers
                 ):
-                    styles = [{"display": "none"}] * 2 # 3 # NBNB-third-tab
+                    styles = [{"display": "none"}] * 2  # 3 # NBNB-third-tab
                 elif (
                     source == GraphSource.CONTAINMENT_ACTUAL_VOLUME
                     and ensemble not in self._co2_actual_volume_table_providers
                 ):
-                    styles = [{"display": "none"}] * 2 # 3 # NBNB-third-tab
+                    styles = [{"display": "none"}] * 2  # 3 # NBNB-third-tab
 
                 return [top_style, bottom_style] + styles

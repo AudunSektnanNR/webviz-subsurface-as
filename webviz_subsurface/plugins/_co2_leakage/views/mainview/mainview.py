@@ -26,7 +26,7 @@ class MapViewElement(ViewElementABC):
         DATE_WRAPPER = "date-wrapper"
         BAR_PLOT = "bar-plot"
         TIME_PLOT = "time-plot"
-        #TIME_PLOT_ONE_REAL = "time-plot-one-realization" # NBNB-third-tab
+        # TIME_PLOT_ONE_REAL = "time-plot-one-realization" # NBNB-third-tab
         BAR_PLOT_ORDER = "bar-plot-order"
         CONTAINMENT_COLORS = "containment-order"
         SIZE_SLIDER = "size-slider"
@@ -99,9 +99,9 @@ class MapViewElement(ViewElementABC):
                             _summary_graph_layout(
                                 self.register_component_unique_id(self.Ids.BAR_PLOT),
                                 self.register_component_unique_id(self.Ids.TIME_PLOT),
-                                #self.register_component_unique_id(
+                                # self.register_component_unique_id(
                                 #    self.Ids.TIME_PLOT_ONE_REAL
-                                #), # NBNB-third-tab
+                                # ), # NBNB-third-tab
                             )
                         ),
                     ],
@@ -143,7 +143,7 @@ class MapViewElement(ViewElementABC):
 def _summary_graph_layout(
     bar_plot_id: str,
     time_plot_id: str,
-    #time_plot_one_realization_id: str, # NBNB-third-tab
+    # time_plot_one_realization_id: str, # NBNB-third-tab
 ) -> List:
     return [
         wcc.Tabs(
@@ -180,8 +180,8 @@ def _summary_graph_layout(
                         ),
                     ],
                 ),
-                #NBNB-third-tab
-                #wcc.Tab(
+                # NBNB-third-tab
+                # wcc.Tab(
                 #    label="Placeholder",
                 #    value="tab-3",
                 #    children=[
@@ -195,7 +195,7 @@ def _summary_graph_layout(
                 #            ),
                 #        ),
                 #    ],
-                #),
+                # ),
             ],
         ),
     ]
