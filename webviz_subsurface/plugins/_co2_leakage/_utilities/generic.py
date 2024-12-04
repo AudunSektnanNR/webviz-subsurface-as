@@ -1,3 +1,4 @@
+from __future__ import annotations  # Change to import Self from typing if we update to Python >3.11
 from typing import Dict, List, TypedDict
 
 from webviz_subsurface._utils.enum_shim import StrEnum

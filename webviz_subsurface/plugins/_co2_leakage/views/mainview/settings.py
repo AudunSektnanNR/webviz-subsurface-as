@@ -39,6 +39,7 @@ class ViewSettings(SettingsGroupABC):
         FORMATION = "formation"
         ENSEMBLE = "ensemble"
         REALIZATION = "realization"
+        ALL_REAL = "all-realizations"
 
         PROPERTY = "property"
         STATISTIC = "statistic"
@@ -54,6 +55,8 @@ class ViewSettings(SettingsGroupABC):
         Y_MAX_GRAPH = "y-max-graph"
         Y_MIN_AUTO_GRAPH = "y-min-auto-graph"
         Y_MAX_AUTO_GRAPH = "y-max-auto-graph"
+        Y_LIM_OPTIONS = "y_limit_options"
+        REAL_OR_STAT = "realization-or-statistics"
         COLOR_BY = "color-by"
         MARK_BY = "mark-by"
         SORT_PLOT = "sort-plot"
@@ -119,6 +122,7 @@ class ViewSettings(SettingsGroupABC):
             EnsembleSelectorLayout(
                 self.register_component_unique_id(self.Ids.ENSEMBLE),
                 self.register_component_unique_id(self.Ids.REALIZATION),
+                self.register_component_unique_id(self.Ids.ALL_REAL),
                 list(self._ensemble_paths.keys()),
             )
         )
@@ -174,6 +178,8 @@ class ViewSettings(SettingsGroupABC):
                         self.register_component_unique_id(self.Ids.CONTAINMENT_MENU),
                         self.register_component_unique_id(self.Ids.PLUME_GROUP),
                         self.register_component_unique_id(self.Ids.PLUME_GROUP_MENU),
+                        self.register_component_unique_id(self.Ids.REAL_OR_STAT),
+                        self.register_component_unique_id(self.Ids.Y_LIM_OPTIONS),
                     ],
                     self._content,
                 )
@@ -197,14 +203,19 @@ class ViewSettings(SettingsGroupABC):
                 self.component_unique_id(self.Ids.REALIZATION).to_string(), "options"
             ),
             Output(self.component_unique_id(self.Ids.REALIZATION).to_string(), "value"),
+            Output(self.component_unique_id(self.Ids.ALL_REAL).to_string(), "value"),
             Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
+            Input(self.component_unique_id(self.Ids.ALL_REAL).to_string(), "value"),
         )
-        def set_realizations(ensemble: str) -> Tuple[List[Dict[str, Any]], List[int]]:
+        def set_realizations(
+            ensemble: str,
+            select_all: List[str],
+        ) -> Tuple[List[Dict[str, Any]], List[int]]:
             rlz = [
                 {"value": r, "label": str(r)}
                 for r in self._realizations_per_ensemble[ensemble]
             ]
-            return rlz, [rlz[0]["value"]]  # type: ignore
+            return rlz, self._realizations_per_ensemble[ensemble], []  # type: ignore
 
         @callback(
             Output(self.component_unique_id(self.Ids.FORMATION).to_string(), "options"),
@@ -1021,32 +1032,57 @@ class GraphSelectorsLayout(wcc.Selectors):
                     style={"display": "flex"},
                 ),
                 html.Div(
-                    "Fix y-limits in third plot:",
+                    "Time plot options:",
                     style={"margin-top": "10px"},
                 ),
-                "Minimum",
                 html.Div(
                     [
-                        dcc.Input(id=y_min_ids[0], type="number"),
-                        dcc.Checklist(
-                            ["Auto"],
-                            ["Auto"],
-                            id=y_min_ids[1],
+                        dcc.RadioItems(
+                            options=[
+                                {"label": "Realizations", "value": "real"},
+                                {"label": "Mean/P10/P90", "value": "stat"}],
+                            value="real",
+                            id=containment_ids[14],
+                            inline=True,
                         ),
                     ],
-                    style=self._CM_RANGE,
+                    style={
+                        "display": "flex",
+                        "flex-direction": "row",
+                    },
                 ),
-                "Maximum",
                 html.Div(
                     [
-                        dcc.Input(id=y_max_ids[0], type="number"),
-                        dcc.Checklist(
-                            ["Auto"],
-                            ["Auto"],
-                            id=y_max_ids[1],
+                        "Fix minimum y-value",
+                        html.Div(
+                            [
+                                dcc.Input(id=y_min_ids[0], type="number"),
+                                dcc.Checklist(
+                                    ["Auto"],
+                                    ["Auto"],
+                                    id=y_min_ids[1],
+                                ),
+                            ],
+                            style=self._CM_RANGE,
+                        ),
+                        "Fix maximum y-value",
+                        html.Div(
+                            [
+                                dcc.Input(id=y_max_ids[0], type="number"),
+                                dcc.Checklist(
+                                    ["Auto"],
+                                    ["Auto"],
+                                    id=y_max_ids[1],
+                                ),
+                            ],
+                            style=self._CM_RANGE,
                         ),
                     ],
-                    style=self._CM_RANGE,
+                    style={
+                        "display": "flex",
+                        "flex-direction": "column",
+                    },
+                    id=containment_ids[15],
                 ),
             ],
         )
@@ -1094,7 +1130,13 @@ class ExperimentalFeaturesLayout(wcc.Selectors):
 
 
 class EnsembleSelectorLayout(wcc.Selectors):
-    def __init__(self, ensemble_id: str, realization_id: str, ensembles: List[str]):
+    def __init__(
+            self,
+            ensemble_id: str,
+            realization_id: str,
+            all_real_id: str,
+            ensembles: List[str],
+    ):
         super().__init__(
             label="Ensemble",
             open_details=True,
@@ -1106,7 +1148,21 @@ class EnsembleSelectorLayout(wcc.Selectors):
                     value=ensembles[0],
                     clearable=False,
                 ),
-                "Realization",
+                html.Div(
+                    [
+                        "Realization",
+                        html.Div("", style={"width": "25px"}),
+                        dcc.Checklist(
+                            options=["Select all"],
+                            value=[],
+                            id=all_real_id,
+                        )
+                    ],
+                    style={
+                        "display": "flex",
+                        "flex-direction": "row",
+                    }
+                ),
                 wcc.SelectWithLabel(
                     id=realization_id,
                     value=[],

@@ -77,6 +77,8 @@ class ContainmentDataProvider:
     def _get_menu_options(provider: EnsembleTableProvider) -> MenuOptions:
         col_names = provider.column_names()
         realization = provider.realizations()[0]
+        #NBNB: Check that these are the same for all realizations????
+        #NBNB: WARNING and empty for zones / regions, and Error if phases are different?
         df = provider.get_column_data(col_names, [realization])
         zones = ["all"]
         for zone in list(df["zone"]):
