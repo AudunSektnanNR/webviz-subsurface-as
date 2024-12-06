@@ -1,7 +1,8 @@
+import json
 import logging
 import shutil
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple, Dict
 
 import pandas as pd
 import xtgeo
@@ -14,6 +15,7 @@ from .ensemble_polygon_provider import (
     EnsemblePolygonProvider,
     PolygonsAddress,
     SimulatedPolygonsAddress,
+    PolygonStyle,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -43,10 +45,12 @@ class ProviderImplFile(EnsemblePolygonProvider):
         provider_id: str,
         provider_dir: Path,
         polygon_inventory_df: pd.DataFrame,
+        attribute_to_poly_style: Dict[str, PolygonStyle],
     ) -> None:
         self._provider_id = provider_id
         self._provider_dir = provider_dir
         self._inventory_df = polygon_inventory_df
+        self._attribute_to_poly_style = attribute_to_poly_style
 
     @staticmethod
     # pylint: disable=too-many-locals
@@ -54,6 +58,7 @@ class ProviderImplFile(EnsemblePolygonProvider):
         storage_dir: Path,
         storage_key: str,
         sim_polygons: List[PolygonsFileInfo],
+        poly_styles: Dict[str, PolygonStyle],
     ) -> None:
         timer = PerfTimer()
 
@@ -108,6 +113,10 @@ class ProviderImplFile(EnsemblePolygonProvider):
         parquet_file_name = provider_dir / "polygons_inventory.parquet"
         polygons_inventory_df.to_parquet(path=parquet_file_name)
 
+        poly_styles_file_name = provider_dir / "polygon_styles.json"
+        with open(poly_styles_file_name, "w") as f:
+            json.dump(poly_styles, f)
+
         LOGGER.debug(
             f"Wrote polygon backing store in: {timer.elapsed_s():.2f}s ("
             f"copy={et_copy_s:.2f}s)"
@@ -119,12 +128,14 @@ class ProviderImplFile(EnsemblePolygonProvider):
         storage_key: str,
     ) -> Optional["ProviderImplFile"]:
         provider_dir = storage_dir / storage_key
+        poly_styles_file_name = provider_dir / "polygon_styles.json"
         parquet_file_name = provider_dir / "polygons_inventory.parquet"
 
         try:
             polygons_inventory_df = pd.read_parquet(path=parquet_file_name)
+            poly_styles = json.load(open(poly_styles_file_name))
             return ProviderImplFile(
-                storage_key, provider_dir, polygons_inventory_df
+                storage_key, provider_dir, polygons_inventory_df, poly_styles
             )
         except FileNotFoundError:
             return None
@@ -152,10 +163,10 @@ class ProviderImplFile(EnsemblePolygonProvider):
         # Sort and strip out any entries with real == -1
         return sorted([r for r in unique_reals if r >= 0])
 
-    def get_fault_polygons(
+    def get_polygons(
         self,
         address: PolygonsAddress,
-    ) -> Optional[xtgeo.Polygons]:
+    ) -> Optional[Tuple[xtgeo.Polygons, PolygonStyle]]:
         if isinstance(address, SimulatedPolygonsAddress):
             return self._get_simulated_polygons(address)
 
@@ -163,7 +174,7 @@ class ProviderImplFile(EnsemblePolygonProvider):
 
     def _get_simulated_polygons(
         self, address: SimulatedPolygonsAddress
-    ) -> Optional[xtgeo.Polygons]:
+    ) -> Optional[Tuple[xtgeo.Polygons, PolygonStyle]]:
         """Returns a Xtgeo fault polygons instance of a single realization fault polygons"""
 
         timer = PerfTimer()
@@ -184,10 +195,11 @@ class ProviderImplFile(EnsemblePolygonProvider):
             )
 
         polygons = xtgeo.polygons_from_file(polygons_fns[0])
+        style = self._attribute_to_poly_style.get(address.attribute, {})
 
         LOGGER.debug(f"Loaded simulated fault polygons in: {timer.elapsed_s():.2f}s")
 
-        return polygons
+        return polygons, style
 
     def _locate_simulated_polygons(
         self, attribute: str, name: str, realizations: List[int]

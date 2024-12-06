@@ -72,21 +72,19 @@ def _polygons_ident_from_filename(filename: str) -> Optional[PolygonsIdent]:
 
 def discover_per_realization_polygons_files(
     ens_path: str,
+    polygons_pattern: str,
 ) -> List[PolygonsFileInfo]:
-    # TODO: accepts additional inputs:
-    # - Hazarduous boundary file path/glob expression
-    # - Containment boundary file path
-    rel_polygons_folder: str = "share/results/polygons"
-    suffix: str = "*.pol"
-
     polygons_files: List[PolygonsFileInfo] = []
 
     real_dict = _discover_ensemble_realizations_fmu(ens_path)
     for realnum, runpath in sorted(real_dict.items()):
-        globbed_filenames = glob.glob(
-            str(Path(runpath) / rel_polygons_folder / suffix)
-        )
-        for polygons_filename in sorted(globbed_filenames):
+        if Path(polygons_pattern).is_absolute():
+            filenames = [polygons_pattern]
+        else:
+            filenames = glob.glob(
+                str(Path(runpath) / polygons_pattern)
+            )
+        for polygons_filename in sorted(filenames):
             polygons_ident = _polygons_ident_from_filename(
                 polygons_filename
             )

@@ -5,4 +5,4 @@ from .ensemble_polygon_provider import (
 from .ensemble_polygon_provider_factory import (
     EnsemblePolygonProviderFactory,
 )
-from .polygon_server import PolygonsAddress, FaultPolygonsServer
+from .polygon_server import PolygonsAddress, PolygonServer

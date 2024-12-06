@@ -1,7 +1,9 @@
 import hashlib
 import logging
 import os
+from dataclasses import dataclass
 from pathlib import Path
+from typing import List, Dict
 
 from webviz_config.webviz_factory import WebvizFactory
 from webviz_config.webviz_factory_registry import WEBVIZ_FACTORY_REGISTRY
@@ -11,7 +13,7 @@ from webviz_subsurface._utils.perf_timer import PerfTimer
 
 from ._polygon_discovery import discover_per_realization_polygons_files
 from ._provider_impl_file import ProviderImplFile
-from .ensemble_polygon_provider import EnsemblePolygonProvider
+from .ensemble_polygon_provider import EnsemblePolygonProvider, PolygonStyle
 
 LOGGER = logging.getLogger(__name__)
 
@@ -50,7 +52,10 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
         return factory
 
     def create_from_ensemble_polygon_files(
-        self, ens_path: str
+        self,
+        ens_path: str,
+        polygon_path_pattern: str,
+        polygon_styles: Dict[str, PolygonStyle],
     ) -> EnsemblePolygonProvider:
         timer = PerfTimer()
 
@@ -70,8 +75,9 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
         LOGGER.info(f"Importing/copying polygon data for: {ens_path}")
 
         timer.lap_s()
-        sim_fault_polygons_files = discover_per_realization_polygons_files(
-            ens_path
+        sim_polygons_files = discover_per_realization_polygons_files(
+            ens_path,
+            polygon_path_pattern,
         )
 
         et_discover_s = timer.lap_s()
@@ -79,7 +85,8 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
         ProviderImplFile.write_backing_store(
             self._storage_dir,
             storage_key,
-            sim_polygons=sim_fault_polygons_files,
+            sim_polygons=sim_polygons_files,
+            poly_styles=polygon_styles,
         )
         et_write_s = timer.lap_s()
 

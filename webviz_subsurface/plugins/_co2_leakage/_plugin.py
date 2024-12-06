@@ -24,7 +24,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import (
     readable_name,
     set_plot_ids,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.fault_polygons import (
+from webviz_subsurface.plugins._co2_leakage._utilities.fault_polygons_handler import (
     FaultPolygonsHandler,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
@@ -45,7 +45,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
     init_realizations,
     init_surface_providers,
     init_unsmry_data_providers,
-    init_well_pick_provider,
+    init_well_pick_provider, init_boundary_polygon_providers,
 )
 from webviz_subsurface.plugins._co2_leakage.views.mainview.mainview import (
     MainView,
@@ -155,6 +155,11 @@ class CO2Leakage(WebvizPluginABC):
             self._unsmry_providers = init_unsmry_data_providers(
                 ensemble_paths,
                 unsmry_relpath,
+            )
+            self._boundary_polygon_provider = init_boundary_polygon_providers(
+                ensemble_paths,
+                file_hazardous_boundary,  # TODO: find a common pattern for both haz and contain
+                {},  # TODO: find a way to link attribute to haz/contain, and further to style. Color choice can be hard-coded initially
             )
             self._haz_bounds_provider = init_hazardous_boundary_providers(
                 ensemble_paths,

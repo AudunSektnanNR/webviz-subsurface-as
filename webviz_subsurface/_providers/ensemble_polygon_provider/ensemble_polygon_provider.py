@@ -1,13 +1,13 @@
 import abc
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Tuple
 
 import xtgeo
 
 
 @dataclass(frozen=True)
 class SimulatedPolygonsAddress:
-    """Specifies a unique simulated fault polygon set for a given ensemble realization"""
+    """Specifies a unique simulated polygon set for a given ensemble realization"""
 
     attribute: str
     name: str
@@ -16,6 +16,7 @@ class SimulatedPolygonsAddress:
 
 # Type aliases used for signature readability
 PolygonsAddress = SimulatedPolygonsAddress
+PolygonStyle = Dict[str, Any]
 
 
 # Class provides data for ensemble surfaces
@@ -29,7 +30,7 @@ class EnsemblePolygonProvider(abc.ABC):
         """Returns list of all available attributes."""
 
     @abc.abstractmethod
-    def fault_polygons_names_for_attribute(
+    def polygons_names_for_attribute(
         self, fault_polygons_attribute: str
     ) -> List[str]:
         """Returns list of all available fault polygons names for a given attribute."""
@@ -39,10 +40,10 @@ class EnsemblePolygonProvider(abc.ABC):
         """Returns list of all available realizations."""
 
     @abc.abstractmethod
-    def get_fault_polygons(
+    def get_polygons(
         self,
         address: PolygonsAddress,
-    ) -> Optional[xtgeo.Polygons]:
+    ) -> Optional[Tuple[xtgeo.Polygons, PolygonStyle]]:
         """Returns fault polygons for a given fault polygons address"""
 
     # @abc.abstractmethod

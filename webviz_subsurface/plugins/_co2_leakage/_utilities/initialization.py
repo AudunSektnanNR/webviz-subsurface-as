@@ -13,6 +13,8 @@ from webviz_subsurface._providers import (
     EnsembleTableProvider,
     EnsembleTableProviderFactory,
 )
+from webviz_subsurface._providers.ensemble_polygon_provider.ensemble_polygon_provider import \
+    PolygonStyle
 from webviz_subsurface._providers.ensemble_surface_provider._surface_discovery import (
     discover_per_realization_surface_files,
 )
@@ -114,6 +116,41 @@ def init_well_pick_provider(
         )
         for ens, ens_p in ensemble_paths.items()
     }
+
+
+def init_boundary_polygon_providers(
+    ensemble_paths: Dict[str, str],
+    poly_path: Optional[str],
+    polygon_styles: Dict[str, PolygonStyle]
+) -> Dict[str, EnsemblePolygonProvider]:
+    if poly_path is None:
+        return {}
+
+    return {
+        ens: _init_boundary_polygon_provider(ens, poly_path, polygon_styles)
+        for ens, poly_path in ensemble_paths.items()
+    }
+
+
+def _init_boundary_polygon_provider(
+    ensemble_path: str,
+    poly_path: str,
+    polygon_styles: Dict[str, PolygonStyle],
+):
+    try:
+        from webviz_subsurface._providers import ensemble_polygon_provider
+        return ensemble_polygon_provider.EnsemblePolygonProviderFactory.instance().create_from_ensemble_polygon_files(
+            ensemble_path,
+            poly_path,
+            polygon_styles,
+        )
+    except OSError as e:
+        LOGGER.warning(
+            f"Failed to create hazardous boundary provider for ensemble path:"
+            f" '{ensemble_path}' and poly path '{poly_path}': {e}"
+        )
+        return None
+
 
 
 def init_hazardous_boundary_providers(
