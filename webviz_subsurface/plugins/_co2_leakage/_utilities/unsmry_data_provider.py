@@ -35,6 +35,7 @@ class UnsmryDataProvider:
             "zones": [],
             "regions": [],
             "phases": ["total", "gas", "aqueous"],
+            "plume_groups": [],
         }
 
     @property

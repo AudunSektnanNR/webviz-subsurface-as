@@ -1,3 +1,7 @@
+from __future__ import (  # Change to import Self from typing if we update to Python >3.11
+    annotations,
+)
+
 from typing import Dict, List, TypedDict
 
 from webviz_subsurface._utils.enum_shim import StrEnum
@@ -134,6 +138,7 @@ class LayoutLabels(StrEnum):
     FEEDBACK = "User feedback"
     VISUALIZATION_UPDATE = "Update threshold"
     VISUALIZATION_THRESHOLDS = "Manage visualization filter"
+    ALL_REAL = "Select all"
 
 
 # pylint: disable=too-few-public-methods
@@ -145,6 +150,13 @@ class LayoutStyle:
         "width": "100%",
         "height": "30px",
         "line-height": "30px",
+        "background-color": "lightgrey",
+    }
+
+    ALL_REAL_BUTTON = {
+        "marginLeft": "10px",
+        "height": "25px",
+        "line-height": "25px",
         "background-color": "lightgrey",
     }
 

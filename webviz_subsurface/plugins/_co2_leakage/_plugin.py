@@ -17,6 +17,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import (
     generate_containment_figures,
     generate_unsmry_figures,
     get_plume_polygon,
+    make_plot_ids,
     process_containment_info,
     process_summed_mass,
     process_visualization_info,
@@ -192,6 +193,7 @@ class CO2Leakage(WebvizPluginABC):
             "change": False,
             "unit": "tons",
         }
+        self._plot_id = ""
         self._color_tables = co2leakage_color_tables()
         self._well_pick_names: Dict[str, List[str]] = {
             ens: (
@@ -271,10 +273,11 @@ class CO2Leakage(WebvizPluginABC):
             @callback(
                 Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
                 Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
-                Output(
-                    self._view_component(MapViewElement.Ids.TIME_PLOT_ONE_REAL),
-                    "figure",
-                ),
+                # NBNB-third-tab
+                # Output(
+                #    self._view_component(MapViewElement.Ids.TIME_PLOT_ONE_REAL),
+                #    "figure",
+                # ),
                 Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
                 Input(self._settings_component(ViewSettings.Ids.GRAPH_SOURCE), "value"),
                 Input(self._settings_component(ViewSettings.Ids.CO2_SCALE), "value"),
@@ -295,6 +298,7 @@ class CO2Leakage(WebvizPluginABC):
                 Input(self._settings_component(ViewSettings.Ids.COLOR_BY), "value"),
                 Input(self._settings_component(ViewSettings.Ids.MARK_BY), "value"),
                 Input(self._settings_component(ViewSettings.Ids.SORT_PLOT), "value"),
+                Input(self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "value"),
             )
             @callback_typecheck
             def update_graphs(
@@ -314,9 +318,10 @@ class CO2Leakage(WebvizPluginABC):
                 color_choice: str,
                 mark_choice: Optional[str],
                 sorting: str,
+                lines_to_show: str,
             ) -> Tuple[Dict, go.Figure, go.Figure, go.Figure]:
                 # pylint: disable=too-many-locals
-                figs = [no_update] * 3
+                figs = [no_update] * 2  # 3 # NBNB-third-tab
                 cont_info = process_containment_info(
                     zone,
                     region,
@@ -326,12 +331,24 @@ class CO2Leakage(WebvizPluginABC):
                     color_choice,
                     mark_choice,
                     sorting,
+                    lines_to_show,
                     self._menu_options[ensemble][source],
                 )
                 if source in [
                     GraphSource.CONTAINMENT_MASS,
                     GraphSource.CONTAINMENT_ACTUAL_VOLUME,
                 ]:
+                    plot_ids = make_plot_ids(
+                        ensemble,
+                        source,
+                        co2_scale,
+                        cont_info,
+                        realizations,
+                        lines_to_show,
+                        len(figs),
+                    )
+                    cont_info["update_first_figure"] = self._plot_id != plot_ids[0]
+                    self._plot_id = plot_ids[0]
                     y_limits = [
                         y_min_val if len(y_min_auto) == 0 else None,
                         y_max_val if len(y_max_auto) == 0 else None,
@@ -343,7 +360,7 @@ class CO2Leakage(WebvizPluginABC):
                         figs[: len(figs)] = generate_containment_figures(
                             self._co2_table_providers[ensemble],
                             co2_scale,
-                            realizations[0],
+                            realizations,
                             y_limits,
                             cont_info,
                         )
@@ -354,11 +371,11 @@ class CO2Leakage(WebvizPluginABC):
                         figs[: len(figs)] = generate_containment_figures(
                             self._co2_actual_volume_table_providers[ensemble],
                             co2_scale,
-                            realizations[0],
+                            realizations,
                             y_limits,
                             cont_info,
                         )
-                    set_plot_ids(figs, source, co2_scale, cont_info, realizations)
+                    set_plot_ids(figs, plot_ids)
                 elif source == GraphSource.UNSMRY:
                     if self._unsmry_providers is not None:
                         if ensemble in self._unsmry_providers:
@@ -368,7 +385,8 @@ class CO2Leakage(WebvizPluginABC):
                                 co2_scale,
                                 self._co2_table_providers[ensemble],
                             )
-                            figs[2] = go.Figure()
+                            # NBNB-third-tab
+                            # figs[2] = go.Figure()
                     else:
                         LOGGER.warning(
                             """UNSMRY file has not been specified as input.
@@ -390,6 +408,28 @@ class CO2Leakage(WebvizPluginABC):
                 if attribute == GraphSource.CONTAINMENT_ACTUAL_VOLUME:
                     return list(Co2VolumeScale), Co2VolumeScale.BILLION_CUBIC_METERS
                 return list(Co2MassScale), Co2MassScale.MTONS
+
+            @callback(
+                Output(
+                    self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "style"
+                ),
+                Output(
+                    self._settings_component(ViewSettings.Ids.Y_LIM_OPTIONS), "style"
+                ),
+                Input(self._settings_component(ViewSettings.Ids.REALIZATION), "value"),
+            )
+            def toggle_time_plot_options_visibility(
+                realizations: List[int],
+            ) -> Tuple[Dict[str, str], Dict[str, str]]:
+                if len(realizations) == 1:
+                    return (
+                        {"display": "none"},
+                        {"display": "flex", "flex-direction": "column"},
+                    )
+                return (
+                    {"display": "flex", "flex-direction": "row"},
+                    {"display": "none"},
+                )
 
         if self._content["maps"]:
 
@@ -546,7 +586,7 @@ class CO2Leakage(WebvizPluginABC):
                 ensemble: str,
                 current_views: List[Any],
                 thresholds: List[float],
-            ) -> Tuple[List[Dict[Any, Any]], List[Any], Dict[Any, Any]]:
+            ) -> Tuple[List[Dict[Any, Any]], Optional[List[Any]], Dict[Any, Any]]:
                 # Unable to clear cache (when needed) without the protected member
                 # pylint: disable=protected-access
                 current_thresholds = dict(zip(self._threshold_ids, thresholds))
@@ -690,9 +730,9 @@ class CO2Leakage(WebvizPluginABC):
                 ),
                 Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "style"),
                 Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "style"),
-                Output(
-                    self._view_component(MapViewElement.Ids.TIME_PLOT_ONE_REAL), "style"
-                ),
+                # Output(
+                #    self._view_component(MapViewElement.Ids.TIME_PLOT_ONE_REAL), "style"
+                # ), # NBNB-third-tab
                 Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
                 Input(self._view_component(MapViewElement.Ids.SIZE_SLIDER), "value"),
                 State(self._view_component(MapViewElement.Ids.TOP_ELEMENT), "style"),
@@ -709,18 +749,20 @@ class CO2Leakage(WebvizPluginABC):
                 bottom_style["height"] = f"{slider_value}vh"
                 top_style["height"] = f"{80 - slider_value}vh"
 
-                styles = [{"height": f"{slider_value * 0.9 - 4}vh", "width": "90%"}] * 3
+                styles = [
+                    {"height": f"{slider_value * 0.9 - 4}vh", "width": "90%"}
+                ] * 2  # 3 # NBNB-third-tab
                 if source == GraphSource.UNSMRY and self._unsmry_providers is None:
-                    styles = [{"display": "none"}] * 3
+                    styles = [{"display": "none"}] * 2  # 3 # NBNB-third-tab
                 elif (
                     source == GraphSource.CONTAINMENT_MASS
                     and ensemble not in self._co2_table_providers
                 ):
-                    styles = [{"display": "none"}] * 3
+                    styles = [{"display": "none"}] * 2  # 3 # NBNB-third-tab
                 elif (
                     source == GraphSource.CONTAINMENT_ACTUAL_VOLUME
                     and ensemble not in self._co2_actual_volume_table_providers
                 ):
-                    styles = [{"display": "none"}] * 3
+                    styles = [{"display": "none"}] * 2  # 3 # NBNB-third-tab
 
                 return [top_style, bottom_style] + styles
