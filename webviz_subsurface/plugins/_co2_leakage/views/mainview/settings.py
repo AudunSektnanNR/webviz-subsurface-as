@@ -205,19 +205,18 @@ class ViewSettings(SettingsGroupABC):
                 self.component_unique_id(self.Ids.REALIZATION).to_string(), "options"
             ),
             Output(self.component_unique_id(self.Ids.REALIZATION).to_string(), "value"),
-            Output(self.component_unique_id(self.Ids.ALL_REAL).to_string(), "value"),
             Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
-            Input(self.component_unique_id(self.Ids.ALL_REAL).to_string(), "value"),
+            Input(self.component_unique_id(self.Ids.ALL_REAL).to_string(), "n_clicks"),
         )
         def set_realizations(
             ensemble: str,
-            select_all: List[str],
+            select_all: int,
         ) -> Tuple[List[Dict[str, Any]], List[int]]:
             rlz = [
                 {"value": r, "label": str(r)}
                 for r in self._realizations_per_ensemble[ensemble]
             ]
-            return rlz, self._realizations_per_ensemble[ensemble], []  # type: ignore
+            return rlz, self._realizations_per_ensemble[ensemble]  # type: ignore
 
         @callback(
             Output(self.component_unique_id(self.Ids.FORMATION).to_string(), "options"),
@@ -1162,17 +1161,19 @@ class EnsembleSelectorLayout(wcc.Selectors):
                 ),
                 html.Div(
                     [
-                        "Realization",
-                        html.Div("", style={"width": "25px"}),
-                        dcc.Checklist(
-                            options=["Select all"],
-                            value=[],
+                        html.Div("Realization", style={"width": "50%"}),
+                        html.Button(
+                            "Select all",
                             id=all_real_id,
+                            style=LayoutStyle.ALL_REAL_BUTTON,
+                            n_clicks=0,
                         ),
                     ],
                     style={
                         "display": "flex",
                         "flex-direction": "row",
+                        "margin-top": "3px",
+                        "margin-bottom": "3px",
                     },
                 ),
                 wcc.SelectWithLabel(

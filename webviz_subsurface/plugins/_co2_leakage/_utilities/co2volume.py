@@ -44,6 +44,26 @@ _COLOR_ZONES = [
     "#34b36f",
 ]
 
+_LIGHTER_COLORS = {
+    "black": "#909090",
+    "#222222": "#909090",
+    "#00aa00": "#55ff55",
+    "#006ddd": "#6eb6ff",
+    "#dd4300": "#ff9a6e",
+    "#e91451": "#f589a8",
+    "#daa218": "#f2d386",
+    "#208eb7": "#81cde9",
+    "#84bc04": "#cdfc63",
+    "#b74532": "#e19e92",
+    "#9a89b4": "#ccc4d9",
+    "#8d30ba": "#c891e3",
+    "#256b33": "#77d089",
+    "#95704d": "#cfb7a1",
+    "#1357ca": "#7ba7f3",
+    "#f75ef0": "#fbaef7",
+    "#34b36f": "#93e0b7",
+}
+
 
 def _read_dataframe(
     table_provider: EnsembleTableProvider,
@@ -655,6 +675,7 @@ def generate_co2_time_containment_figure(
             "Statistic: %{meta[0]}"
         )
     for rlz in realizations:
+        lwd = 1.5 if rlz in ["p10", "p90"] else 2.5
         sub_df = df[df["realization"] == rlz].copy().reset_index(drop=True)
         if not containment_info["use_stats"]:
             _add_prop_to_df(
@@ -669,7 +690,10 @@ def generate_co2_time_containment_figure(
         ):
             args = {
                 "line_dash": line_type,
-                "marker_color": color,
+                "line_width": lwd,
+                "marker_color": (
+                    _LIGHTER_COLORS[color] if rlz in ["p10", "p90"] else color
+                ),
                 "legendgroup": name,
                 "name": "",
                 "meta": [rlz, name],
