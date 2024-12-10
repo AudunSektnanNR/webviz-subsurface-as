@@ -475,7 +475,7 @@ def process_containment_info(
         plume_groups = [pg_name for pg_name in plume_groups if pg_name != "all"]
 
         def plume_sort_key(name: str) -> int:
-            if name == "?":
+            if name == "undetermined":
                 return 999
             return name.count("+")
 
