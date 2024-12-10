@@ -543,6 +543,8 @@ def _connect_plume_groups(
         cols.append(mark_choice)
     elif mark_choice == "plume_group":
         cols.append(color_choice)
+    if len(cols) == 1:
+        cols = cols[0]
     # Find points where plumes start or end, to connect the lines
     end_points = []
     start_points = []
