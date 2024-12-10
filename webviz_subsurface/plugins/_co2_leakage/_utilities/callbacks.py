@@ -29,9 +29,6 @@ from webviz_subsurface.plugins._co2_leakage._utilities.co2volume import (
 from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import (
     ContainmentDataProvider,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.ensemble_polygon_provider import (
-    EnsemblePolygonProvider,
-)
 from webviz_subsurface.plugins._co2_leakage._utilities.ensemble_well_picks import (
     EnsembleWellPicks,
 )

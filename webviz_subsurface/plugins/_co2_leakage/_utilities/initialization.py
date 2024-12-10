@@ -13,8 +13,7 @@ from webviz_subsurface._providers import (
     EnsembleTableProvider,
     EnsembleTableProviderFactory,
 )
-from webviz_subsurface._providers.ensemble_polygon_provider import \
-    PolygonServer
+from webviz_subsurface._providers.ensemble_polygon_provider import PolygonServer
 from webviz_subsurface._providers.ensemble_surface_provider._surface_discovery import (
     discover_per_realization_surface_files,
 )
@@ -32,8 +31,9 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     MenuOptions,
     BoundaryOptions,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.polygon_handler import \
-    PolygonHandler
+from webviz_subsurface.plugins._co2_leakage._utilities.polygon_handler import (
+    PolygonHandler,
+)
 from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider import (
     UnsmryDataProvider,
 )
@@ -123,17 +123,18 @@ def init_polygon_provider_handlers(
     ensemble_paths: Dict[str, str],
     options: Optional[BoundaryOptions],
 ) -> Dict[str, PolygonHandler]:
-    default_options = {
+    filled_options: BoundaryOptions = {
         "polygon_pattern": "share/results/polygon/*.pol",
         "hazardous_attribute": "hazardous",
         "containment_attribute": "containment",
     }
-    options = dict(**default_options, **options)
+    if options is not None:
+        filled_options.update(options)
     return {
         ens: PolygonHandler(
             server,
             ens_path,
-            options,
+            filled_options,
         )
         for ens, ens_path in ensemble_paths.items()
     }

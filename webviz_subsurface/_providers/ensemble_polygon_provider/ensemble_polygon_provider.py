@@ -1,6 +1,6 @@
 import abc
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional
 
 import xtgeo
 
@@ -17,6 +17,7 @@ class SimulatedPolygonsAddress:
 # Type aliases used for signature readability
 PolygonsAddress = SimulatedPolygonsAddress
 
+
 # Class provides data for ensemble surfaces
 class EnsemblePolygonProvider(abc.ABC):
     @abc.abstractmethod
@@ -26,12 +27,6 @@ class EnsemblePolygonProvider(abc.ABC):
     @abc.abstractmethod
     def attributes(self) -> List[str]:
         """Returns list of all available attributes."""
-
-    @abc.abstractmethod
-    def polygons_names_for_attribute(
-        self, fault_polygons_attribute: str
-    ) -> List[str]:
-        """Returns list of all available fault polygons names for a given attribute."""
 
     @abc.abstractmethod
     def realizations(self) -> List[int]:

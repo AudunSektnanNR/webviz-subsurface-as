@@ -1,9 +1,12 @@
 from typing import List, Optional
 
-from webviz_subsurface._providers.ensemble_polygon_provider import PolygonServer, \
-    EnsemblePolygonProviderFactory
-from webviz_subsurface._providers.ensemble_polygon_provider.ensemble_polygon_provider import \
-    PolygonsAddress
+from webviz_subsurface._providers.ensemble_polygon_provider import (
+    PolygonServer,
+    EnsemblePolygonProviderFactory,
+)
+from webviz_subsurface._providers.ensemble_polygon_provider.ensemble_polygon_provider import (
+    PolygonsAddress,
+)
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import BoundaryOptions
 
 
@@ -18,11 +21,9 @@ class PolygonHandler:
         self._hazardous_attribute = boundary_options["hazardous_attribute"]
         self._containment_attribute = boundary_options["containment_attribute"]
         polygon_provider_factory = EnsemblePolygonProviderFactory.instance()
-        self._provider = (
-            polygon_provider_factory.create_from_ensemble_polygon_files(
-                ensemble_path,
-                boundary_options["polygon_pattern"],
-            )
+        self._provider = polygon_provider_factory.create_from_ensemble_polygon_files(
+            ensemble_path,
+            boundary_options["polygon_pattern"],
         )
         server.add_provider(self._provider)
 

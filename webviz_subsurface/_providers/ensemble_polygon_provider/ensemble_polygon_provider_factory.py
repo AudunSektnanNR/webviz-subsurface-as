@@ -1,9 +1,7 @@
 import hashlib
 import logging
 import os
-from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict
 
 from webviz_config.webviz_factory import WebvizFactory
 from webviz_config.webviz_factory_registry import WEBVIZ_FACTORY_REGISTRY
@@ -34,9 +32,7 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
     def instance() -> "EnsemblePolygonProviderFactory":
         """Static method to access the singleton instance of the factory."""
 
-        factory = WEBVIZ_FACTORY_REGISTRY.get_factory(
-            EnsemblePolygonProviderFactory
-        )
+        factory = WEBVIZ_FACTORY_REGISTRY.get_factory(EnsemblePolygonProviderFactory)
         if not factory:
             app_instance_info = WEBVIZ_FACTORY_REGISTRY.app_instance_info
             storage_folder = app_instance_info.storage_folder
@@ -45,9 +41,7 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
             factory = EnsemblePolygonProviderFactory(storage_folder, allow_writes)
 
             # Store the factory object in the global factory registry
-            WEBVIZ_FACTORY_REGISTRY.set_factory(
-                EnsemblePolygonProviderFactory, factory
-            )
+            WEBVIZ_FACTORY_REGISTRY.set_factory(EnsemblePolygonProviderFactory, factory)
 
         return factory
 
@@ -90,9 +84,7 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
 
         provider = ProviderImplFile.from_backing_store(self._storage_dir, storage_key)
         if not provider:
-            raise ValueError(
-                f"Failed to load/create polygon provider for {ens_path}"
-            )
+            raise ValueError(f"Failed to load/create polygon provider for {ens_path}")
 
         LOGGER.info(
             f"Saved polygon provider to backing store in {timer.elapsed_s():.2f}s ("

@@ -52,10 +52,10 @@ from webviz_subsurface.plugins._co2_leakage.views.mainview.mainview import (
     MapViewElement,
 )
 from webviz_subsurface.plugins._co2_leakage.views.mainview.settings import ViewSettings
+from webviz_subsurface._providers.ensemble_polygon_provider import PolygonServer
 
 from . import _error
 from ._utilities.color_tables import co2leakage_color_tables
-from webviz_subsurface._providers.ensemble_polygon_provider import PolygonServer
 
 LOGGER = logging.getLogger(__name__)
 TABLES_PATH = "share/results/tables"
@@ -617,18 +617,15 @@ class CO2Leakage(WebvizPluginABC):
                         contour_data,
                     )
                 # Create layers and view bounds
-                fault_polygon_url = (
-                    self._fault_polygon_handlers[ensemble]
-                    .extract_fault_polygon_url(formation, realization)
-                )
-                hazardous_polygon_url = (
-                    self._polygon_handlers[ensemble]
-                    .extract_hazardous_poly_url(realization)
-                )
-                containment_polygon_url = (
-                    self._polygon_handlers[ensemble]
-                    .extract_containment_poly_url(realization)
-                )
+                fault_polygon_url = self._fault_polygon_handlers[
+                    ensemble
+                ].extract_fault_polygon_url(formation, realization)
+                hazardous_polygon_url = self._polygon_handlers[
+                    ensemble
+                ].extract_hazardous_poly_url(realization)
+                containment_polygon_url = self._polygon_handlers[
+                    ensemble
+                ].extract_containment_poly_url(realization)
                 layers = create_map_layers(
                     realizations=realization,
                     formation=formation,

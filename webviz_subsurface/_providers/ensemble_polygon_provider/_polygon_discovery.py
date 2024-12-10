@@ -81,13 +81,9 @@ def discover_per_realization_polygons_files(
         if Path(polygons_pattern).is_absolute():
             filenames = [polygons_pattern]
         else:
-            filenames = glob.glob(
-                str(Path(runpath) / polygons_pattern)
-            )
+            filenames = glob.glob(str(Path(runpath) / polygons_pattern))
         for polygons_filename in sorted(filenames):
-            polygons_ident = _polygons_ident_from_filename(
-                polygons_filename
-            )
+            polygons_ident = _polygons_ident_from_filename(polygons_filename)
             if polygons_ident:
                 polygons_files.append(
                     PolygonsFileInfo(
