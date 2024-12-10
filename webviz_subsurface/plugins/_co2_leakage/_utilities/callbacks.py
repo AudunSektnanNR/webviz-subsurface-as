@@ -287,8 +287,8 @@ def create_map_layers(
     formation: str,
     surface_data: Optional[SurfaceData],
     fault_polygon_url: Optional[str],
-    containment_bounds_provider: Optional[EnsemblePolygonProvider],
-    haz_bounds_provider: Optional[EnsemblePolygonProvider],
+    containment_bounds_url: Optional[str],
+    haz_bounds_url: Optional[str],
     well_pick_provider: Optional[EnsembleWellPicks],
     plume_extent_data: Optional[geojson.FeatureCollection],
     options_dialog_options: List[int],
@@ -325,22 +325,36 @@ def create_map_layers(
         )
 
     if (
-        containment_bounds_provider is not None
-        and len(realizations) > 0
+        containment_bounds_url is not None
         and LayoutLabels.SHOW_CONTAINMENT_POLYGON in options_dialog_options
     ):
-        layer = containment_bounds_provider.geojson_layer(realizations[0])
-        if layer is not None:
-            layers.append(layer)
+        layers.append(
+            {
+                "@@type": "GeoJsonLayer",
+                "name": "Containment Polygon",
+                "id": "license-boundary-layer",
+                "data": containment_bounds_url,
+                "stroked": False,
+                "getFillColor": [0, 172, 0, 120],
+                "visible": True,
+            }
+        )
 
     if (
-        haz_bounds_provider is not None
-        and len(realizations) > 0
+        haz_bounds_url is not None
         and LayoutLabels.SHOW_HAZARDOUS_POLYGON in options_dialog_options
     ):
-        layer = haz_bounds_provider.geojson_layer(realizations[0])
-        if layer is not None:
-            layers.append(layer)
+        layers.append(
+            {
+                "@@type": "GeoJsonLayer",
+                "name": "Hazardous Polygon",
+                "id": "hazardous-boundary-layer",
+                "data": containment_bounds_url,
+                "stroked": False,
+                "getFillColor": [200, 0, 0, 120],
+                "visible": True,
+            }
+        )
 
     if (
         well_pick_provider is not None

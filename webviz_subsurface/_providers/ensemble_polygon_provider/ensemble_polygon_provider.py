@@ -16,8 +16,6 @@ class SimulatedPolygonsAddress:
 
 # Type aliases used for signature readability
 PolygonsAddress = SimulatedPolygonsAddress
-PolygonStyle = Dict[str, Any]
-
 
 # Class provides data for ensemble surfaces
 class EnsemblePolygonProvider(abc.ABC):
@@ -43,7 +41,7 @@ class EnsemblePolygonProvider(abc.ABC):
     def get_polygons(
         self,
         address: PolygonsAddress,
-    ) -> Optional[Tuple[xtgeo.Polygons, PolygonStyle]]:
+    ) -> Optional[xtgeo.Polygons]:
         """Returns fault polygons for a given fault polygons address"""
 
     # @abc.abstractmethod

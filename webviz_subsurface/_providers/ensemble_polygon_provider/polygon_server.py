@@ -11,7 +11,7 @@ from dash import Dash
 
 from .ensemble_polygon_provider import (
     EnsemblePolygonProvider,
-    PolygonsAddress, PolygonStyle,
+    PolygonsAddress,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -91,11 +91,10 @@ class PolygonServer:
 
             address = PolygonsAddress(**json.loads(polygons_address))
             provider = self._id_to_provider_dict[provider_id]
-            polygons_and_style = provider.get_polygons(address)
-            if polygons_and_style is not None:
+            polygons = provider.get_polygons(address)
+            if polygons is not None:
                 polygons_geojson = _create_polygons_geojson(
-                    polygons=polygons_and_style[0],
-                    style=polygons_and_style[1],
+                    polygons=polygons,
                 )
 
             # except Exception as e:
@@ -116,9 +115,9 @@ class PolygonServer:
             )
 
 
-def _create_polygons_geojson(polygons: xtgeo.Polygons, style: PolygonStyle) -> Dict:
+def _create_polygons_geojson(polygons: xtgeo.Polygons) -> Dict:
     feature_arr = []
-    prop_style = dict(color=[0, 0, 0, 255], **style)
+    prop_style = dict(color=[0, 0, 0, 255])
     for name, polygon in polygons.dataframe.groupby("POLY_ID"):
         coords = [list(zip(polygon.X_UTME, polygon.Y_UTMN))]
         feature = geojson.Feature(

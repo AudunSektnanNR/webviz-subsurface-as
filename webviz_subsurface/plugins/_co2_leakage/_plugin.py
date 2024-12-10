@@ -34,18 +34,18 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     MapAttribute,
     MapThresholds,
     MapType,
+    BoundaryOptions,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
-    init_containment_boundary_providers,
     init_containment_data_providers,
     init_dictionary_of_content,
-    init_hazardous_boundary_providers,
     init_map_attribute_names,
     init_menu_options,
     init_realizations,
     init_surface_providers,
     init_unsmry_data_providers,
-    init_well_pick_provider, init_boundary_polygon_providers,
+    init_well_pick_provider,
+    init_polygon_provider_handlers,
 )
 from webviz_subsurface.plugins._co2_leakage.views.mainview.mainview import (
     MainView,
@@ -55,6 +55,7 @@ from webviz_subsurface.plugins._co2_leakage.views.mainview.settings import ViewS
 
 from . import _error
 from ._utilities.color_tables import co2leakage_color_tables
+from webviz_subsurface._providers.ensemble_polygon_provider import PolygonServer
 
 LOGGER = logging.getLogger(__name__)
 TABLES_PATH = "share/results/tables"
@@ -100,8 +101,6 @@ class CO2Leakage(WebvizPluginABC):
         app: Dash,
         webviz_settings: WebvizSettings,
         ensembles: List[str],
-        file_containment_boundary: Optional[str] = None,
-        file_hazardous_boundary: Optional[str] = None,
         well_pick_file: Optional[str] = None,
         plume_mass_relpath: str = TABLES_PATH + "/plume_mass.csv",
         plume_actual_volume_relpath: str = TABLES_PATH + "/plume_actual_volume.csv",
@@ -111,6 +110,7 @@ class CO2Leakage(WebvizPluginABC):
         map_attribute_names: Optional[Dict[str, str]] = None,
         map_surface_names_to_well_pick_names: Optional[Dict[str, str]] = None,
         map_surface_names_to_fault_polygons: Optional[Dict[str, str]] = None,
+        boundary_options: Optional[BoundaryOptions] = None,  # TODO: reflect on name
     ):
         super().__init__()
         self._error_message = ""
@@ -156,18 +156,10 @@ class CO2Leakage(WebvizPluginABC):
                 ensemble_paths,
                 unsmry_relpath,
             )
-            self._boundary_polygon_provider = init_boundary_polygon_providers(
+            self._polygon_handlers = init_polygon_provider_handlers(
+                PolygonServer.instance(app),
                 ensemble_paths,
-                file_hazardous_boundary,  # TODO: find a common pattern for both haz and contain
-                {},  # TODO: find a way to link attribute to haz/contain, and further to style. Color choice can be hard-coded initially
-            )
-            self._haz_bounds_provider = init_hazardous_boundary_providers(
-                ensemble_paths,
-                file_hazardous_boundary,
-            )
-            self._containment_bounds_provider = init_containment_boundary_providers(
-                ensemble_paths,
-                file_containment_boundary,
+                boundary_options,
             )
             # Well picks
             self._well_pick_provider = init_well_pick_provider(
@@ -625,22 +617,25 @@ class CO2Leakage(WebvizPluginABC):
                         contour_data,
                     )
                 # Create layers and view bounds
+                fault_polygon_url = (
+                    self._fault_polygon_handlers[ensemble]
+                    .extract_fault_polygon_url(formation, realization)
+                )
+                hazardous_polygon_url = (
+                    self._polygon_handlers[ensemble]
+                    .extract_hazardous_poly_url(realization)
+                )
+                containment_polygon_url = (
+                    self._polygon_handlers[ensemble]
+                    .extract_containment_poly_url(realization)
+                )
                 layers = create_map_layers(
                     realizations=realization,
                     formation=formation,
                     surface_data=surf_data,
-                    fault_polygon_url=(
-                        self._fault_polygon_handlers[
-                            ensemble
-                        ].extract_fault_polygon_url(
-                            formation,
-                            realization,
-                        )
-                    ),
-                    containment_bounds_provider=self._containment_bounds_provider.get(
-                        ensemble, None
-                    ),
-                    haz_bounds_provider=self._haz_bounds_provider.get(ensemble, None),
+                    fault_polygon_url=fault_polygon_url,
+                    containment_bounds_url=containment_polygon_url,
+                    haz_bounds_url=hazardous_polygon_url,
                     well_pick_provider=self._well_pick_provider.get(ensemble, None),
                     plume_extent_data=plume_polygon,
                     options_dialog_options=options_dialog_options,

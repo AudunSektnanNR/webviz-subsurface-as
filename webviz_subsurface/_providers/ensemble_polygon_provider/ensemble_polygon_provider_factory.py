@@ -13,7 +13,7 @@ from webviz_subsurface._utils.perf_timer import PerfTimer
 
 from ._polygon_discovery import discover_per_realization_polygons_files
 from ._provider_impl_file import ProviderImplFile
-from .ensemble_polygon_provider import EnsemblePolygonProvider, PolygonStyle
+from .ensemble_polygon_provider import EnsemblePolygonProvider
 
 LOGGER = logging.getLogger(__name__)
 
@@ -55,7 +55,6 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
         self,
         ens_path: str,
         polygon_path_pattern: str,
-        polygon_styles: Dict[str, PolygonStyle],
     ) -> EnsemblePolygonProvider:
         timer = PerfTimer()
 
@@ -86,7 +85,6 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
             self._storage_dir,
             storage_key,
             sim_polygons=sim_polygons_files,
-            poly_styles=polygon_styles,
         )
         et_write_s = timer.lap_s()
 
