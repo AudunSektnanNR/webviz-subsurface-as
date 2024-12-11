@@ -29,7 +29,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     MapAttribute,
     MapNamingConvention,
     MenuOptions,
-    BoundaryOptions,
+    BoundarySettings,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.polygon_handler import (
     PolygonHandler,
@@ -121,12 +121,13 @@ def init_well_pick_provider(
 def init_polygon_provider_handlers(
     server: PolygonServer,
     ensemble_paths: Dict[str, str],
-    options: Optional[BoundaryOptions],
+    options: Optional[BoundarySettings],
 ) -> Dict[str, PolygonHandler]:
-    filled_options: BoundaryOptions = {
-        "polygon_pattern": "share/results/polygon/*.pol",
-        "hazardous_attribute": "hazardous",
-        "containment_attribute": "containment",
+    filled_options: BoundarySettings = {
+        "polygon_file_pattern": "share/results/polygon/*.csv",
+        "attribute": "boundary",
+        "hazardous_name": "hazardous",
+        "containment_name": "containment",
     }
     if options is not None:
         filled_options.update(options)

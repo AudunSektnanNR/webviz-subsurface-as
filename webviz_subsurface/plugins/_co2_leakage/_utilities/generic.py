@@ -191,7 +191,8 @@ class MapThresholds:
             self.standard_thresholds[MapAttribute.MAX_AMFG] = 0.0005
 
 
-class BoundaryOptions(TypedDict):
-    polygon_pattern: str
-    hazardous_attribute: str
-    containment_attribute: str
+class BoundarySettings(TypedDict):
+    polygon_file_pattern: str
+    attribute: str
+    hazardous_name: str
+    containment_name: str

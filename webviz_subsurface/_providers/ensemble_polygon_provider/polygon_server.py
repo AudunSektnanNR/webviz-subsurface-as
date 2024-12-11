@@ -77,7 +77,7 @@ class PolygonServer:
 
     def _setup_url_rule(self, app: Dash) -> None:
         @app.server.route(_ROOT_URL_PATH + "/<provider_id>/<polygons_address>")
-        def _handle_fault_polygons_request(
+        def _handle_polygons_request(
             provider_id: str,
             polygons_address: str,
         ) -> flask.Response:
@@ -98,7 +98,7 @@ class PolygonServer:
                 )
 
             # except Exception as e:
-            #     LOGGER.error("Error decoding fault polygons address")
+            #     LOGGER.error("Error decoding polygons address")
             #     print(e)
             #     # flask.abort(404)
             featurecoll = (

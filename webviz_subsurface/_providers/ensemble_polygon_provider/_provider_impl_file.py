@@ -159,7 +159,7 @@ class ProviderImplFile(EnsemblePolygonProvider):
 
         timer = PerfTimer()
 
-        polygons_fns: List[str] = self._locate_simulated_polygons(
+        polygons_fns: List[Path] = self._locate_simulated_polygons(
             attribute=address.attribute,
             name=address.name,
             realizations=[address.realization],
@@ -174,7 +174,10 @@ class ProviderImplFile(EnsemblePolygonProvider):
                 "Returning first fault polygons."
             )
 
-        polygons = xtgeo.polygons_from_file(polygons_fns[0])
+        if polygons_fns[0].suffix == ".csv":
+            polygons = xtgeo.Polygons(pd.read_csv(polygons_fns[0]))
+        else:
+            polygons = xtgeo.polygons_from_file(polygons_fns[0])
 
         LOGGER.debug(f"Loaded simulated fault polygons in: {timer.elapsed_s():.2f}s")
 
@@ -182,7 +185,7 @@ class ProviderImplFile(EnsemblePolygonProvider):
 
     def _locate_simulated_polygons(
         self, attribute: str, name: str, realizations: List[int]
-    ) -> List[str]:
+    ) -> List[Path]:
         """Returns list of file names matching the specified filter criteria"""
         df = self._inventory_df.loc[
             self._inventory_df[Col.TYPE] == PolygonType.SIMULATED

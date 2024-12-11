@@ -34,7 +34,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     MapAttribute,
     MapThresholds,
     MapType,
-    BoundaryOptions,
+    BoundarySettings,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
     init_containment_data_providers,
@@ -110,7 +110,7 @@ class CO2Leakage(WebvizPluginABC):
         map_attribute_names: Optional[Dict[str, str]] = None,
         map_surface_names_to_well_pick_names: Optional[Dict[str, str]] = None,
         map_surface_names_to_fault_polygons: Optional[Dict[str, str]] = None,
-        boundary_options: Optional[BoundaryOptions] = None,  # TODO: reflect on name
+        boundary_settings: Optional[BoundarySettings] = None,
     ):
         super().__init__()
         self._error_message = ""
@@ -159,7 +159,7 @@ class CO2Leakage(WebvizPluginABC):
             self._polygon_handlers = init_polygon_provider_handlers(
                 PolygonServer.instance(app),
                 ensemble_paths,
-                boundary_options,
+                boundary_settings,
             )
             # Well picks
             self._well_pick_provider = init_well_pick_provider(

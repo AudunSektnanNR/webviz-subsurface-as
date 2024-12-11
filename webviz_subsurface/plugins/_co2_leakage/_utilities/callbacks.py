@@ -346,7 +346,7 @@ def create_map_layers(
                 "@@type": "GeoJsonLayer",
                 "name": "Hazardous Polygon",
                 "id": "hazardous-boundary-layer",
-                "data": containment_bounds_url,
+                "data": haz_bounds_url,
                 "stroked": False,
                 "getFillColor": [200, 0, 0, 120],
                 "visible": True,
