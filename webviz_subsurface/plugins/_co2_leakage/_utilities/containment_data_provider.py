@@ -101,9 +101,9 @@ class ContainmentDataProvider:
         plume_groups = sorted(plume_groups, key=plume_sort_key)
 
         if "free_gas" in list(df["phase"]):
-            phases = ["total", "free_gas", "trapped_gas", "aqueous"]
+            phases = ["total", "free_gas", "trapped_gas", "dissolved"]
         else:
-            phases = ["total", "gas", "aqueous"]
+            phases = ["total", "gas", "dissolved"]
         return {
             "zones": zones if len(zones) > 1 else [],
             "regions": regions if len(regions) > 1 else [],
