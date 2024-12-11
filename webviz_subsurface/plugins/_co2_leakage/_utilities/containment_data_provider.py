@@ -94,7 +94,7 @@ class ContainmentDataProvider:
                 plume_groups.append(plume_group)
 
         def plume_sort_key(name: str) -> int:
-            if name == "?":
+            if name == "undetermined":
                 return 999
             return name.count("+")
 

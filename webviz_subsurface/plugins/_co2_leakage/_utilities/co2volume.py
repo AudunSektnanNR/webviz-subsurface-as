@@ -543,11 +543,13 @@ def _connect_plume_groups(
         cols.append(mark_choice)
     elif mark_choice == "plume_group":
         cols.append(color_choice)
+    if len(cols) == 1:
+        cols = cols[0]
     # Find points where plumes start or end, to connect the lines
     end_points = []
     start_points = []
     for plume_name, df_sub in df.groupby("plume_group"):
-        if plume_name == "?":
+        if plume_name == "undetermined":
             continue
         for _, df_sub2 in df_sub.groupby(cols):
             # Assumes the data frame is sorted on date
