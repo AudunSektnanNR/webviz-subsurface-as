@@ -93,8 +93,9 @@ class ContainmentDataProvider:
         plume_groups = ["all"]
         if "plume_group" in df:
             for plume_group in list(df["plume_group"]):
-                if plume_group not in plume_groups:
+                if plume_group not in plume_groups and plume_group is not None:
                     plume_groups.append(plume_group)
+
 
         def plume_sort_key(name: Optional[str]) -> int:
             if name is None:
