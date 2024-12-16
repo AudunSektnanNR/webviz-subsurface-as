@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 import pandas as pd
 
@@ -81,21 +81,26 @@ class ContainmentDataProvider:
         # NBNB: WARNING and empty for zones / regions, and Error if phases are different?
         df = provider.get_column_data(col_names, [realization])
         zones = ["all"]
-        for zone in list(df["zone"]):
-            if zone not in zones:
-                zones.append(zone)
+        if "zone" in df:
+            for zone in list(df["zone"]):
+                if zone not in zones:
+                    zones.append(zone)
         regions = ["all"]
-        for region in list(df["region"]):
-            if region not in regions:
-                regions.append(region)
+        if "region" in df:
+            for region in list(df["region"]):
+                if region not in regions:
+                    regions.append(region)
         plume_groups = ["all"]
-        for plume_group in list(df["plume_group"]):
-            if plume_group not in plume_groups:
-                plume_groups.append(plume_group)
+        if "plume_group" in df:
+            for plume_group in list(df["plume_group"]):
+                if plume_group not in plume_groups:
+                    plume_groups.append(plume_group)
 
-        def plume_sort_key(name: str) -> int:
+        def plume_sort_key(name: Optional[str]) -> int:
+            if name is None:
+                return 999  # Not sure why/when this can happen, just a precaution
             if name == "undetermined":
-                return 999
+                return 998
             return name.count("+")
 
         plume_groups = sorted(plume_groups, key=plume_sort_key)
