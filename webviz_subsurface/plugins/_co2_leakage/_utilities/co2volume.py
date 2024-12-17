@@ -742,7 +742,12 @@ def generate_co2_statistics_figure(
     print(df)
     _filter_columns_statistics_plot(df, containment_info)
     print(df)
-    # df = df.append({'Values': min_value - 0.01}, ignore_index=True)
+    if True:
+        min_amount = df["amount"].min()
+        print(f"min_amount: {min_amount}")
+        # df = df.append({"amount": min_amount - 0.00001, "realization": -1}, ignore_index=True)
+        df.loc[len(df)] = {"amount": min_amount - 0.00001, "realization": -1}
+        print(df)
     fig = px.ecdf(df, x="amount")  # , color=".."
     # fig = px.scatter(df, x="sepal_width", y="sepal_length", color="species")
     # fig = px.area(df,
@@ -750,7 +755,6 @@ def generate_co2_statistics_figure(
     #     y="amount")
     fig.layout.xaxis.title = scale.value
     fig.layout.yaxis.title = "Probability"
-    fig.layout.xaxis.range = (0.0, None)
     _adjust_figure(fig)
     fig.update_traces(mode="lines+markers")
 
