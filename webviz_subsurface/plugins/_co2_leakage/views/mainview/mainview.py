@@ -26,7 +26,7 @@ class MapViewElement(ViewElementABC):
         DATE_WRAPPER = "date-wrapper"
         BAR_PLOT = "bar-plot"
         TIME_PLOT = "time-plot"
-        # TIME_PLOT_ONE_REAL = "time-plot-one-realization" # NBNB-third-tab
+        STATISTICS_PLOT = "time-plot-one-realization"
         BAR_PLOT_ORDER = "bar-plot-order"
         CONTAINMENT_COLORS = "containment-order"
         SIZE_SLIDER = "size-slider"
@@ -99,9 +99,9 @@ class MapViewElement(ViewElementABC):
                             _summary_graph_layout(
                                 self.register_component_unique_id(self.Ids.BAR_PLOT),
                                 self.register_component_unique_id(self.Ids.TIME_PLOT),
-                                # self.register_component_unique_id(
-                                #    self.Ids.TIME_PLOT_ONE_REAL
-                                # ), # NBNB-third-tab
+                                self.register_component_unique_id(
+                                   self.Ids.STATISTICS_PLOT
+                                ),
                             )
                         ),
                     ],
@@ -143,7 +143,7 @@ class MapViewElement(ViewElementABC):
 def _summary_graph_layout(
     bar_plot_id: str,
     time_plot_id: str,
-    # time_plot_one_realization_id: str, # NBNB-third-tab
+    statistics_plot_id: str,
 ) -> List:
     return [
         wcc.Tabs(
@@ -180,22 +180,21 @@ def _summary_graph_layout(
                         ),
                     ],
                 ),
-                # NBNB-third-tab
-                # wcc.Tab(
-                #    label="Placeholder",
-                #    value="tab-3",
-                #    children=[
-                #        html.Div(
-                #            wcc.Graph(
-                #                id=time_plot_one_realization_id,
-                #                figure=go.Figure(),
-                #                config={
-                #                    "displayModeBar": False,
-                #                },
-                #            ),
-                #        ),
-                #    ],
-                # ),
+                wcc.Tab(
+                   label="Placeholder",
+                   value="tab-3",
+                   children=[
+                       html.Div(
+                           wcc.Graph(
+                               id=statistics_plot_id,
+                               figure=go.Figure(),
+                               config={
+                                   "displayModeBar": False,
+                               },
+                           ),
+                       ),
+                   ],
+                ),
             ],
         ),
     ]

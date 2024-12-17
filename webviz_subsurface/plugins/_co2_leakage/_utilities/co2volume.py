@@ -267,6 +267,20 @@ def _filter_columns(
     df.drop(columns=filter_columns, inplace=True)
 
 
+def _filter_columns_statistics_plot(
+    df: pd.DataFrame,
+    containment_info: Dict,
+) -> None:
+    df.query(f'date == "2500-01-01"', inplace=True)
+    df.query(f'phase == "total"', inplace=True)
+    df.query(f'containment == "hazardous"', inplace=True)
+    df.query(f'zone == "all"', inplace=True)
+    df.query(f'region == "all"', inplace=True)
+    df.query(f'plume_group == "all"', inplace=True)
+    df.drop(columns=["date", "phase", "containment", "zone", "region", "plume_group"], inplace=True)
+    df.drop(columns=["REAL"], inplace=True)
+
+
 def _filter_rows(
     df: pd.DataFrame,
     color_choice: str,
@@ -714,3 +728,31 @@ def generate_co2_time_containment_figure(
     fig.layout.yaxis.autorange = True
     _adjust_figure(fig)
     return fig
+
+
+# pylint: disable=too-many-locals
+def generate_co2_statistics_figure(
+    table_provider: ContainmentDataProvider,
+    realizations: List[int],
+    scale: Union[Co2MassScale, Co2VolumeScale],
+    containment_info: Dict[str, Any],
+) -> go.Figure:
+    df = _read_co2_volumes(table_provider, realizations, scale)
+    # Temp filtering:
+    print(df)
+    _filter_columns_statistics_plot(df, containment_info)
+    print(df)
+    # df = df.append({'Values': min_value - 0.01}, ignore_index=True)
+    fig = px.ecdf(df, x="amount")  # , color=".."
+    # fig = px.scatter(df, x="sepal_width", y="sepal_length", color="species")
+    # fig = px.area(df,
+    #     x="date",
+    #     y="amount")
+    fig.layout.xaxis.title = scale.value
+    fig.layout.yaxis.title = "Probability"
+    fig.layout.xaxis.range = (0.0, None)
+    _adjust_figure(fig)
+    fig.update_traces(mode="lines+markers")
+
+    return fig
+    # return go.Figure()
