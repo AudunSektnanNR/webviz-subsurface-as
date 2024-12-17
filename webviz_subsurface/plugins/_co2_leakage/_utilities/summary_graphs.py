@@ -45,7 +45,7 @@ def generate_summary_figure(
         containment_reference["phase"] == "free_gas"
     ]["amount"].iloc[-1]
     containment_last_dissolved = containment_reference[
-        containment_reference["phase"] == "aqueous"
+        containment_reference["phase"] == "dissolved"
     ]["amount"].iloc[-1]
     # ---
     last_total_err_percentage = (
@@ -114,7 +114,7 @@ def generate_summary_figure(
     _col_names = {
         "total": "total",
         "free_gas": "mobile",
-        "aqueous": "dissolved",
+        "dissolved": "dissolved",
         "trapped_gas": "trapped",
     }
 
