@@ -61,6 +61,9 @@ class MapNamingConvention(StrEnum):
     MAX_GAS_PHASE = "max_gas_phase"
     MAX_DISSOLVED_PHASE = "max_dissolved_phase"
     MAX_TRAPPED_PHASE = "max_trapped_phase"
+    GAS_PHASE_PLUME = "plume_indicator_gas_phase"
+    DISSOLVED_PHASE_PLUME = "plume_indicator_dissolved_phase"
+    TRAPPED_PHASE_PLUME = "plume_indicator_trapped_phase"
     MASS = "co2_mass_total"
     DISSOLVED = "co2_mass_dissolved_phase"
     FREE = "co2_mass_gas_phase"
@@ -71,23 +74,6 @@ class MapNamingConvention(StrEnum):
 class FilteredMapAttribute:
     def __init__(self, mapping: Dict):
         self.mapping = mapping
-        map_types = {
-            key: MapType[key].value
-            for key in MapAttribute.__members__
-            if MapAttribute[key].value in self.mapping
-        }
-        map_groups = {
-            key: MapGroup[key].value
-            for key in MapAttribute.__members__
-            if MapAttribute[key].value in self.mapping
-        }
-        map_attrs_with_plume = [
-            map_groups[key] for key, value in map_types.items() if value == "MAX"
-        ]
-        plume_request = {
-            f"Plume ({item})": f"{item.lower()}_plume" for item in map_attrs_with_plume
-        }
-        self.mapping.update(plume_request)
         self.filtered_values = self.filter_map_attribute()
 
     def filter_map_attribute(self) -> Dict:
