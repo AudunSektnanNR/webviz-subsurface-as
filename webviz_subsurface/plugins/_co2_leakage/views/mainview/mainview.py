@@ -26,7 +26,7 @@ class MapViewElement(ViewElementABC):
         DATE_WRAPPER = "date-wrapper"
         BAR_PLOT = "bar-plot"
         TIME_PLOT = "time-plot"
-        STATISTICS_PLOT = "time-plot-one-realization"
+        STATISTICS_PLOT = "statistics-plot"
         BAR_PLOT_ORDER = "bar-plot-order"
         CONTAINMENT_COLORS = "containment-order"
         SIZE_SLIDER = "size-slider"
@@ -181,7 +181,7 @@ def _summary_graph_layout(
                     ],
                 ),
                 wcc.Tab(
-                   label="Placeholder",
+                   label="End-state statistics",
                    value="tab-3",
                    children=[
                        html.Div(

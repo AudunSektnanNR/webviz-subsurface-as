@@ -233,10 +233,18 @@ def _read_terminal_co2_volumes(
     records[color_choice] = []
     if mark_choice != "none":
         records[mark_choice] = []
+    #print("Empty records:")
+    #print(records)
     data_frame = None
     for real in realizations:
+        # if real == 3:
+        #     print(f"real: {real}")
         df = table_provider.extract_dataframe(real, scale)
+        # if real == 3:
+        #     print(df)
         df = df[df["date"] == np.max(df["date"])]
+        # if real == 3:
+        #     print(df)
         _add_sort_key_and_real(df, str(real), containment_info)
         _filter_columns(df, color_choice, mark_choice, containment_info)
         _filter_rows(df, color_choice, mark_choice)
@@ -277,7 +285,8 @@ def _filter_columns_statistics_plot(
     df.query(f'zone == "all"', inplace=True)
     df.query(f'region == "all"', inplace=True)
     df.query(f'plume_group == "all"', inplace=True)
-    df.drop(columns=["date", "phase", "containment", "zone", "region", "plume_group"], inplace=True)
+    # df.drop(columns=["containment", "phase", "zone", "region", "plume_group"], inplace=True)
+    df.drop(columns=["date", "containment", "phase", "zone", "region", "plume_group"], inplace=True)
     df.drop(columns=["REAL"], inplace=True)
 
 
@@ -396,9 +405,12 @@ def generate_co2_volume_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
 ) -> go.Figure:
+    print("\nAAAA")
     df = _read_terminal_co2_volumes(
         table_provider, realizations, scale, containment_info
     )
+    print("\ndf in generate_co2_volume_figure():")
+    print(df)
     color_choice = containment_info["color_choice"]
     mark_choice = containment_info["mark_choice"]
     _add_prop_to_df(df, [str(r) for r in realizations], "real")
@@ -408,6 +420,8 @@ def generate_co2_volume_figure(
         color_choice,
         mark_choice,
     )
+    print("\nAfter prepare:")
+    print(df)
     fig = px.bar(
         df,
         y="real",
@@ -628,12 +642,18 @@ def generate_co2_time_containment_figure(
     containment_info: Dict[str, Any],
 ) -> go.Figure:
     df = _read_co2_volumes(table_provider, realizations, scale)
+    print("\ndf in generate_co2_time_containment_figure():")
+    print(df)
     color_choice = containment_info["color_choice"]
     mark_choice = containment_info["mark_choice"]
     _filter_columns(df, color_choice, mark_choice, containment_info)
+    print("\nAfter filtering")
+    print(df)
     options = _prepare_line_type_and_color_options(
         df, containment_info, color_choice, mark_choice
     )
+    print("\nAfter preparing options")
+    print(df)
     active_cols_at_startup = list(
         options[options["line_type"].isin(["solid", "0px"])]["name"]
     )
@@ -738,17 +758,46 @@ def generate_co2_statistics_figure(
     containment_info: Dict[str, Any],
 ) -> go.Figure:
     df = _read_co2_volumes(table_provider, realizations, scale)
+    # df = _read_terminal_co2_volumes(
+    #     table_provider, realizations, scale, containment_info
+    # )
+    print("\n\nBBBB")
+    print(df)
+    df = df[df["date"] == np.max(df["date"])]
+    print(df)
+    color_choice = containment_info["color_choice"]
+    mark_choice = containment_info["mark_choice"]
+    # print(df)
+    #
+    _filter_columns(df, color_choice, mark_choice, containment_info)
+    print(df)
+    # options = _prepare_line_type_and_color_options(
+    #     df, containment_info, color_choice, mark_choice
+    # )
+    # print("\n\nCCCC")
+    # print(df)
     # Temp filtering:
-    print(df)
-    _filter_columns_statistics_plot(df, containment_info)
-    print(df)
-    if True:
+    # print(df)
+    # _filter_columns_statistics_plot(df, containment_info)
+    # print(df)
+    if False:
         min_amount = df["amount"].min()
         print(f"min_amount: {min_amount}")
         # df = df.append({"amount": min_amount - 0.00001, "realization": -1}, ignore_index=True)
         df.loc[len(df)] = {"amount": min_amount - 0.00001, "realization": -1}
         print(df)
-    fig = px.ecdf(df, x="amount")  # , color=".."
+    fig = px.ecdf(
+        df,
+        x="amount",
+        color=color_choice,
+        line_dash=mark_choice,
+        ecdfmode="complementary",  # or reversed
+        markers=True,
+        # marginal="histogram",
+        # animation_frame = "date",
+        # animation_group = "country",
+    )
+
     # fig = px.scatter(df, x="sepal_width", y="sepal_length", color="species")
     # fig = px.area(df,
     #     x="date",
@@ -756,7 +805,7 @@ def generate_co2_statistics_figure(
     fig.layout.xaxis.title = scale.value
     fig.layout.yaxis.title = "Probability"
     _adjust_figure(fig)
-    fig.update_traces(mode="lines+markers")
+    # fig.update_traces(mode="lines+markers")
 
     return fig
     # return go.Figure()
