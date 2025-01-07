@@ -234,6 +234,7 @@ def init_dictionary_of_content(
     content["maps"] = has_maps
     content["zones"] = False
     content["regions"] = False
+    content["plume_groups"] = False
     if content["mass"] or content["volume"]:
         content["zones"] = max(
             len(inner_dict["zones"]) > 0
@@ -242,6 +243,11 @@ def init_dictionary_of_content(
         )
         content["regions"] = max(
             len(inner_dict["regions"]) > 0
+            for outer_dict in menu_options.values()
+            for inner_dict in outer_dict.values()
+        )
+        content["plume_groups"] = max(
+            len(inner_dict["plume_groups"]) > 0
             for outer_dict in menu_options.values()
             for inner_dict in outer_dict.values()
         )

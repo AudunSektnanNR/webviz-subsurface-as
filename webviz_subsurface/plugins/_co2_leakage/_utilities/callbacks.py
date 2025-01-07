@@ -129,7 +129,7 @@ def derive_surface_address(
     contour_data: Optional[Dict[str, Any]],
 ) -> Union[SurfaceAddress, TruncatedSurfaceAddress]:
     if MapType[MapAttribute(attribute).name].value == "PLUME":
-        max_attr_name = f"MAX_{MapGroup[MapAttribute(attribute).name]}"
+        max_attr_name = f"MAX_{MapGroup[MapAttribute(attribute).name]}".upper()
         assert date is not None
         basis = getattr(MapAttribute, max_attr_name)
         return TruncatedSurfaceAddress(
@@ -382,30 +382,43 @@ def create_map_layers(
 def generate_containment_figures(
     table_provider: ContainmentDataProvider,
     co2_scale: Union[Co2MassScale, Co2VolumeScale],
-    realization: int,
+    realizations: List[int],
     y_limits: List[Optional[float]],
     containment_info: Dict[str, Union[str, None, List[str], int]],
-) -> Tuple[go.Figure, go.Figure, go.Figure]:
+) -> Tuple[go.Figure, go.Figure]:  # , go.Figure]: # NBNB-third-tab
     try:
-        fig0 = generate_co2_volume_figure(
-            table_provider,
-            table_provider.realizations,
-            co2_scale,
-            containment_info,
+        fig0 = (
+            no_update
+            if not containment_info["update_first_figure"]
+            else generate_co2_volume_figure(
+                table_provider,
+                table_provider.realizations,
+                co2_scale,
+                containment_info,
+            )
         )
-        fig1 = generate_co2_time_containment_figure(
-            table_provider,
-            table_provider.realizations,
-            co2_scale,
-            containment_info,
+        fig1 = (
+            generate_co2_time_containment_figure(
+                table_provider,
+                realizations,
+                co2_scale,
+                containment_info,
+            )
+            if len(realizations) > 1
+            else generate_co2_time_containment_one_realization_figure(
+                table_provider,
+                co2_scale,
+                realizations[0],
+                y_limits,
+                containment_info,
+            )
         )
-        fig2 = generate_co2_time_containment_one_realization_figure(
-            table_provider, co2_scale, realization, y_limits, containment_info
-        )
+        # fig2 = go.Figure()
+        # NBNB-third-tab
     except KeyError as exc:
         warnings.warn(f"Could not generate CO2 figures: {exc}")
         raise exc
-    return fig0, fig1, fig2
+    return fig0, fig1  # , fig2 # NBNB-third-tab
 
 
 def generate_unsmry_figures(
@@ -431,10 +444,11 @@ def process_visualization_info(
     Clear surface cache if the threshold for visualization or mass unit is changed
     """
     stored_info["attribute"] = attribute
-    if MapType[MapAttribute(attribute).name].value in ["PLUME", "MIGRATION_TIME"]:
-        return stored_info
     stored_info["change"] = False
-    if unit != stored_info["unit"]:
+    if (
+        MapType[MapAttribute(attribute).name].value not in ["PLUME", "MIGRATION_TIME"]
+        and unit != stored_info["unit"]
+    ):
         stored_info["unit"] = unit
         stored_info["change"] = True
     if thresholds is not None:
@@ -452,19 +466,32 @@ def process_containment_info(
     region: Optional[str],
     phase: str,
     containment: str,
+    plume_group: str,
     color_choice: str,
     mark_choice: Optional[str],
     sorting: str,
+    lines_to_show: str,
     menu_options: MenuOptions,
 ) -> Dict[str, Union[str, None, List[str], int]]:
     if mark_choice is None:
         mark_choice = "phase"
     zones = menu_options["zones"]
     regions = menu_options["regions"]
+    plume_groups = menu_options["plume_groups"]
     if len(zones) > 0:
         zones = [zone_name for zone_name in zones if zone_name != "all"]
     if len(regions) > 0:
         regions = [reg_name for reg_name in regions if reg_name != "all"]
+    if len(plume_groups) > 0:
+        plume_groups = [pg_name for pg_name in plume_groups if pg_name != "all"]
+
+        def plume_sort_key(name: str) -> int:
+            if name == "undetermined":
+                return 999
+            return name.count("+")
+
+        plume_groups = sorted(plume_groups, key=plume_sort_key)
+
     containments = ["hazardous", "outside", "contained"]
     phases = [phase for phase in menu_options["phases"] if phase != "total"]
     if "zone" in [mark_choice, color_choice]:
@@ -478,45 +505,70 @@ def process_containment_info(
         "regions": regions,
         "phase": phase,
         "containment": containment,
+        "plume_group": plume_group,
         "color_choice": color_choice,
         "mark_choice": mark_choice,
         "sorting": sorting,
         "phases": phases,
         "containments": containments,
+        "plume_groups": plume_groups,
+        "use_stats": lines_to_show == "stat",
     }
 
 
-def set_plot_ids(
-    figs: List[go.Figure],
+def make_plot_ids(
+    ensemble: str,
     source: GraphSource,
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict,
     realizations: List[int],
+    lines_to_show: str,
+    num_figs: int,
+) -> List[str]:
+    zone_str = (
+        containment_info["zone"] if containment_info["zone"] is not None else "None"
+    )
+    region_str = (
+        containment_info["region"] if containment_info["region"] is not None else "None"
+    )
+    plume_group_str = (
+        containment_info["plume_group"]
+        if containment_info["plume_group"] is not None
+        else "None"
+    )
+    mark_choice_str = (
+        containment_info["mark_choice"]
+        if containment_info["mark_choice"] is not None
+        else "None"
+    )
+    plot_id = "-".join(
+        (
+            ensemble,
+            source,
+            scale,
+            zone_str,
+            region_str,
+            plume_group_str,
+            str(containment_info["phase"]),
+            str(containment_info["containment"]),
+            containment_info["color_choice"],
+            mark_choice_str,
+            containment_info["sorting"],
+        )
+    )
+    ids = [plot_id]
+    ids += [plot_id + f"-{realizations}"] * (num_figs - 1)
+    ids[1] += f"-{lines_to_show}"
+    return ids
+
+
+def set_plot_ids(
+    figs: List[go.Figure],
+    plot_ids: List[str],
 ) -> None:
-    if figs[0] != no_update:
-        zone_str = (
-            containment_info["zone"] if containment_info["zone"] is not None else "None"
-        )
-        region_str = (
-            containment_info["region"]
-            if containment_info["region"] is not None
-            else "None"
-        )
-        plot_id = "-".join(
-            (
-                source,
-                scale,
-                zone_str,
-                region_str,
-                str(containment_info["phase"]),
-                str(containment_info["containment"]),
-                containment_info["color_choice"],
-                containment_info["mark_choice"],
-            )
-        )
-        for fig in figs:
+    for fig, plot_id in zip(figs, plot_ids):
+        if fig != no_update:
             fig["layout"]["uirevision"] = plot_id
-        figs[-1]["layout"]["uirevision"] += f"-{realizations}"
 
 
 def process_summed_mass(

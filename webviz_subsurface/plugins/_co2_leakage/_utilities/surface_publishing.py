@@ -50,7 +50,10 @@ def publish_and_get_surface_metadata(
     map_attribute_names: FilteredMapAttribute,
 ) -> Tuple[Optional[SurfaceImageMeta], Optional[str], Optional[Any]]:
     if isinstance(address, TruncatedSurfaceAddress):
-        return _publish_and_get_truncated_surface_metadata(server, provider, address)
+        return (
+            *_publish_and_get_truncated_surface_metadata(server, provider, address),
+            None,
+        )
     provider_id: str = provider.provider_id()
     qualified_address = QualifiedSurfaceAddress(provider_id, address)
     surf_meta = server.get_surface_metadata(qualified_address)
@@ -93,7 +96,7 @@ def _publish_and_get_truncated_surface_metadata(
     server: SurfaceImageServer,
     provider: EnsembleSurfaceProvider,
     address: TruncatedSurfaceAddress,
-) -> Tuple[Optional[SurfaceImageMeta], str, Optional[Any]]:
+) -> Tuple[Optional[SurfaceImageMeta], str]:
     qualified_address = QualifiedSurfaceAddress(
         provider.provider_id(),
         # TODO: Should probably use a dedicated address type for this. Statistical surface
@@ -109,15 +112,13 @@ def _publish_and_get_truncated_surface_metadata(
         ),
     )
     surf_meta = server.get_surface_metadata(qualified_address)
-    summed_mass = None
     if surf_meta is None:
         surface = _generate_surface(provider, address)
         if surface is None:
             raise ValueError(f"Could not generate surface for address: {address}")
-        summed_mass = np.ma.sum(surface.values)
         server.publish_surface(qualified_address, surface)
         surf_meta = server.get_surface_metadata(qualified_address)
-    return surf_meta, server.encode_partial_url(qualified_address), summed_mass
+    return surf_meta, server.encode_partial_url(qualified_address)
 
 
 def _generate_surface(

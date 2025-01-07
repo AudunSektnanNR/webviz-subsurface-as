@@ -44,6 +44,26 @@ _COLOR_ZONES = [
     "#34b36f",
 ]
 
+_LIGHTER_COLORS = {
+    "black": "#909090",
+    "#222222": "#909090",
+    "#00aa00": "#55ff55",
+    "#006ddd": "#6eb6ff",
+    "#dd4300": "#ff9a6e",
+    "#e91451": "#f589a8",
+    "#daa218": "#f2d386",
+    "#208eb7": "#81cde9",
+    "#84bc04": "#cdfc63",
+    "#b74532": "#e19e92",
+    "#9a89b4": "#ccc4d9",
+    "#8d30ba": "#c891e3",
+    "#256b33": "#77d089",
+    "#95704d": "#cfb7a1",
+    "#1357ca": "#7ba7f3",
+    "#f75ef0": "#fbaef7",
+    "#34b36f": "#93e0b7",
+}
+
 
 def _read_dataframe(
     table_provider: EnsembleTableProvider,
@@ -75,7 +95,7 @@ def _get_marks(num_marks: int, mark_choice: str) -> List[str]:
         return [""] * num_marks
     if mark_choice == "containment":
         return ["x", "/", ""]
-    if mark_choice in ["zone", "region"]:
+    if mark_choice in ["zone", "region", "plume_group"]:
         base_pattern = ["", "/", "x", "-", "\\", "+", "|", "."]
         if num_marks > len(base_pattern):
             base_pattern *= int(np.ceil(num_marks / len(base_pattern)))
@@ -92,7 +112,7 @@ def _get_line_types(mark_options: List[str], mark_choice: str) -> List[str]:
         return ["solid"]
     if mark_choice == "containment":
         return ["dash", "dot", "solid"]
-    if mark_choice in ["zone", "region"]:
+    if mark_choice in ["zone", "region", "plume_group"]:
         if len(mark_options) > 8:
             warnings.warn(
                 f"Large number of {mark_choice}s might make it hard "
@@ -239,7 +259,7 @@ def _filter_columns(
 ) -> None:
     filter_columns = [
         col
-        for col in ["phase", "containment", "zone", "region"]
+        for col in ["phase", "containment", "zone", "region", "plume_group"]
         if col not in [mark_choice, color_choice]
     ]
     for col in filter_columns:
@@ -269,6 +289,7 @@ def _add_sort_key_and_real(
             & (df["containment"] == "hazardous")
             & (df["zone"] == containment_info["zone"])
             & (df["region"] == containment_info["region"])
+            & (df["plume_group"] == containment_info["plume_group"])
         ]["amount"]
     )
     sort_value_secondary = np.sum(
@@ -277,6 +298,7 @@ def _add_sort_key_and_real(
             & (df["containment"] == "outside")
             & (df["zone"] == containment_info["zone"])
             & (df["region"] == containment_info["region"])
+            & (df["plume_group"] == containment_info["plume_group"])
         ]["amount"]
     )
     df["real"] = [label] * df.shape[0]
@@ -511,6 +533,79 @@ def _add_hover_info_in_field(
             prev_vals[date] = prev_val + amount
 
 
+def _connect_plume_groups(
+    df: pd.DataFrame,
+    color_choice: str,
+    mark_choice: str,
+) -> None:
+    cols = ["realization"]
+    if color_choice == "plume_group" and mark_choice != "none":
+        cols.append(mark_choice)
+    elif mark_choice == "plume_group":
+        cols.append(color_choice)
+    if len(cols) == 1:
+        cols = cols[0]
+    # Find points where plumes start or end, to connect the lines
+    end_points = []
+    start_points = []
+    for plume_name, df_sub in df.groupby("plume_group"):
+        if plume_name == "undetermined":
+            continue
+        for _, df_sub2 in df_sub.groupby(cols):
+            # Assumes the data frame is sorted on date
+            mask_end = (
+                (df_sub2["amount"] == 0.0)
+                & (df_sub2["amount"].shift(1) > 0.0)
+                & (df_sub2.index > 0)
+            )
+            mask_start = (
+                (df_sub2["amount"] > 0.0)
+                & (df_sub2["amount"].shift(1) == 0.0)
+                & (df_sub2.index > 0)
+            )
+            first_index_end = mask_end.idxmax() if mask_end.any() else None
+            first_index_start = mask_start.idxmax() if mask_start.any() else None
+            transition_row_end = (
+                df_sub2.loc[first_index_end] if first_index_end is not None else None
+            )
+            transition_row_start = (
+                df_sub2.loc[first_index_start]
+                if first_index_start is not None
+                else None
+            )
+            if transition_row_end is not None:
+                end_points.append(transition_row_end)
+                # Replace 0 with np.nan for all dates after this
+                date = str(transition_row_end["date"])
+                df.loc[
+                    (df["plume_group"] == plume_name)
+                    & (df["amount"] == 0.0)
+                    & (df["date"] > date),
+                    "amount",
+                ] = np.nan
+            if transition_row_start is not None:
+                start_points.append(transition_row_start)
+    for end_point in end_points:
+        plume1 = end_point["plume_group"]
+        row1 = end_point.drop(["amount", "plume_group", "name"])
+        for start_point in start_points:
+            plume2 = start_point["plume_group"]
+            if plume1 in plume2 and len(plume1) < len(plume2):
+                row2 = start_point.drop(["amount", "plume_group", "name"])
+                if row1.equals(row2):
+                    row_to_change = df.eq(end_point).all(axis=1)
+                    if sum(row_to_change) == 1:
+                        df.loc[row_to_change == True, "amount"] = start_point["amount"]
+    df["is_merged"] = ["+" in x for x in df["plume_group"].values]
+    df.loc[
+        (df["plume_group"] != "all")
+        & (df["is_merged"] == True)
+        & (df["amount"] == 0.0),
+        "amount",
+    ] = np.nan
+    df.drop(columns="is_merged", inplace=True)
+
+
 # pylint: disable=too-many-locals
 def generate_co2_time_containment_figure(
     table_provider: ContainmentDataProvider,
@@ -528,6 +623,12 @@ def generate_co2_time_containment_figure(
     active_cols_at_startup = list(
         options[options["line_type"].isin(["solid", "0px"])]["name"]
     )
+    if "plume_group" in df:
+        try:
+            _connect_plume_groups(df, color_choice, mark_choice)
+        except Exception:
+            pass
+
     fig = go.Figure()
     # Generate dummy scatters for legend entries
     dummy_args = {"x": df["date"], "mode": "lines", "hoverinfo": "none"}
@@ -543,11 +644,45 @@ def generate_co2_time_containment_figure(
         if name not in active_cols_at_startup:
             args["visible"] = "legendonly"
         fig.add_scatter(y=[0.0], **dummy_args, **args)
-    for rlz in realizations:
-        sub_df = df[df["realization"] == rlz].copy().reset_index()
-        _add_prop_to_df(
-            sub_df, np.unique(df["date"]), "date", [color_choice, mark_choice]
+
+    hover_template = (
+        "Type: %{meta[1]}<br>Date: %{x}<br>Amount: %{y:.3f}<br>"
+        "Realization: %{meta[0]}<br>Proportion: %{customdata}"
+    )
+
+    if containment_info["use_stats"]:
+        df_no_real = df.drop(columns=["REAL", "realization"]).reset_index(drop=True)
+        if mark_choice == "none":
+            df_grouped = df_no_real.groupby(
+                ["date", "name", color_choice], as_index=False
+            )
+        else:
+            df_grouped = df_no_real.groupby(
+                ["date", "name", color_choice, mark_choice], as_index=False
+            )
+        df_mean = df_grouped.agg(np.mean)
+        df_mean["realization"] = ["mean"] * df_mean.shape[0]
+        df_p10 = df_grouped.agg(lambda x: np.quantile(x, 0.1))
+        df_p10["realization"] = ["p10"] * df_p10.shape[0]
+        df_p90 = df_grouped.agg(lambda x: np.quantile(x, 0.9))
+        df_p90["realization"] = ["p90"] * df_p90.shape[0]
+        df = (
+            pd.concat([df_mean, df_p10, df_p90])
+            .sort_values(["name", "date"])
+            .reset_index(drop=True)
         )
+        realizations = ["p10", "mean", "p90"]  # type: ignore
+        hover_template = (
+            "Type: %{meta[1]}<br>Date: %{x}<br>Amount: %{y:.3f}<br>"
+            "Statistic: %{meta[0]}"
+        )
+    for rlz in realizations:
+        lwd = 1.5 if rlz in ["p10", "p90"] else 2.5
+        sub_df = df[df["realization"] == rlz].copy().reset_index(drop=True)
+        if not containment_info["use_stats"]:
+            _add_prop_to_df(
+                sub_df, np.unique(df["date"]), "date", [color_choice, mark_choice]
+            )
         common_args = {
             "x": sub_df["date"],
             "showlegend": False,
@@ -557,14 +692,17 @@ def generate_co2_time_containment_figure(
         ):
             args = {
                 "line_dash": line_type,
-                "marker_color": color,
+                "line_width": lwd,
+                "marker_color": (
+                    _LIGHTER_COLORS[color] if rlz in ["p10", "p90"] else color
+                ),
                 "legendgroup": name,
                 "name": "",
                 "meta": [rlz, name],
-                "customdata": sub_df[sub_df["name"] == name]["prop"],
-                "hovertemplate": "Type: %{meta[1]}<br>Date: %{x}<br>Amount: %{y:.3f}"
-                "<br>Realization: %{meta[0]}<br>Proportion: %{customdata}",
+                "hovertemplate": hover_template,
             }
+            if not containment_info["use_stats"]:
+                args["customdata"] = sub_df[sub_df["name"] == name]["prop"]
             if name not in active_cols_at_startup:
                 args["visible"] = "legendonly"
             fig.add_scatter(

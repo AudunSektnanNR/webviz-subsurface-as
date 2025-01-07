@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 import pandas as pd
 
@@ -45,7 +45,11 @@ class ContainmentDataProvider:
         co2_scale: Union[Co2MassScale, Co2VolumeScale],
     ) -> pd.DataFrame:
         df = self._provider.get_column_data(self._provider.column_names())
-        df = df.loc[(df["zone"] == "all") & (df["region"] == "all")]
+        df = df.loc[
+            (df["zone"] == "all")
+            & (df["region"] == "all")
+            & (df["plume_group"] == "all")
+        ]
         if co2_scale == Co2MassScale.MTONS:
             df.loc[:, "amount"] /= 1e9
         elif co2_scale == Co2MassScale.NORMALIZE:
@@ -73,29 +77,58 @@ class ContainmentDataProvider:
     def _get_menu_options(provider: EnsembleTableProvider) -> MenuOptions:
         col_names = provider.column_names()
         realization = provider.realizations()[0]
+        # NBNB: Check that these are the same for all realizations????
+        # NBNB: WARNING and empty for zones / regions, and Error if phases are different?
         df = provider.get_column_data(col_names, [realization])
         zones = ["all"]
-        for zone in list(df["zone"]):
-            if zone not in zones:
-                zones.append(zone)
+        if "zone" in df:
+            for zone in list(df["zone"]):
+                if zone not in zones:
+                    zones.append(zone)
         regions = ["all"]
-        for region in list(df["region"]):
-            if region not in regions:
-                regions.append(region)
+        if "region" in df:
+            for region in list(df["region"]):
+                if region not in regions:
+                    regions.append(region)
+        plume_groups = ["all"]
+        if "plume_group" in df:
+            for plume_group in list(df["plume_group"]):
+                if plume_group not in plume_groups and plume_group is not None:
+                    plume_groups.append(plume_group)
+
+
+        def plume_sort_key(name: Optional[str]) -> int:
+            if name is None:
+                return 999  # Not sure why/when this can happen, just a precaution
+            if name == "undetermined":
+                return 998
+            return name.count("+")
+
+        plume_groups = sorted(plume_groups, key=plume_sort_key)
+
         if "free_gas" in list(df["phase"]):
-            phases = ["total", "free_gas", "trapped_gas", "aqueous"]
+            phases = ["total", "free_gas", "trapped_gas", "dissolved"]
         else:
-            phases = ["total", "gas", "aqueous"]
+            phases = ["total", "gas", "dissolved"]
         return {
             "zones": zones if len(zones) > 1 else [],
             "regions": regions if len(regions) > 1 else [],
             "phases": phases,
+            "plume_groups": plume_groups if len(plume_groups) > 1 else [],
         }
 
     @staticmethod
     def _validate(provider: EnsembleTableProvider) -> None:
         col_names = provider.column_names()
-        required_columns = ["date", "amount", "phase", "containment", "zone", "region"]
+        required_columns = [
+            "date",
+            "amount",
+            "phase",
+            "containment",
+            "zone",
+            "region",
+            "plume_group",
+        ]
         missing_columns = [col for col in required_columns if col not in col_names]
         realization = provider.realizations()[0]
         if len(missing_columns) == 0:
