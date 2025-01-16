@@ -233,6 +233,19 @@ def _prepare_pattern_and_color_options_statistics_plot(
     print(f"line_types   : {line_types}")
     print(f"colors       : {colors}")
     print(f"cat_ord      : {cat_ord}")
+
+    for m in mark_options + ["total", "all"]:
+        df["type"] = df["type"].replace(f"total, {m}", m)
+        df["type"] = df["type"].replace(f"all, {m}", m)
+    for m in color_options:
+        df["type"] = df["type"].replace(f"{m}, total", m)
+        df["type"] = df["type"].replace(f"{m}, all", m)
+    cat_ord["type"] = [label.replace("total, ", "") if "total, " in label else label for label in cat_ord["type"]]
+    cat_ord["type"] = [label.replace("all, ", "") if "all, " in label else label for label in cat_ord["type"]]
+    cat_ord["type"] = [label.replace(", total", "") if ", total" in label else label for label in cat_ord["type"]]
+    cat_ord["type"] = [label.replace(", all", "") if ", all" in label else label for label in cat_ord["type"]]
+    print(f"cat_ord      : {cat_ord}")
+
     return cat_ord, colors, line_types
 
 
