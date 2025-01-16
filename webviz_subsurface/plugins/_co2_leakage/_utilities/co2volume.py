@@ -1040,9 +1040,8 @@ def generate_co2_statistics_figure(
     fig = px.ecdf(
         df,
         x="amount",
-        # color=color_choice,
-        # line_dash=mark_choice,
         ecdfmode="complementary",  # or reversed
+        ecdfnorm="probability",  # or "percent"
         markers=True,
         color="type",
         color_discrete_sequence=colors,
@@ -1057,6 +1056,10 @@ def generate_co2_statistics_figure(
         if trace.name != default_option:
             trace.visible = "legendonly"
 
+    fig.update_traces(
+        hovertemplate="Type: %{data.name}<br>Amount: %{x:.3f}<br>"
+        "Probability: %{y:.3f}<extra></extra>",
+    )
     fig.layout.yaxis.range = [-0.02, 1.02]
     fig.layout.legend.tracegroupgap = 0
     fig.layout.xaxis.title = scale.value
