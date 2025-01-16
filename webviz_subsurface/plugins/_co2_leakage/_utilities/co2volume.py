@@ -249,6 +249,20 @@ def _prepare_pattern_and_color_options_statistics_plot(
     return cat_ord, colors, line_types
 
 
+def _find_default_option_statistics_figure(df: pd.DataFrame, categories: list[str]) -> str:
+    if "hazardous" in categories:
+        default_option = "hazardous"
+    else:
+        max_value = -999.9
+        default_option = categories[0]
+        for category in categories:
+            df_filtered = df[df["type"] == category]
+            if df_filtered["amount"].max() > max_value:
+                max_value = df_filtered["amount"].max()
+                default_option = category
+    return default_option
+
+
 def _prepare_line_type_and_color_options(
     df: pd.DataFrame,
     containment_info: Dict,
@@ -1037,6 +1051,12 @@ def generate_co2_statistics_figure(
         category_orders=cat_ord,
         # custom_data=["type", "prop"],
     )
+
+    default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
+    for trace in fig.data:
+        if trace.name != default_option:
+            trace.visible = "legendonly"
+    _adjust_figure(fig)
 #
     #     # color_discrete_sequence=colors,
     #     # line_dash_sequence=,
