@@ -1056,11 +1056,15 @@ def generate_co2_statistics_figure(
     for trace in fig.data:
         if trace.name != default_option:
             trace.visible = "legendonly"
+
+    fig.layout.yaxis.range = [-0.02, 1.02]
+    fig.layout.legend.tracegroupgap = 0
+    fig.layout.xaxis.title = scale.value
+    fig.layout.yaxis.title = "Probability"
     _adjust_figure(fig)
-#
+
     #     # color_discrete_sequence=colors,
     #     # line_dash_sequence=,
-#
     #     # color="type",
     #     # color_discrete_sequence=colors,
     #     # pattern_shape="type" if mark_choice != "none" else None,
@@ -1072,14 +1076,7 @@ def generate_co2_statistics_figure(
     #     # animation_frame = "date",
     #     # animation_group = "country",
     # )
-#
-    # # fig = px.scatter(df, x="sepal_width", y="sepal_length", color="species")
-    # # fig = px.area(df,
-    # #     x="date",
-    # #     y="amount")
-    # fig.layout.xaxis.title = scale.value
-    # fig.layout.yaxis.title = "Probability"
-    # _adjust_figure(fig)
+
     # # fig.update_traces(mode="lines+markers")
 
     return fig
