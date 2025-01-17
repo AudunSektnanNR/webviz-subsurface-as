@@ -186,18 +186,30 @@ def _prepare_pattern_and_color_options_statistics_plot(
     print(f"line_types : {line_types}")
     print(f"colors     : {colors}")
 
-    filter_mark = True
+    # filter_mark = True
     if mark_choice == "phase":
         mark_options = ["total"] + mark_options
         line_types = ["solid"] + line_types
         num_marks += 1
-        filter_mark = False
+        # filter_mark = False
     if color_choice == "containment":
         color_options = ["total"] + color_options
         colors = ["black"] + colors
         num_colors += 1
+    # else:
+    #     _filter_rows(df, color_choice, mark_choice, filter_mark)
+    if mark_choice in ["phase"]:  # , "containment"
+        filter_mark = False
     else:
-        _filter_rows(df, color_choice, mark_choice, filter_mark)
+        filter_mark = True
+    if color_choice in ["phase", "containment"]:
+        filter_color = False
+    else:
+        filter_color = True
+    print(f"filter_mark : {filter_mark}")
+    print(f"filter_color: {filter_color}")
+    # if color_choice in ["phase", "containment"]
+    _filter_rows(df, color_choice, mark_choice, filter_mark, filter_color)
     print(f"line_types : {line_types}")
     print(f"colors     : {colors}")
 
@@ -216,7 +228,7 @@ def _prepare_pattern_and_color_options_statistics_plot(
     #     df["type"] = df["type"].replace(f"{m}, total", m)
     #     df["type"] = df["type"].replace(f"{m}, all", m)
     print("df after")
-    print(df)
+    print(df.to_string())
 
     if containment_info["sorting"] == "color":
         cat_ord = {
@@ -406,10 +418,16 @@ def _filter_rows(
     color_choice: str,
     mark_choice: str,
     filter_mark: bool = True,
+    filter_color: bool = True,
 ) -> None:
-    df.query(f'{color_choice} not in ["total", "all"]', inplace=True)
+    print("\nBefore filter rows")
+    print(df.to_string())
+    if filter_color:
+        df.query(f'{color_choice} not in ["total", "all"]', inplace=True)
     if mark_choice != "none" and filter_mark:
         df.query(f'{mark_choice} not in ["total", "all"]', inplace=True)
+    print("\nAfter filter rows")
+    print(df.to_string())
 
 
 def _add_sort_key_and_real(
@@ -941,7 +959,8 @@ def generate_co2_statistics_figure(
         color_choice,
         mark_choice,
     )
-    print(df)
+    print("\nAfter _prepare_pattern_and_color_options_statistics_plot()")
+    print(df.to_string())
     print(f"\ncat_ord   : {cat_ord}")
     print(f"colors    : {colors}")
     print(f"line_types: {line_types}")
@@ -1040,7 +1059,7 @@ def generate_co2_statistics_figure(
     fig = px.ecdf(
         df,
         x="amount",
-        ecdfmode="complementary",  # or reversed
+        ecdfmode="reversed",  # or complementary
         ecdfnorm="probability",  # or "percent"
         markers=True,
         color="type",
