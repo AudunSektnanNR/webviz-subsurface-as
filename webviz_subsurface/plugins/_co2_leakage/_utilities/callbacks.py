@@ -465,6 +465,7 @@ def process_containment_info(
     mark_choice: Optional[str],
     sorting: str,
     lines_to_show: str,
+    date_option: str,
     menu_options: MenuOptions,
 ) -> Dict[str, Union[str, None, List[str], int]]:
     if mark_choice is None:
@@ -507,6 +508,7 @@ def process_containment_info(
         "containments": containments,
         "plume_groups": plume_groups,
         "use_stats": lines_to_show == "stat",
+        "date_option": date_option,
     }
 
 
@@ -535,7 +537,7 @@ def make_plot_ids(
         if containment_info["mark_choice"] is not None
         else "None"
     )
-    plot_id = "-".join(
+    plot_id = "-".join(  # NBNB-AS: Update this?
         (
             ensemble,
             source,

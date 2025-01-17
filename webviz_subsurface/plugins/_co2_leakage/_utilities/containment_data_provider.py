@@ -110,11 +110,16 @@ class ContainmentDataProvider:
             phases = ["total", "free_gas", "trapped_gas", "dissolved"]
         else:
             phases = ["total", "gas", "dissolved"]
+
+        dates = df["date"].unique()
+        dates.sort()
+
         return {
             "zones": zones if len(zones) > 1 else [],
             "regions": regions if len(regions) > 1 else [],
             "phases": phases,
             "plume_groups": plume_groups if len(plume_groups) > 1 else [],
+            "dates": dates,
         }
 
     @staticmethod

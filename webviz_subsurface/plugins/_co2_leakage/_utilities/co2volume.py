@@ -801,11 +801,22 @@ def generate_co2_statistics_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
 ) -> go.Figure:
+    print("\n\n\n\ngenerate_co2_statistics_figure()")
+    date_option = containment_info["date_option"]
+    print(f"date_option: {date_option}")
     df = _read_co2_volumes(table_provider, realizations, scale)
     # df = _read_terminal_co2_volumes(
     #     table_provider, realizations, scale, containment_info
     # )
-    df = df[df["date"] == np.max(df["date"])]
+
+    print(set(df["date"].to_list()))
+    df = df[df["date"] == date_option]
+    # if True or date_option == "0":
+    #     print("A")
+    #     df = df[df["date"] == np.max(df["date"])]
+    # elif date_option == "1":
+    #     print("B")
+    #     df = df[df["date"] == "2350-01-01"]
     df = df.drop(columns=["date"]).reset_index(drop=True)
     color_choice = containment_info["color_choice"]
     mark_choice = containment_info["mark_choice"]

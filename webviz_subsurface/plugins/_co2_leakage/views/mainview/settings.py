@@ -71,6 +71,7 @@ class ViewSettings(SettingsGroupABC):
         PLUME_GROUP = "plume-group"
         CONTAINMENT_MENU = "containment-menu"
         PLUME_GROUP_MENU = "plume-group-menu"
+        DATE_OPTION = "date-option"
 
         PLUME_THRESHOLD = "plume-threshold"
         PLUME_SMOOTHING = "plume-smoothing"
@@ -180,6 +181,7 @@ class ViewSettings(SettingsGroupABC):
                         self.register_component_unique_id(self.Ids.PLUME_GROUP_MENU),
                         self.register_component_unique_id(self.Ids.REAL_OR_STAT),
                         self.register_component_unique_id(self.Ids.Y_LIM_OPTIONS),
+                        self.register_component_unique_id(self.Ids.DATE_OPTION),
                     ],
                     self._content,
                 )
@@ -365,8 +367,11 @@ class ViewSettings(SettingsGroupABC):
                 ensemble: str,
                 current_value: str,
             ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
+                print("\nset_zones")
                 if ensemble is not None:
                     zones = self._menu_options[ensemble][source]["zones"]
+                    print(f"zones: {zones}")
+                    print(self._menu_options[ensemble][source])
                     if len(zones) > 0:
                         options = [
                             {"label": zone.title(), "value": zone} for zone in zones
@@ -431,6 +436,31 @@ class ViewSettings(SettingsGroupABC):
                             no_update if current_value in plume_groups else "all",
                         )
                 return [{"label": "All", "value": "all"}], "all"
+
+
+            @callback(
+                Output(self.component_unique_id(self.Ids.DATE_OPTION).to_string(), "options"),
+                Output(self.component_unique_id(self.Ids.DATE_OPTION).to_string(), "value"),
+                Input(
+                    self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"
+                ),
+                Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
+                State(self.component_unique_id(self.Ids.DATE_OPTION).to_string(), "value"),
+            )
+            def set_date_option(
+                source: GraphSource,
+                ensemble: str,
+                current_value: str,
+            ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
+                print("\nset_date_option")
+                if ensemble is not None:
+                    dates = self._menu_options[ensemble][source]["dates"]
+                    print(f"dates: {dates}")
+                    options = [
+                        {"label": date.title(), "value": date} for date in dates
+                    ]
+                    return options, no_update if current_value in dates else "all"
+                return [{"label": "All", "value": "all"}], "all"  # NBNB-AS
 
             @callback(
                 Output(
@@ -1060,6 +1090,27 @@ class GraphSelectorsLayout(wcc.Selectors):
                     style={
                         "display": "flex",
                         "flex-direction": "row",
+                    },
+                ),
+                html.Div(
+                    "Date option:",
+                    style={"margin-top": "8"},
+                ),
+                html.Div(
+                    [
+                        "Date",
+                        wcc.Dropdown(
+                            options=[{"label": "First", "value": "0"}, {"label": "Last", "value": "1"}],
+                            value="0",
+                            id=containment_ids[16],
+                            clearable=False,
+                        ),
+                    ],
+                    id=containment_ids[4],
+                    style={
+                        "width": "100%",
+                        "display": True,
+                        "flex-direction": "column",
                     },
                 ),
                 html.Div(

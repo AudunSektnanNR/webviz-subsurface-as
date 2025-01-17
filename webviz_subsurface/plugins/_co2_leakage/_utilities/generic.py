@@ -190,6 +190,7 @@ class MenuOptions(TypedDict):
     regions: List[str]
     phases: List[str]
     plume_groups: List[str]
+    dates: List[str]
 
 
 class MapThresholds:

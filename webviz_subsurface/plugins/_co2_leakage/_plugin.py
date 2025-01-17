@@ -298,6 +298,7 @@ class CO2Leakage(WebvizPluginABC):
                 Input(self._settings_component(ViewSettings.Ids.MARK_BY), "value"),
                 Input(self._settings_component(ViewSettings.Ids.SORT_PLOT), "value"),
                 Input(self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "value"),
+                Input(self._settings_component(ViewSettings.Ids.DATE_OPTION), "value"),
             )
             @callback_typecheck
             def update_graphs(
@@ -318,6 +319,7 @@ class CO2Leakage(WebvizPluginABC):
                 mark_choice: Optional[str],
                 sorting: str,
                 lines_to_show: str,
+                date_option: str,
             ) -> Tuple[Dict, go.Figure, go.Figure, go.Figure]:
                 # pylint: disable=too-many-locals
                 figs = [no_update] * 3
@@ -331,6 +333,7 @@ class CO2Leakage(WebvizPluginABC):
                     mark_choice,
                     sorting,
                     lines_to_show,
+                    date_option,
                     self._menu_options[ensemble][source],
                 )
                 if source in [
