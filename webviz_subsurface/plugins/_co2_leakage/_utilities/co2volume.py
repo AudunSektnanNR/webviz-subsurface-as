@@ -310,7 +310,8 @@ def _read_terminal_co2_volumes(
     data_frame = None
     for real in realizations:
         df = table_provider.extract_dataframe(real, scale)
-        df = df[df["date"] == np.max(df["date"])]
+        df = df[df["date"] == containment_info["date_option"]]
+        # df = df[df["date"] == np.max(df["date"])]
         _add_sort_key_and_real(df, str(real), containment_info)
         _filter_columns(df, color_choice, mark_choice, containment_info)
         _filter_rows(df, color_choice, mark_choice)
@@ -458,6 +459,8 @@ def generate_co2_volume_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
 ) -> go.Figure:
+    print("\n\n\ngenerate_co2_volume_figure()")
+    print(containment_info["date_option"])
     df = _read_terminal_co2_volumes(
         table_provider, realizations, scale, containment_info
     )
@@ -805,7 +808,7 @@ def generate_co2_statistics_figure(
     date_option = containment_info["date_option"]
     print(f"date_option: {date_option}")
     df = _read_co2_volumes(table_provider, realizations, scale)
-    # df = _read_terminal_co2_volumes(
+    # df2 = _read_terminal_co2_volumes(
     #     table_provider, realizations, scale, containment_info
     # )
 

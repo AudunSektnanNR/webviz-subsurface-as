@@ -72,6 +72,7 @@ class ViewSettings(SettingsGroupABC):
         CONTAINMENT_MENU = "containment-menu"
         PLUME_GROUP_MENU = "plume-group-menu"
         DATE_OPTION = "date-option"
+        DATE_OPTION_COL = "date-option-column"
 
         PLUME_THRESHOLD = "plume-threshold"
         PLUME_SMOOTHING = "plume-smoothing"
@@ -182,6 +183,7 @@ class ViewSettings(SettingsGroupABC):
                         self.register_component_unique_id(self.Ids.REAL_OR_STAT),
                         self.register_component_unique_id(self.Ids.Y_LIM_OPTIONS),
                         self.register_component_unique_id(self.Ids.DATE_OPTION),
+                        self.register_component_unique_id(self.Ids.DATE_OPTION_COL),
                     ],
                     self._content,
                 )
@@ -453,13 +455,15 @@ class ViewSettings(SettingsGroupABC):
                 current_value: str,
             ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
                 print("\nset_date_option")
+                print(f"current_value: {current_value}")
                 if ensemble is not None:
                     dates = self._menu_options[ensemble][source]["dates"]
                     print(f"dates: {dates}")
                     options = [
                         {"label": date.title(), "value": date} for date in dates
                     ]
-                    return options, no_update if current_value in dates else "all"
+                    return options, dates[-1]  # NBNB-AS: Change back?
+                    # return options, no_update if current_value in dates else "all"
                 return [{"label": "All", "value": "all"}], "all"  # NBNB-AS
 
             @callback(
@@ -1100,17 +1104,17 @@ class GraphSelectorsLayout(wcc.Selectors):
                     [
                         "Date",
                         wcc.Dropdown(
-                            options=[{"label": "First", "value": "0"}, {"label": "Last", "value": "1"}],
-                            value="0",
+                            options=[{"label": "End-state", "value": "end-state"}],
+                            value="end-state",
                             id=containment_ids[16],
                             clearable=False,
                         ),
                     ],
-                    id=containment_ids[4],
+                    id=containment_ids[17],
                     style={
                         "width": "100%",
                         "display": True,
-                        "flex-direction": "column",
+                        # "flex-direction": "column",
                     },
                 ),
                 html.Div(

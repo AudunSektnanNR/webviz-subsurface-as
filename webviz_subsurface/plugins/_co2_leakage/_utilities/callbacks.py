@@ -550,6 +550,7 @@ def make_plot_ids(
             containment_info["color_choice"],
             mark_choice_str,
             containment_info["sorting"],
+            containment_info["date_option"],
         )
     )
     ids = [plot_id]
