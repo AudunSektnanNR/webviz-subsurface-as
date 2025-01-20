@@ -1097,15 +1097,15 @@ class GraphSelectorsLayout(wcc.Selectors):
                     },
                 ),
                 html.Div(
-                    "Date option:",
+                    "State at date:",
                     style={"margin-top": "8"},
                 ),
                 html.Div(
                     [
-                        "Date",
+                        # "Date",
                         wcc.Dropdown(
-                            options=[{"label": "End-state", "value": "end-state"}],
-                            value="end-state",
+                            # options=[{"label": "End-state", "value": "end-state"}],
+                            # value="end-state",
                             id=containment_ids[16],
                             clearable=False,
                         ),
@@ -1113,8 +1113,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                     id=containment_ids[17],
                     style={
                         "width": "100%",
-                        "display": True,
-                        # "flex-direction": "column",
+                        "flex-direction": "row",
                     },
                 ),
                 html.Div(

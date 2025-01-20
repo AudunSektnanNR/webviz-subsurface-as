@@ -151,7 +151,7 @@ def _summary_graph_layout(
             value="tab-1",
             children=[
                 wcc.Tab(
-                    label="End-state containment",
+                    label="Containment state",
                     value="tab-1",
                     children=[
                         html.Div(
@@ -181,7 +181,7 @@ def _summary_graph_layout(
                     ],
                 ),
                 wcc.Tab(
-                   label="End-state statistics",
+                   label="Statistics",
                    value="tab-3",
                    children=[
                        html.Div(

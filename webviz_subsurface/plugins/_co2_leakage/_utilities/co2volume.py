@@ -409,15 +409,21 @@ def _change_names(
         df["name"] = df["name"].replace(f"{m}, all", m)
 
 
-def _adjust_figure(fig: go.Figure) -> None:
+def _adjust_figure(fig: go.Figure, title: Optional[str] = None) -> None:
     fig.layout.legend.orientation = "v"
     fig.layout.legend.title.text = ""
     fig.layout.legend.itemwidth = 40
     fig.layout.xaxis.exponentformat = "power"
-    fig.layout.title.x = 0.5
+    if title is not None:
+        fig.layout.title = title
+        fig.layout.title.font = {"size": 14 }
+        fig.layout.margin.t = 40
+        fig.layout.title.y = 0.95
+    else:
+        fig.layout.margin.t = 15
+    fig.layout.title.x = 0.4
     fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
     fig.layout.margin.b = 6
-    fig.layout.margin.t = 15
     fig.layout.margin.l = 10
     fig.layout.margin.r = 10
     fig.update_layout(
@@ -491,7 +497,7 @@ def generate_co2_volume_figure(
     )
     fig.layout.yaxis.title = "Realization"
     fig.layout.xaxis.title = scale.value
-    _adjust_figure(fig)
+    _adjust_figure(fig, title=containment_info["date_option"])
     return fig
 
 
@@ -863,6 +869,6 @@ def generate_co2_statistics_figure(
     fig.layout.legend.tracegroupgap = 0
     fig.layout.xaxis.title = scale.value
     fig.layout.yaxis.title = "Probability"
-    _adjust_figure(fig)
+    _adjust_figure(fig, title=containment_info["date_option"])
 
     return fig
