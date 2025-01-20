@@ -321,10 +321,6 @@ class CO2Leakage(WebvizPluginABC):
                 lines_to_show: str,
                 date_option: str,
             ) -> Tuple[Dict, go.Figure, go.Figure, go.Figure]:
-                print("\n\n\nupdate_graphs()")
-                print(zone)
-                print(plume_group)
-                print(date_option)
                 # pylint: disable=too-many-locals
                 figs = [no_update] * 3
                 cont_info = process_containment_info(

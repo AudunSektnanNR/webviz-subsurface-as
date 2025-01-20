@@ -537,7 +537,7 @@ def make_plot_ids(
         if containment_info["mark_choice"] is not None
         else "None"
     )
-    plot_id = "-".join(  # NBNB-AS: Update this?
+    plot_id = "-".join(
         (
             ensemble,
             source,

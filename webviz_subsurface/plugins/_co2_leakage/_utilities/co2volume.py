@@ -311,7 +311,6 @@ def _read_terminal_co2_volumes(
     for real in realizations:
         df = table_provider.extract_dataframe(real, scale)
         df = df[df["date"] == containment_info["date_option"]]
-        # df = df[df["date"] == np.max(df["date"])]
         _add_sort_key_and_real(df, str(real), containment_info)
         _filter_columns(df, color_choice, mark_choice, containment_info)
         _filter_rows(df, color_choice, mark_choice)
@@ -465,8 +464,6 @@ def generate_co2_volume_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
 ) -> go.Figure:
-    print("\n\n\ngenerate_co2_volume_figure()")
-    print(containment_info["date_option"])
     df = _read_terminal_co2_volumes(
         table_provider, realizations, scale, containment_info
     )
@@ -761,7 +758,6 @@ def generate_co2_time_containment_figure(
             "Type: %{meta[1]}<br>Date: %{x}<br>Amount: %{y:.3f}<br>"
             "Statistic: %{meta[0]}"
         )
-
     for rlz in realizations:
         lwd = 1.5 if rlz in ["p10", "p90"] else 2.5
         sub_df = df[df["realization"] == rlz].copy().reset_index(drop=True)
@@ -791,7 +787,6 @@ def generate_co2_time_containment_figure(
                 args["customdata"] = sub_df[sub_df["name"] == name]["prop"]
             if name not in active_cols_at_startup:
                 args["visible"] = "legendonly"
-
             fig.add_scatter(
                 y=sub_df[sub_df["name"] == name]["amount"], **args, **common_args
             )
@@ -810,22 +805,9 @@ def generate_co2_statistics_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
 ) -> go.Figure:
-    print("\n\n\n\ngenerate_co2_statistics_figure()")
     date_option = containment_info["date_option"]
-    print(f"date_option: {date_option}")
     df = _read_co2_volumes(table_provider, realizations, scale)
-    # df2 = _read_terminal_co2_volumes(
-    #     table_provider, realizations, scale, containment_info
-    # )
-
-    print(set(df["date"].to_list()))
     df = df[df["date"] == date_option]
-    # if True or date_option == "0":
-    #     print("A")
-    #     df = df[df["date"] == np.max(df["date"])]
-    # elif date_option == "1":
-    #     print("B")
-    #     df = df[df["date"] == "2350-01-01"]
     df = df.drop(columns=["date"]).reset_index(drop=True)
     color_choice = containment_info["color_choice"]
     mark_choice = containment_info["mark_choice"]
@@ -842,19 +824,15 @@ def generate_co2_statistics_figure(
     fig = px.ecdf(
         df,
         x="amount",
-        ecdfmode="reversed",  # or complementary
-        ecdfnorm="probability",  # or "percent"
+        ecdfmode="reversed",
+        ecdfnorm="probability",
         markers=True,
         color="type",
         color_discrete_sequence=colors,
         line_dash="type" if mark_choice != "none" else None,
         line_dash_sequence=line_types,
         category_orders=cat_ord,
-        # custom_data=["type", "prop"],
-        # animation_frame = "date",
-        # marginal="histogram",
     )
-    # fig.update_traces(mode="lines+markers")
 
     default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
     for trace in fig.data:

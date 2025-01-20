@@ -369,11 +369,8 @@ class ViewSettings(SettingsGroupABC):
                 ensemble: str,
                 current_value: str,
             ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
-                print("\nset_zones")
                 if ensemble is not None:
                     zones = self._menu_options[ensemble][source]["zones"]
-                    print(f"zones: {zones}")
-                    print(self._menu_options[ensemble][source])
                     if len(zones) > 0:
                         options = [
                             {"label": zone.title(), "value": zone} for zone in zones
@@ -454,11 +451,8 @@ class ViewSettings(SettingsGroupABC):
                 ensemble: str,
                 current_value: str,
             ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
-                print("\nset_date_option")
-                print(f"current_value: {current_value}")
                 if ensemble is not None:
                     dates = self._menu_options[ensemble][source]["dates"]
-                    print(f"dates: {dates}")
                     options = [
                         {"label": date.title(), "value": date} for date in dates
                     ]
@@ -1102,10 +1096,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                 ),
                 html.Div(
                     [
-                        # "Date",
                         wcc.Dropdown(
-                            # options=[{"label": "End-state", "value": "end-state"}],
-                            # value="end-state",
                             id=containment_ids[16],
                             clearable=False,
                         ),
