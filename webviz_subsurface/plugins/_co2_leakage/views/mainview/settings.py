@@ -456,9 +456,8 @@ class ViewSettings(SettingsGroupABC):
                     options = [
                         {"label": date.title(), "value": date} for date in dates
                     ]
-                    return options, dates[-1]  # NBNB-AS: Change back?
-                    # return options, no_update if current_value in dates else "all"
-                return [{"label": "All", "value": "all"}], "all"  # NBNB-AS
+                    return options, no_update if current_value in dates else dates[-1]
+                return [], None
 
             @callback(
                 Output(
