@@ -96,7 +96,6 @@ class ContainmentDataProvider:
                 if plume_group not in plume_groups and plume_group is not None:
                     plume_groups.append(plume_group)
 
-
         def plume_sort_key(name: Optional[str]) -> int:
             if name is None:
                 return 999  # Not sure why/when this can happen, just a precaution

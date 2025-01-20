@@ -436,15 +436,21 @@ class ViewSettings(SettingsGroupABC):
                         )
                 return [{"label": "All", "value": "all"}], "all"
 
-
             @callback(
-                Output(self.component_unique_id(self.Ids.DATE_OPTION).to_string(), "options"),
-                Output(self.component_unique_id(self.Ids.DATE_OPTION).to_string(), "value"),
+                Output(
+                    self.component_unique_id(self.Ids.DATE_OPTION).to_string(),
+                    "options",
+                ),
+                Output(
+                    self.component_unique_id(self.Ids.DATE_OPTION).to_string(), "value"
+                ),
                 Input(
                     self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"
                 ),
                 Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
-                State(self.component_unique_id(self.Ids.DATE_OPTION).to_string(), "value"),
+                State(
+                    self.component_unique_id(self.Ids.DATE_OPTION).to_string(), "value"
+                ),
             )
             def set_date_option(
                 source: GraphSource,
@@ -453,9 +459,7 @@ class ViewSettings(SettingsGroupABC):
             ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
                 if ensemble is not None:
                     dates = self._menu_options[ensemble][source]["dates"]
-                    options = [
-                        {"label": date.title(), "value": date} for date in dates
-                    ]
+                    options = [{"label": date.title(), "value": date} for date in dates]
                     return options, no_update if current_value in dates else dates[-1]
                 return [], None
 

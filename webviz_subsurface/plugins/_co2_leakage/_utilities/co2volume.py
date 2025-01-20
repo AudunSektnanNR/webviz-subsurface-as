@@ -207,15 +207,29 @@ def _prepare_pattern_and_color_options_statistics_plot(
     for m in color_options:
         df["type"] = df["type"].replace(f"{m}, total", m)
         df["type"] = df["type"].replace(f"{m}, all", m)
-    cat_ord["type"] = [label.replace("total, ", "") if "total, " in label else label for label in cat_ord["type"]]
-    cat_ord["type"] = [label.replace("all, ", "") if "all, " in label else label for label in cat_ord["type"]]
-    cat_ord["type"] = [label.replace(", total", "") if ", total" in label else label for label in cat_ord["type"]]
-    cat_ord["type"] = [label.replace(", all", "") if ", all" in label else label for label in cat_ord["type"]]
+    cat_ord["type"] = [
+        label.replace("total, ", "") if "total, " in label else label
+        for label in cat_ord["type"]
+    ]
+    cat_ord["type"] = [
+        label.replace("all, ", "") if "all, " in label else label
+        for label in cat_ord["type"]
+    ]
+    cat_ord["type"] = [
+        label.replace(", total", "") if ", total" in label else label
+        for label in cat_ord["type"]
+    ]
+    cat_ord["type"] = [
+        label.replace(", all", "") if ", all" in label else label
+        for label in cat_ord["type"]
+    ]
 
     return cat_ord, colors, line_types
 
 
-def _find_default_option_statistics_figure(df: pd.DataFrame, categories: list[str]) -> str:
+def _find_default_option_statistics_figure(
+    df: pd.DataFrame, categories: list[str]
+) -> str:
     if "hazardous" in categories:
         default_option = "hazardous"
     else:
@@ -415,7 +429,7 @@ def _adjust_figure(fig: go.Figure, title: Optional[str] = None) -> None:
     fig.layout.xaxis.exponentformat = "power"
     if title is not None:
         fig.layout.title = title
-        fig.layout.title.font = {"size": 14 }
+        fig.layout.title.font = {"size": 14}
         fig.layout.margin.t = 40
         fig.layout.title.y = 0.95
     else:

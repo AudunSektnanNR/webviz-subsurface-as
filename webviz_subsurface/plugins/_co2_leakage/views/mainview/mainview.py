@@ -100,7 +100,7 @@ class MapViewElement(ViewElementABC):
                                 self.register_component_unique_id(self.Ids.BAR_PLOT),
                                 self.register_component_unique_id(self.Ids.TIME_PLOT),
                                 self.register_component_unique_id(
-                                   self.Ids.STATISTICS_PLOT
+                                    self.Ids.STATISTICS_PLOT
                                 ),
                             )
                         ),
@@ -181,19 +181,19 @@ def _summary_graph_layout(
                     ],
                 ),
                 wcc.Tab(
-                   label="Statistics",
-                   value="tab-3",
-                   children=[
-                       html.Div(
-                           wcc.Graph(
-                               id=statistics_plot_id,
-                               figure=go.Figure(),
-                               config={
-                                   "displayModeBar": False,
-                               },
-                           ),
-                       ),
-                   ],
+                    label="Statistics",
+                    value="tab-3",
+                    children=[
+                        html.Div(
+                            wcc.Graph(
+                                id=statistics_plot_id,
+                                figure=go.Figure(),
+                                config={
+                                    "displayModeBar": False,
+                                },
+                            ),
+                        ),
+                    ],
                 ),
             ],
         ),

@@ -32,9 +32,7 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
     def instance() -> "EnsemblePolygonProviderFactory":
         """Static method to access the singleton instance of the factory."""
 
-        factory = WEBVIZ_FACTORY_REGISTRY.get_factory(
-            EnsemblePolygonProviderFactory
-        )
+        factory = WEBVIZ_FACTORY_REGISTRY.get_factory(EnsemblePolygonProviderFactory)
         if not factory:
             app_instance_info = WEBVIZ_FACTORY_REGISTRY.app_instance_info
             storage_folder = app_instance_info.storage_folder
@@ -43,9 +41,7 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
             factory = EnsemblePolygonProviderFactory(storage_folder, allow_writes)
 
             # Store the factory object in the global factory registry
-            WEBVIZ_FACTORY_REGISTRY.set_factory(
-                EnsemblePolygonProviderFactory, factory
-            )
+            WEBVIZ_FACTORY_REGISTRY.set_factory(EnsemblePolygonProviderFactory, factory)
 
         return factory
 
@@ -70,9 +66,7 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
         LOGGER.info(f"Importing/copying polygon data for: {ens_path}")
 
         timer.lap_s()
-        sim_fault_polygons_files = discover_per_realization_polygons_files(
-            ens_path
-        )
+        sim_fault_polygons_files = discover_per_realization_polygons_files(ens_path)
 
         et_discover_s = timer.lap_s()
 
@@ -85,9 +79,7 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
 
         provider = ProviderImplFile.from_backing_store(self._storage_dir, storage_key)
         if not provider:
-            raise ValueError(
-                f"Failed to load/create polygon provider for {ens_path}"
-            )
+            raise ValueError(f"Failed to load/create polygon provider for {ens_path}")
 
         LOGGER.info(
             f"Saved polygon provider to backing store in {timer.elapsed_s():.2f}s ("

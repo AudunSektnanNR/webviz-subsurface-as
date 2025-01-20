@@ -274,8 +274,8 @@ class CO2Leakage(WebvizPluginABC):
                 Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
                 Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
                 Output(
-                   self._view_component(MapViewElement.Ids.STATISTICS_PLOT),
-                   "figure",
+                    self._view_component(MapViewElement.Ids.STATISTICS_PLOT),
+                    "figure",
                 ),
                 Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
                 Input(self._settings_component(ViewSettings.Ids.GRAPH_SOURCE), "value"),
@@ -732,7 +732,7 @@ class CO2Leakage(WebvizPluginABC):
                 Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "style"),
                 Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "style"),
                 Output(
-                   self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "style"
+                    self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "style"
                 ),
                 Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
                 Input(self._view_component(MapViewElement.Ids.SIZE_SLIDER), "value"),
@@ -750,9 +750,7 @@ class CO2Leakage(WebvizPluginABC):
                 bottom_style["height"] = f"{slider_value}vh"
                 top_style["height"] = f"{80 - slider_value}vh"
 
-                styles = [
-                    {"height": f"{slider_value * 0.9 - 4}vh", "width": "90%"}
-                ] * 3
+                styles = [{"height": f"{slider_value * 0.9 - 4}vh", "width": "90%"}] * 3
                 if source == GraphSource.UNSMRY and self._unsmry_providers is None:
                     styles = [{"display": "none"}] * 3
                 elif (
