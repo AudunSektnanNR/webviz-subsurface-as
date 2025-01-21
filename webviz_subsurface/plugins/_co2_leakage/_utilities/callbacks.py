@@ -131,18 +131,6 @@ def derive_surface_address(
     statistic: str,
     contour_data: Optional[Dict[str, Any]],
 ) -> Union[SurfaceAddress, TruncatedSurfaceAddress]:
-    if MapType[MapAttribute(attribute).name].value == "PLUME":
-        max_attr_name = f"MAX_{MapGroup[MapAttribute(attribute).name]}".upper()
-        assert date is not None
-        basis = getattr(MapAttribute, max_attr_name)
-        return TruncatedSurfaceAddress(
-            name=surface_name,
-            datestr=date,
-            realizations=realization,
-            basis_attribute=map_attribute_names[basis],
-            threshold=contour_data["threshold"] if contour_data else 0.0,
-            smoothing=contour_data["smoothing"] if contour_data else 0.0,
-        )
     date = (
         None
         if MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME"
