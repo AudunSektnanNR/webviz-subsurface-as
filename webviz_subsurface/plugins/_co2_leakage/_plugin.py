@@ -273,11 +273,10 @@ class CO2Leakage(WebvizPluginABC):
             @callback(
                 Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
                 Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
-                # NBNB-third-tab
-                # Output(
-                #    self._view_component(MapViewElement.Ids.TIME_PLOT_ONE_REAL),
-                #    "figure",
-                # ),
+                Output(
+                    self._view_component(MapViewElement.Ids.STATISTICS_PLOT),
+                    "figure",
+                ),
                 Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
                 Input(self._settings_component(ViewSettings.Ids.GRAPH_SOURCE), "value"),
                 Input(self._settings_component(ViewSettings.Ids.CO2_SCALE), "value"),
@@ -299,6 +298,7 @@ class CO2Leakage(WebvizPluginABC):
                 Input(self._settings_component(ViewSettings.Ids.MARK_BY), "value"),
                 Input(self._settings_component(ViewSettings.Ids.SORT_PLOT), "value"),
                 Input(self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "value"),
+                Input(self._settings_component(ViewSettings.Ids.DATE_OPTION), "value"),
             )
             @callback_typecheck
             def update_graphs(
@@ -319,9 +319,10 @@ class CO2Leakage(WebvizPluginABC):
                 mark_choice: Optional[str],
                 sorting: str,
                 lines_to_show: str,
+                date_option: str,
             ) -> Tuple[Dict, go.Figure, go.Figure, go.Figure]:
                 # pylint: disable=too-many-locals
-                figs = [no_update] * 2  # 3 # NBNB-third-tab
+                figs = [no_update] * 3
                 cont_info = process_containment_info(
                     zone,
                     region,
@@ -332,6 +333,7 @@ class CO2Leakage(WebvizPluginABC):
                     mark_choice,
                     sorting,
                     lines_to_show,
+                    date_option,
                     self._menu_options[ensemble][source],
                 )
                 if source in [
@@ -385,8 +387,7 @@ class CO2Leakage(WebvizPluginABC):
                                 co2_scale,
                                 self._co2_table_providers[ensemble],
                             )
-                            # NBNB-third-tab
-                            # figs[2] = go.Figure()
+                            figs[2] = go.Figure()
                     else:
                         LOGGER.warning(
                             """UNSMRY file has not been specified as input.
@@ -730,9 +731,9 @@ class CO2Leakage(WebvizPluginABC):
                 ),
                 Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "style"),
                 Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "style"),
-                # Output(
-                #    self._view_component(MapViewElement.Ids.TIME_PLOT_ONE_REAL), "style"
-                # ), # NBNB-third-tab
+                Output(
+                    self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "style"
+                ),
                 Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
                 Input(self._view_component(MapViewElement.Ids.SIZE_SLIDER), "value"),
                 State(self._view_component(MapViewElement.Ids.TOP_ELEMENT), "style"),
@@ -749,20 +750,18 @@ class CO2Leakage(WebvizPluginABC):
                 bottom_style["height"] = f"{slider_value}vh"
                 top_style["height"] = f"{80 - slider_value}vh"
 
-                styles = [
-                    {"height": f"{slider_value * 0.9 - 4}vh", "width": "90%"}
-                ] * 2  # 3 # NBNB-third-tab
+                styles = [{"height": f"{slider_value * 0.9 - 4}vh", "width": "90%"}] * 3
                 if source == GraphSource.UNSMRY and self._unsmry_providers is None:
-                    styles = [{"display": "none"}] * 2  # 3 # NBNB-third-tab
+                    styles = [{"display": "none"}] * 3
                 elif (
                     source == GraphSource.CONTAINMENT_MASS
                     and ensemble not in self._co2_table_providers
                 ):
-                    styles = [{"display": "none"}] * 2  # 3 # NBNB-third-tab
+                    styles = [{"display": "none"}] * 3
                 elif (
                     source == GraphSource.CONTAINMENT_ACTUAL_VOLUME
                     and ensemble not in self._co2_actual_volume_table_providers
                 ):
-                    styles = [{"display": "none"}] * 2  # 3 # NBNB-third-tab
+                    styles = [{"display": "none"}] * 3
 
                 return [top_style, bottom_style] + styles

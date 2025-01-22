@@ -83,13 +83,9 @@ def discover_per_realization_polygons_files(
 
     real_dict = _discover_ensemble_realizations_fmu(ens_path)
     for realnum, runpath in sorted(real_dict.items()):
-        globbed_filenames = glob.glob(
-            str(Path(runpath) / rel_polygons_folder / suffix)
-        )
+        globbed_filenames = glob.glob(str(Path(runpath) / rel_polygons_folder / suffix))
         for polygons_filename in sorted(globbed_filenames):
-            polygons_ident = _polygons_ident_from_filename(
-                polygons_filename
-            )
+            polygons_ident = _polygons_ident_from_filename(polygons_filename)
             if polygons_ident:
                 polygons_files.append(
                     PolygonsFileInfo(

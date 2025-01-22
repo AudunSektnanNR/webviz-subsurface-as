@@ -22,6 +22,7 @@ from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_pro
 )
 from webviz_subsurface.plugins._co2_leakage._utilities import plume_extent
 from webviz_subsurface.plugins._co2_leakage._utilities.co2volume import (
+    generate_co2_statistics_figure,
     generate_co2_time_containment_figure,
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
@@ -374,7 +375,7 @@ def generate_containment_figures(
     realizations: List[int],
     y_limits: List[Optional[float]],
     containment_info: Dict[str, Union[str, None, List[str], int]],
-) -> Tuple[go.Figure, go.Figure]:  # , go.Figure]: # NBNB-third-tab
+) -> Tuple[go.Figure, go.Figure, go.Figure]:
     try:
         fig0 = (
             no_update
@@ -402,12 +403,16 @@ def generate_containment_figures(
                 containment_info,
             )
         )
-        # fig2 = go.Figure()
-        # NBNB-third-tab
+        fig2 = generate_co2_statistics_figure(
+            table_provider,
+            realizations,
+            co2_scale,
+            containment_info,
+        )
     except KeyError as exc:
         warnings.warn(f"Could not generate CO2 figures: {exc}")
         raise exc
-    return fig0, fig1  # , fig2 # NBNB-third-tab
+    return fig0, fig1, fig2
 
 
 def generate_unsmry_figures(
@@ -460,6 +465,7 @@ def process_containment_info(
     mark_choice: Optional[str],
     sorting: str,
     lines_to_show: str,
+    date_option: str,
     menu_options: MenuOptions,
 ) -> Dict[str, Union[str, None, List[str], int]]:
     if mark_choice is None:
@@ -502,6 +508,7 @@ def process_containment_info(
         "containments": containments,
         "plume_groups": plume_groups,
         "use_stats": lines_to_show == "stat",
+        "date_option": date_option,
     }
 
 
@@ -543,6 +550,7 @@ def make_plot_ids(
             containment_info["color_choice"],
             mark_choice_str,
             containment_info["sorting"],
+            containment_info["date_option"],
         )
     )
     ids = [plot_id]

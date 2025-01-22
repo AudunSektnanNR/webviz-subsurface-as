@@ -85,13 +85,9 @@ class ProviderImplFile(EnsemblePolygonProvider):
             rel_path_arr.append(str(rel_path_in_store))
             original_path_arr.append(polygon_info.path)
 
-        LOGGER.debug(
-            f"Copying {len(original_path_arr)} polygons into backing store..."
-        )
+        LOGGER.debug(f"Copying {len(original_path_arr)} polygons into backing store...")
         timer.lap_s()
-        _copy_polygons_into_provider_dir(
-            original_path_arr, rel_path_arr, provider_dir
-        )
+        _copy_polygons_into_provider_dir(original_path_arr, rel_path_arr, provider_dir)
         et_copy_s = timer.lap_s()
 
         polygons_inventory_df = pd.DataFrame(
@@ -123,9 +119,7 @@ class ProviderImplFile(EnsemblePolygonProvider):
 
         try:
             polygons_inventory_df = pd.read_parquet(path=parquet_file_name)
-            return ProviderImplFile(
-                storage_key, provider_dir, polygons_inventory_df
-            )
+            return ProviderImplFile(storage_key, provider_dir, polygons_inventory_df)
         except FileNotFoundError:
             return None
 
@@ -135,14 +129,12 @@ class ProviderImplFile(EnsemblePolygonProvider):
     def attributes(self) -> List[str]:
         return sorted(list(self._inventory_df[Col.ATTRIBUTE].unique()))
 
-    def fault_polygons_names_for_attribute(
-        self, polygons_attribute: str
-    ) -> List[str]:
+    def fault_polygons_names_for_attribute(self, polygons_attribute: str) -> List[str]:
         return sorted(
             list(
                 self._inventory_df.loc[
                     self._inventory_df[Col.ATTRIBUTE] == polygons_attribute
-                    ][Col.NAME].unique()
+                ][Col.NAME].unique()
             )
         )
 
@@ -195,7 +187,7 @@ class ProviderImplFile(EnsemblePolygonProvider):
         """Returns list of file names matching the specified filter criteria"""
         df = self._inventory_df.loc[
             self._inventory_df[Col.TYPE] == PolygonType.SIMULATED
-            ]
+        ]
 
         df = df.loc[
             (df[Col.ATTRIBUTE] == attribute)

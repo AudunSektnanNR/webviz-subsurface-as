@@ -9,10 +9,7 @@ import geojson
 import xtgeo
 from dash import Dash
 
-from .ensemble_polygon_provider import (
-    EnsemblePolygonProvider,
-    PolygonsAddress,
-)
+from .ensemble_polygon_provider import EnsemblePolygonProvider, PolygonsAddress
 
 LOGGER = logging.getLogger(__name__)
 
