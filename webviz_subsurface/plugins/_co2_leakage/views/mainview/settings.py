@@ -1245,30 +1245,20 @@ def _create_left_side_menu(
     map_attribute_list = [
         {"label": MapAttribute[key.name].value, "value": MapAttribute[key.name].value}
         for key in map_attribute_names.filtered_values.keys()
-        if MapGroup[key.name].value == map_group
-    ]
-    map_attribute_list2 = [
-        {"label": MapAttribute[key.name].value, "value": MapAttribute[key.name].value}
-        for key in map_attribute_names.filtered_values.keys()
         if map_group_labels[MapGroup[key.name].value] == map_group
     ]
-    return [title] + map_attribute_list2
+    return [title] + map_attribute_list
 
 
 def _compile_property_options(
     map_attribute_names: FilteredMapAttribute,
 ) -> List[Dict[str, Any]]:
     requested_map_groups = [
-        MapGroup[key.name].value for key in map_attribute_names.filtered_values.keys()
-    ]
-    requested_map_groups2 = [
         map_group_labels[MapGroup[key.name].value] for key in map_attribute_names.filtered_values.keys()
     ]
     print("requested_map_groups:")
     print(requested_map_groups)
-    print("requested_map_groups2:")
-    print(requested_map_groups2)
-    unique_requested_map_groups = list(set(requested_map_groups2))
+    unique_requested_map_groups = list(set(requested_map_groups))
     return [
         element
         for group in unique_requested_map_groups

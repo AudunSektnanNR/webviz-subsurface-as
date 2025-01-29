@@ -44,25 +44,8 @@ class MapGroup(StrEnum):
     FREE_GAS = "CO2 MASS"
     TRAPPED_GAS = "CO2 MASS"
 
-map_group_labels = {"SGAS": "Gas phase", "AMFG": "Dissolved phase", "XMF2": "Dissolved phase", "SGSTRAND": "Trapped gas phase", "CO2 MASS": "CO2 mass"}
 
-class MapGroup_new(StrEnum):
-    MIGRATION_TIME_SGAS = "Gas phase"
-    MIGRATION_TIME_AMFG = "Dissolved phase"
-    MIGRATION_TIME_XMF2 = "Dissolved phase"
-    MAX_SGAS = "Gas phase"
-    MAX_AMFG = "Dissolved phase"
-    MAX_XMF2 = "Dissolved phase"
-    MAX_SGSTRAND = "Trapped gas phase"
-    SGAS_PLUME = "Gas phase"
-    AMFG_PLUME = "Dissolved phase"
-    XMF2_PLUME = "Dissolved phase"
-    SGSTRAND_PLUME = "Trapped gas phase"
-    MASS = "CO2 MASS"
-    DISSOLVED = "CO2 MASS"
-    FREE = "CO2 MASS"
-    FREE_GAS = "CO2 MASS"
-    TRAPPED_GAS = "CO2 MASS"
+map_group_labels = {"SGAS": "Gas phase", "AMFG": "Dissolved phase", "XMF2": "Dissolved phase", "SGSTRAND": "Trapped gas phase", "CO2 MASS": "CO2 mass"}
 
 
 class MapType(StrEnum):
@@ -121,14 +104,8 @@ class FilteredMapAttribute:
         map_attrs_with_plume = [
             map_groups[key] for key, value in map_types.items() if value == "MAX"
         ]
-        map_attrs_with_plume_new = [
-            key.split("_")[-1] for key, value in map_types.items() if value == "MAX"
-        ]
         print(f"\nmap_attrs_with_plume:")
         for k in map_attrs_with_plume:
-            print(f"{k}")
-        print(f"\nmap_attrs_with_plume_new:")
-        for k in map_attrs_with_plume_new:
             print(f"{k}")
         plume_request = {
             f"Plume ({item})": f"{item.lower()}_plume" for item in map_attrs_with_plume

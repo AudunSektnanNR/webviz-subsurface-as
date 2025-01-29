@@ -137,9 +137,7 @@ def derive_surface_address(
     if MapType[MapAttribute(attribute).name].value == "PLUME":
         print("  -> Bingo")
         print(f"  MapAttribute(attribute).name: {MapAttribute(attribute).name}")
-        # prop_name = MapAttribute(attribute).name.split("_")[0]
         max_attr_name = f"MAX_{MapGroup[MapAttribute(attribute).name]}".upper()  # NBNB-AS: Remove upper?
-        # max_attr_name = f"MAX_{prop_name}".upper()  # NBNB-AS: Remove upper?
         print(f"  max_attr_name: {max_attr_name}")
         assert date is not None
         basis = getattr(MapAttribute, max_attr_name)
