@@ -8,14 +8,14 @@ from webviz_subsurface._utils.enum_shim import StrEnum
 
 
 class MapAttribute(StrEnum):
-    MIGRATION_TIME_GAS_PHASE = "Migration time (gas)"
-    MIGRATION_TIME_DISSOLVED_PHASE = "Migration time (dissolved)"
-    MAX_GAS_PHASE = "Maximum gas"
-    MAX_DISSOLVED_PHASE = "Maximum dissolved"
-    MAX_TRAPPED_PHASE = "Maximum trapped gas"
-    GAS_PHASE_PLUME = "Plume (gas_phase)"
-    DISSOLVED_PHASE_PLUME = "Plume (dissolved_phase)"
-    TRAPPED_PHASE_PLUME = "Plume (trapped_phase)"
+    MIGRATION_TIME_SGAS = "Migration time (SGAS)"
+    MIGRATION_TIME_AMFG = "Migration time (AMFG)"
+    MAX_SGAS = "Maximum SGAS"
+    MAX_AMFG = "Maximum AMFG"
+    MAX_SGSTRAND = "Maximum SGSTRAND"
+    SGAS_PLUME = "Plume (SGAS)"
+    AMFG_PLUME = "Plume (AMFG)"
+    SGSTRAND_PLUME = "Plume (SGSTRAND)"
     MASS = "Mass"
     DISSOLVED = "Dissolved mass"
     FREE = "Free gas mass"
@@ -24,14 +24,14 @@ class MapAttribute(StrEnum):
 
 
 class MapGroup(StrEnum):
-    MIGRATION_TIME_GAS_PHASE = "gas_phase"
-    MIGRATION_TIME_DISSOLVED_PHASE = "dissolved_phase"
-    MAX_GAS_PHASE = "gas_phase"
-    MAX_DISSOLVED_PHASE = "dissolved_phase"
-    MAX_TRAPPED_PHASE = "trapped_phase"
-    GAS_PHASE_PLUME = "gas_phase"
-    DISSOLVED_PHASE_PLUME = "dissolved_phase"
-    TRAPPED_PHASE_PLUME = "trapped_phase"
+    MIGRATION_TIME_SGAS = "SGAS"
+    MIGRATION_TIME_AMFG = "AMFG"
+    MAX_SGAS = "SGAS"
+    MAX_AMFG = "AMFG"
+    MAX_SGSTRAND = "SGSTRAND"
+    SGAS_PLUME = "SGAS"
+    AMFG_PLUME = "AMFG"
+    SGSTRAND_PLUME = "SGSTRAND"
     MASS = "CO2 MASS"
     DISSOLVED = "CO2 MASS"
     FREE = "CO2 MASS"
@@ -40,14 +40,14 @@ class MapGroup(StrEnum):
 
 
 class MapType(StrEnum):
-    MIGRATION_TIME_GAS_PHASE = "MIGRATION_TIME"
-    MIGRATION_TIME_DISSOLVED_PHASE = "MIGRATION_TIME"
-    MAX_GAS_PHASE = "MAX"
-    MAX_DISSOLVED_PHASE = "MAX"
-    MAX_TRAPPED_PHASE = "MAX"
-    GAS_PHASE_PLUME = "PLUME"
-    DISSOLVED_PHASE_PLUME = "PLUME"
-    TRAPPED_PHASE_PLUME = "PLUME"
+    MIGRATION_TIME_SGAS = "MIGRATION_TIME"
+    MIGRATION_TIME_AMFG = "MIGRATION_TIME"
+    MAX_SGAS = "MAX"
+    MAX_AMFG = "MAX"
+    MAX_SGSTRAND = "MAX"
+    SGAS_PLUME = "PLUME"
+    AMFG_PLUME = "PLUME"
+    SGSTRAND_PLUME = "PLUME"
     MASS = "MASS"
     DISSOLVED = "MASS"
     FREE = "MASS"
@@ -56,11 +56,11 @@ class MapType(StrEnum):
 
 
 class MapNamingConvention(StrEnum):
-    MIGRATION_TIME_GAS_PHASE = "migrationtime_gas_phase"
-    MIGRATION_TIME_DISSOLVED_PHASE = "migrationtime_dissolved_phase"
-    MAX_GAS_PHASE = "max_gas_phase"
-    MAX_DISSOLVED_PHASE = "max_dissolved_phase"
-    MAX_TRAPPED_PHASE = "max_trapped_phase"
+    MIGRATION_TIME_SGAS = "migrationtime_sgas"
+    MIGRATION_TIME_AMFG = "migrationtime_amfg"
+    MAX_SGAS = "max_sgas"
+    MAX_AMFG = "max_amfg"
+    MAX_SGSTRAND = "max_sgstrand"
     MASS = "co2_mass_total"
     DISSOLVED = "co2_mass_dissolved_phase"
     FREE = "co2_mass_gas_phase"
@@ -201,5 +201,5 @@ class MapThresholds:
             if MapType[MapAttribute[key.name].name].value
             not in ["PLUME", "MIGRATION_TIME"]
         }
-        if MapAttribute.MAX_DISSOLVED_PHASE in self.standard_thresholds.keys():
-            self.standard_thresholds[MapAttribute.MAX_DISSOLVED_PHASE] = 0.0005
+        if MapAttribute.MAX_AMFG in self.standard_thresholds.keys():
+            self.standard_thresholds[MapAttribute.MAX_AMFG] = 0.0005
