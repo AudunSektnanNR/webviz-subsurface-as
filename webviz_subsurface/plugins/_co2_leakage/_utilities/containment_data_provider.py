@@ -96,7 +96,6 @@ class ContainmentDataProvider:
                 if plume_group not in plume_groups and plume_group is not None:
                     plume_groups.append(plume_group)
 
-
         def plume_sort_key(name: Optional[str]) -> int:
             if name is None:
                 return 999  # Not sure why/when this can happen, just a precaution
@@ -110,11 +109,16 @@ class ContainmentDataProvider:
             phases = ["total", "free_gas", "trapped_gas", "dissolved"]
         else:
             phases = ["total", "gas", "dissolved"]
+
+        dates = df["date"].unique()
+        dates.sort()
+
         return {
             "zones": zones if len(zones) > 1 else [],
             "regions": regions if len(regions) > 1 else [],
             "phases": phases,
             "plume_groups": plume_groups if len(plume_groups) > 1 else [],
+            "dates": dates,
         }
 
     @staticmethod

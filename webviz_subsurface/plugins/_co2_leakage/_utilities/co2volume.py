@@ -156,6 +156,93 @@ def _prepare_pattern_and_color_options(
     return cat_ord, colors, marks
 
 
+def _prepare_pattern_and_color_options_statistics_plot(
+    df: pd.DataFrame,
+    containment_info: Dict,
+    color_choice: str,
+    mark_choice: str,
+) -> Tuple[Dict, List, List]:
+    mark_options = [] if mark_choice == "none" else containment_info[f"{mark_choice}s"]
+    color_options = containment_info[f"{color_choice}s"]
+    num_colors = len(color_options)
+    num_marks = num_colors if mark_choice == "none" else len(mark_options)
+    line_types = _get_line_types(mark_options, mark_choice)
+    colors = _get_colors(num_colors, color_choice)
+
+    if mark_choice == "phase":
+        mark_options = ["total"] + mark_options
+        line_types = ["solid"] + line_types
+        num_marks += 1
+    if color_choice == "containment":
+        color_options = ["total"] + color_options
+        colors = ["black"] + colors
+        num_colors += 1
+
+    filter_mark = mark_choice != "phase"
+    filter_color = color_choice not in ["phase", "containment"]
+    _filter_rows(df, color_choice, mark_choice, filter_mark, filter_color)
+
+    if mark_choice == "none":
+        cat_ord = {"type": color_options}
+        df["type"] = df[color_choice]
+        return cat_ord, colors, line_types
+    df["type"] = [", ".join((c, m)) for c, m in zip(df[color_choice], df[mark_choice])]
+
+    if containment_info["sorting"] == "color":
+        cat_ord = {
+            "type": [", ".join((c, m)) for c in color_options for m in mark_options],
+        }
+        colors = [c for c in colors for _ in range(num_marks)]
+        line_types = line_types * num_colors
+    else:
+        cat_ord = {
+            "type": [", ".join((c, m)) for m in mark_options for c in color_options],
+        }
+        colors = colors * num_marks
+        line_types = [m for m in line_types for _ in range(num_colors)]
+
+    for m in mark_options + ["total", "all"]:
+        df["type"] = df["type"].replace(f"total, {m}", m)
+        df["type"] = df["type"].replace(f"all, {m}", m)
+    for m in color_options:
+        df["type"] = df["type"].replace(f"{m}, total", m)
+        df["type"] = df["type"].replace(f"{m}, all", m)
+    cat_ord["type"] = [
+        label.replace("total, ", "") if "total, " in label else label
+        for label in cat_ord["type"]
+    ]
+    cat_ord["type"] = [
+        label.replace("all, ", "") if "all, " in label else label
+        for label in cat_ord["type"]
+    ]
+    cat_ord["type"] = [
+        label.replace(", total", "") if ", total" in label else label
+        for label in cat_ord["type"]
+    ]
+    cat_ord["type"] = [
+        label.replace(", all", "") if ", all" in label else label
+        for label in cat_ord["type"]
+    ]
+
+    return cat_ord, colors, line_types
+
+
+def _find_default_option_statistics_figure(
+    df: pd.DataFrame, categories: list[str]
+) -> str:
+    if "hazardous" in categories:
+        default_option = "hazardous"
+    else:
+        max_value = -999.9
+        default_option = categories[0]
+        for category in categories:
+            df_filtered = df[df["type"] == category]
+            if df_filtered["amount"].max() > max_value:
+                max_value = df_filtered["amount"].max()
+                default_option = category
+    return default_option
+
+
 def _prepare_line_type_and_color_options(
     df: pd.DataFrame,
     containment_info: Dict,
@@ -169,6 +256,7 @@ def _prepare_line_type_and_color_options(
     num_colors = len(color_options)
     line_types = _get_line_types(mark_options, mark_choice)
     colors = _get_colors(num_colors, color_choice)
+
     filter_mark = True
     if mark_choice == "phase":
         mark_options = ["total"] + mark_options
@@ -236,7 +324,7 @@ def _read_terminal_co2_volumes(
     data_frame = None
     for real in realizations:
         df = table_provider.extract_dataframe(real, scale)
-        df = df[df["date"] == np.max(df["date"])]
+        df = df[df["date"] == containment_info["date_option"]]
         _add_sort_key_and_real(df, str(real), containment_info)
         _filter_columns(df, color_choice, mark_choice, containment_info)
         _filter_rows(df, color_choice, mark_choice)
@@ -272,8 +360,10 @@ def _filter_rows(
     color_choice: str,
     mark_choice: str,
     filter_mark: bool = True,
+    filter_color: bool = True,
 ) -> None:
-    df.query(f'{color_choice} not in ["total", "all"]', inplace=True)
+    if filter_color:
+        df.query(f'{color_choice} not in ["total", "all"]', inplace=True)
     if mark_choice != "none" and filter_mark:
         df.query(f'{mark_choice} not in ["total", "all"]', inplace=True)
 
@@ -332,15 +422,21 @@ def _change_names(
         df["name"] = df["name"].replace(f"{m}, all", m)
 
 
-def _adjust_figure(fig: go.Figure) -> None:
+def _adjust_figure(fig: go.Figure, plot_title: Optional[str] = None) -> None:
     fig.layout.legend.orientation = "v"
     fig.layout.legend.title.text = ""
     fig.layout.legend.itemwidth = 40
     fig.layout.xaxis.exponentformat = "power"
-    fig.layout.title.x = 0.5
+    if plot_title is not None:
+        fig.layout.title = plot_title
+        fig.layout.title.font = {"size": 14}
+        fig.layout.margin.t = 40
+        fig.layout.title.y = 0.95
+    else:
+        fig.layout.margin.t = 15
+    fig.layout.title.x = 0.4
     fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
     fig.layout.margin.b = 6
-    fig.layout.margin.t = 15
     fig.layout.margin.l = 10
     fig.layout.margin.r = 10
     fig.update_layout(
@@ -412,7 +508,7 @@ def generate_co2_volume_figure(
     )
     fig.layout.yaxis.title = "Realization"
     fig.layout.xaxis.title = scale.value
-    _adjust_figure(fig)
+    _adjust_figure(fig, plot_title=containment_info["date_option"])
     return fig
 
 
@@ -713,4 +809,58 @@ def generate_co2_time_containment_figure(
     fig.layout.yaxis.title = scale.value
     fig.layout.yaxis.autorange = True
     _adjust_figure(fig)
+    return fig
+
+
+# pylint: disable=too-many-locals
+def generate_co2_statistics_figure(
+    table_provider: ContainmentDataProvider,
+    realizations: List[int],
+    scale: Union[Co2MassScale, Co2VolumeScale],
+    containment_info: Dict[str, Any],
+) -> go.Figure:
+    date_option = containment_info["date_option"]
+    df = _read_co2_volumes(table_provider, realizations, scale)
+    df = df[df["date"] == date_option]
+    df = df.drop(columns=["date"]).reset_index(drop=True)
+    color_choice = containment_info["color_choice"]
+    mark_choice = containment_info["mark_choice"]
+    _filter_columns(df, color_choice, mark_choice, containment_info)
+    cat_ord, colors, line_types = _prepare_pattern_and_color_options_statistics_plot(
+        df,
+        containment_info,
+        color_choice,
+        mark_choice,
+    )
+
+    # Remove if we want realization as label?
+    df = df.drop(columns=["REAL", "realization"]).reset_index(drop=True)
+    fig = px.ecdf(
+        df,
+        x="amount",
+        ecdfmode="reversed",
+        ecdfnorm="probability",
+        markers=True,
+        color="type",
+        color_discrete_sequence=colors,
+        line_dash="type" if mark_choice != "none" else None,
+        line_dash_sequence=line_types,
+        category_orders=cat_ord,
+    )
+
+    default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
+    for trace in fig.data:
+        if trace.name != default_option:
+            trace.visible = "legendonly"
+
+    fig.update_traces(
+        hovertemplate="Type: %{data.name}<br>Amount: %{x:.3f}<br>"
+        "Probability: %{y:.3f}<extra></extra>",
+    )
+    fig.layout.yaxis.range = [-0.02, 1.02]
+    fig.layout.legend.tracegroupgap = 0
+    fig.layout.xaxis.title = scale.value
+    fig.layout.yaxis.title = "Probability"
+    _adjust_figure(fig, plot_title=containment_info["date_option"])
+
     return fig
