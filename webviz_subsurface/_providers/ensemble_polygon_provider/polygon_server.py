@@ -13,9 +13,9 @@ from .ensemble_polygon_provider import EnsemblePolygonProvider, PolygonsAddress
 
 LOGGER = logging.getLogger(__name__)
 
-_ROOT_URL_PATH = "/FaultPolygonsServer"
+_ROOT_URL_PATH = "/PolygonServer"
 
-_FAULT_POLYGONS_SERVER_INSTANCE: Optional["FaultPolygonsServer"] = None
+_POLYGONS_SERVER_INSTANCE: Optional["PolygonServer"] = None
 
 
 @dataclass(frozen=True)
@@ -24,20 +24,20 @@ class QualifiedAddress:
     address: PolygonsAddress
 
 
-class FaultPolygonsServer:
+class PolygonServer:
     def __init__(self, app: Dash) -> None:
         self._setup_url_rule(app)
         self._id_to_provider_dict: Dict[str, EnsemblePolygonProvider] = {}
 
     @staticmethod
-    def instance(app: Dash) -> "FaultPolygonsServer":
+    def instance(app: Dash) -> "PolygonServer":
         # pylint: disable=global-statement
-        global _FAULT_POLYGONS_SERVER_INSTANCE
-        if not _FAULT_POLYGONS_SERVER_INSTANCE:
-            LOGGER.debug("Initializing FaultPolygonsServer instance")
-            _FAULT_POLYGONS_SERVER_INSTANCE = FaultPolygonsServer(app)
+        global _POLYGONS_SERVER_INSTANCE
+        if not _POLYGONS_SERVER_INSTANCE:
+            LOGGER.debug("Initializing PolygonServer instance")
+            _POLYGONS_SERVER_INSTANCE = PolygonServer(app)
 
-        return _FAULT_POLYGONS_SERVER_INSTANCE
+        return _POLYGONS_SERVER_INSTANCE
 
     def add_provider(self, provider: EnsemblePolygonProvider) -> None:
         provider_id = provider.provider_id()
@@ -60,47 +60,47 @@ class FaultPolygonsServer:
     def encode_partial_url(
         self,
         provider_id: str,
-        fault_polygons_address: PolygonsAddress,
+        polygons_address: PolygonsAddress,
     ) -> str:
         if not provider_id in self._id_to_provider_dict:
             raise ValueError("Could not find provider")
 
         url_path: str = (
             f"{_ROOT_URL_PATH}/{quote(provider_id)}"
-            f"/{quote(json.dumps(asdict(fault_polygons_address)))}"
+            f"/{quote(json.dumps(asdict(polygons_address)))}"
         )
 
         return url_path
 
     def _setup_url_rule(self, app: Dash) -> None:
-        @app.server.route(_ROOT_URL_PATH + "/<provider_id>/<fault_polygons_address>")
-        def _handle_fault_polygons_request(
+        @app.server.route(_ROOT_URL_PATH + "/<provider_id>/<polygons_address>")
+        def _handle_polygons_request(
             provider_id: str,
-            fault_polygons_address: str,
+            polygons_address: str,
         ) -> flask.Response:
             LOGGER.debug(
-                f"Handling fault_polygons_request: "
-                f"full_fault_polygons_address={fault_polygons_address} "
+                f"Handling polygons_request: "
+                f"full_polygons_address={polygons_address} "
             )
 
-            fault_polygons_geojson = None
+            polygons_geojson = None
             # try:
 
-            address = PolygonsAddress(**json.loads(fault_polygons_address))
+            address = PolygonsAddress(**json.loads(polygons_address))
             provider = self._id_to_provider_dict[provider_id]
-            fault_polygons = provider.get_fault_polygons(address)
-            if fault_polygons is not None:
-                fault_polygons_geojson = _create_fault_polygons_geojson(
-                    polygons=fault_polygons
+            polygons = provider.get_polygons(address)
+            if polygons is not None:
+                polygons_geojson = _create_polygons_geojson(
+                    polygons=polygons,
                 )
 
             # except Exception as e:
-            #     LOGGER.error("Error decoding fault polygons address")
+            #     LOGGER.error("Error decoding polygons address")
             #     print(e)
             #     # flask.abort(404)
             featurecoll = (
-                fault_polygons_geojson
-                if fault_polygons_geojson is not None
+                polygons_geojson
+                if polygons_geojson is not None
                 else {
                     "type": "FeatureCollection",
                     "features": [],
@@ -112,13 +112,14 @@ class FaultPolygonsServer:
             )
 
 
-def _create_fault_polygons_geojson(polygons: xtgeo.Polygons) -> Dict:
+def _create_polygons_geojson(polygons: xtgeo.Polygons) -> Dict:
     feature_arr = []
+    prop_style = dict(color=[0, 0, 0, 255])
     for name, polygon in polygons.dataframe.groupby("POLY_ID"):
         coords = [list(zip(polygon.X_UTME, polygon.Y_UTMN))]
         feature = geojson.Feature(
             geometry=geojson.Polygon(coords),
-            properties={"name": f"id:{name}", "color": [0, 0, 0, 255]},
+            properties=dict(name=f"id:{name}", **prop_style),
         )
         feature_arr.append(feature)
     return geojson.FeatureCollection(features=feature_arr)

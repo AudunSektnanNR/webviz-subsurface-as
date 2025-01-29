@@ -46,7 +46,9 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
         return factory
 
     def create_from_ensemble_polygon_files(
-        self, ens_path: str
+        self,
+        ens_path: str,
+        polygon_path_pattern: str,
     ) -> EnsemblePolygonProvider:
         timer = PerfTimer()
 
@@ -66,14 +68,17 @@ class EnsemblePolygonProviderFactory(WebvizFactory):
         LOGGER.info(f"Importing/copying polygon data for: {ens_path}")
 
         timer.lap_s()
-        sim_fault_polygons_files = discover_per_realization_polygons_files(ens_path)
+        sim_polygons_files = discover_per_realization_polygons_files(
+            ens_path,
+            polygon_path_pattern,
+        )
 
         et_discover_s = timer.lap_s()
 
         ProviderImplFile.write_backing_store(
             self._storage_dir,
             storage_key,
-            sim_polygons=sim_fault_polygons_files,
+            sim_polygons=sim_polygons_files,
         )
         et_write_s = timer.lap_s()
 

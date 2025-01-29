@@ -224,3 +224,10 @@ class MapThresholds:
         }
         if MapAttribute.MAX_AMFG in self.standard_thresholds.keys():
             self.standard_thresholds[MapAttribute.MAX_AMFG] = 0.0005
+
+
+class BoundarySettings(TypedDict):
+    polygon_file_pattern: str
+    attribute: str
+    hazardous_name: str
+    containment_name: str
