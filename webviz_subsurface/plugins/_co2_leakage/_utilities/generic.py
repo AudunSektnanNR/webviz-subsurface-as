@@ -15,10 +15,12 @@ class MapAttribute(StrEnum):
     MAX_AMFG = "Maximum AMFG"
     MAX_XMF2 = "Maximum XMF2"
     MAX_SGSTRAND = "Maximum SGSTRAND"
+    MAX_SGTRH = "Maximum SGTRH"
     SGAS_PLUME = "Plume (SGAS)"
     AMFG_PLUME = "Plume (AMFG)"
     XMF2_PLUME = "Plume (XMF2)"
     SGSTRAND_PLUME = "Plume (SGSTRAND)"
+    SGTRH_PLUME = "Plume (SGTRH)"
     MASS = "Mass"
     DISSOLVED = "Dissolved mass"
     FREE = "Free gas mass"
@@ -34,10 +36,12 @@ class MapGroup(StrEnum):
     MAX_AMFG = "AMFG"
     MAX_XMF2 = "XMF2"
     MAX_SGSTRAND = "SGSTRAND"
+    MAX_SGTRH = "SGTRH"
     SGAS_PLUME = "SGAS"
     AMFG_PLUME = "AMFG"
     XMF2_PLUME = "XMF2"
     SGSTRAND_PLUME = "SGSTRAND"
+    SGTRH_PLUME = "SGTRH"
     MASS = "CO2 MASS"
     DISSOLVED = "CO2 MASS"
     FREE = "CO2 MASS"
@@ -45,7 +49,7 @@ class MapGroup(StrEnum):
     TRAPPED_GAS = "CO2 MASS"
 
 
-map_group_labels = {"SGAS": "Gas phase", "AMFG": "Dissolved phase", "XMF2": "Dissolved phase", "SGSTRAND": "Trapped gas phase", "CO2 MASS": "CO2 mass"}
+map_group_labels = {"SGAS": "Gas phase", "AMFG": "Dissolved phase", "XMF2": "Dissolved phase", "SGSTRAND": "Trapped gas phase", "SGTRH": "Trapped gas phase", "CO2 MASS": "CO2 mass"}
 
 
 class MapType(StrEnum):
@@ -56,10 +60,12 @@ class MapType(StrEnum):
     MAX_AMFG = "MAX"
     MAX_XMF2 = "MAX"
     MAX_SGSTRAND = "MAX"
+    MAX_SGTRH = "MAX"
     SGAS_PLUME = "PLUME"
     AMFG_PLUME = "PLUME"
     XMF2_PLUME = "PLUME"
     SGSTRAND_PLUME = "PLUME"
+    SGTRH_PLUME = "PLUME"
     MASS = "MASS"
     DISSOLVED = "MASS"
     FREE = "MASS"
@@ -75,6 +81,7 @@ class MapNamingConvention(StrEnum):
     MAX_AMFG = "max_amfg"
     MAX_XMF2 = "max_xmf2"
     MAX_SGSTRAND = "max_sgstrand"
+    MAX_SGTRH = "max_sgtrh"
     MASS = "co2_mass_total"
     DISSOLVED = "co2_mass_dissolved_phase"
     FREE = "co2_mass_gas_phase"
