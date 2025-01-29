@@ -7,7 +7,7 @@ import xtgeo
 
 @dataclass(frozen=True)
 class SimulatedPolygonsAddress:
-    """Specifies a unique simulated fault polygon set for a given ensemble realization"""
+    """Specifies a unique simulated polygon set for a given ensemble realization"""
 
     attribute: str
     name: str
@@ -29,17 +29,11 @@ class EnsemblePolygonProvider(abc.ABC):
         """Returns list of all available attributes."""
 
     @abc.abstractmethod
-    def fault_polygons_names_for_attribute(
-        self, fault_polygons_attribute: str
-    ) -> List[str]:
-        """Returns list of all available fault polygons names for a given attribute."""
-
-    @abc.abstractmethod
     def realizations(self) -> List[int]:
         """Returns list of all available realizations."""
 
     @abc.abstractmethod
-    def get_fault_polygons(
+    def get_polygons(
         self,
         address: PolygonsAddress,
     ) -> Optional[xtgeo.Polygons]:
