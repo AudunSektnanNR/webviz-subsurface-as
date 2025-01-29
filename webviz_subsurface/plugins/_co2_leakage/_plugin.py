@@ -114,6 +114,7 @@ class CO2Leakage(WebvizPluginABC):
         map_surface_names_to_fault_polygons: Optional[Dict[str, str]] = None,
     ):
         super().__init__()
+        print("\nINIT CO2Leakage")
         self._error_message = ""
         try:
             ensemble_paths = {

@@ -10,11 +10,14 @@ from webviz_subsurface._utils.enum_shim import StrEnum
 class MapAttribute(StrEnum):
     MIGRATION_TIME_SGAS = "Migration time (SGAS)"
     MIGRATION_TIME_AMFG = "Migration time (AMFG)"
+    MIGRATION_TIME_XMF2 = "Migration time (XMF2)"
     MAX_SGAS = "Maximum SGAS"
     MAX_AMFG = "Maximum AMFG"
+    MAX_XMF2 = "Maximum XMF2"
     MAX_SGSTRAND = "Maximum SGSTRAND"
     SGAS_PLUME = "Plume (SGAS)"
     AMFG_PLUME = "Plume (AMFG)"
+    XMF2_PLUME = "Plume (XMF2)"
     SGSTRAND_PLUME = "Plume (SGSTRAND)"
     MASS = "Mass"
     DISSOLVED = "Dissolved mass"
@@ -26,12 +29,35 @@ class MapAttribute(StrEnum):
 class MapGroup(StrEnum):
     MIGRATION_TIME_SGAS = "SGAS"
     MIGRATION_TIME_AMFG = "AMFG"
+    MIGRATION_TIME_XMF2 = "XMF2"
     MAX_SGAS = "SGAS"
     MAX_AMFG = "AMFG"
+    MAX_XMF2 = "XMF2"
     MAX_SGSTRAND = "SGSTRAND"
     SGAS_PLUME = "SGAS"
     AMFG_PLUME = "AMFG"
+    XMF2_PLUME = "XMF2"
     SGSTRAND_PLUME = "SGSTRAND"
+    MASS = "CO2 MASS"
+    DISSOLVED = "CO2 MASS"
+    FREE = "CO2 MASS"
+    FREE_GAS = "CO2 MASS"
+    TRAPPED_GAS = "CO2 MASS"
+
+map_group_labels = {"SGAS": "Gas phase", "AMFG": "Dissolved phase", "XMF2": "Dissolved phase", "SGSTRAND": "Trapped gas phase", "CO2 MASS": "CO2 mass"}
+
+class MapGroup_new(StrEnum):
+    MIGRATION_TIME_SGAS = "Gas phase"
+    MIGRATION_TIME_AMFG = "Dissolved phase"
+    MIGRATION_TIME_XMF2 = "Dissolved phase"
+    MAX_SGAS = "Gas phase"
+    MAX_AMFG = "Dissolved phase"
+    MAX_XMF2 = "Dissolved phase"
+    MAX_SGSTRAND = "Trapped gas phase"
+    SGAS_PLUME = "Gas phase"
+    AMFG_PLUME = "Dissolved phase"
+    XMF2_PLUME = "Dissolved phase"
+    SGSTRAND_PLUME = "Trapped gas phase"
     MASS = "CO2 MASS"
     DISSOLVED = "CO2 MASS"
     FREE = "CO2 MASS"
@@ -42,11 +68,14 @@ class MapGroup(StrEnum):
 class MapType(StrEnum):
     MIGRATION_TIME_SGAS = "MIGRATION_TIME"
     MIGRATION_TIME_AMFG = "MIGRATION_TIME"
+    MIGRATION_TIME_XMF2 = "MIGRATION_TIME"
     MAX_SGAS = "MAX"
     MAX_AMFG = "MAX"
+    MAX_XMF2 = "MAX"
     MAX_SGSTRAND = "MAX"
     SGAS_PLUME = "PLUME"
     AMFG_PLUME = "PLUME"
+    XMF2_PLUME = "PLUME"
     SGSTRAND_PLUME = "PLUME"
     MASS = "MASS"
     DISSOLVED = "MASS"
@@ -58,8 +87,10 @@ class MapType(StrEnum):
 class MapNamingConvention(StrEnum):
     MIGRATION_TIME_SGAS = "migrationtime_sgas"
     MIGRATION_TIME_AMFG = "migrationtime_amfg"
+    MIGRATION_TIME_XMF2 = "migrationtime_xmf2"
     MAX_SGAS = "max_sgas"
     MAX_AMFG = "max_amfg"
+    MAX_XMF2 = "max_xmf2"
     MAX_SGSTRAND = "max_sgstrand"
     MASS = "co2_mass_total"
     DISSOLVED = "co2_mass_dissolved_phase"
@@ -71,6 +102,9 @@ class MapNamingConvention(StrEnum):
 class FilteredMapAttribute:
     def __init__(self, mapping: Dict):
         self.mapping = mapping
+        print(f"\nself.mapping:")
+        for k, v in self.mapping.items():
+            print(f"{k}: {v}")
         map_types = {
             key: MapType[key].value
             for key in MapAttribute.__members__
@@ -81,14 +115,30 @@ class FilteredMapAttribute:
             for key in MapAttribute.__members__
             if MapAttribute[key].value in self.mapping
         }
+        print(f"\nmap_groups:")
+        for k, v in map_groups.items():
+            print(f"{k}: {v}")
         map_attrs_with_plume = [
             map_groups[key] for key, value in map_types.items() if value == "MAX"
         ]
+        map_attrs_with_plume_new = [
+            key.split("_")[-1] for key, value in map_types.items() if value == "MAX"
+        ]
+        print(f"\nmap_attrs_with_plume:")
+        for k in map_attrs_with_plume:
+            print(f"{k}")
+        print(f"\nmap_attrs_with_plume_new:")
+        for k in map_attrs_with_plume_new:
+            print(f"{k}")
         plume_request = {
             f"Plume ({item})": f"{item.lower()}_plume" for item in map_attrs_with_plume
         }
+        print(plume_request)
         self.mapping.update(plume_request)
         self.filtered_values = self.filter_map_attribute()
+        print(f"\nself.filtered_values:")
+        for k, v in self.filtered_values.items():
+            print(f"{k}: {v}")
 
     def filter_map_attribute(self) -> Dict:
         return {
@@ -98,6 +148,7 @@ class FilteredMapAttribute:
         }
 
     def __getitem__(self, key: MapAttribute) -> MapAttribute:
+        print(f"key: {key}")
         if isinstance(key, MapAttribute):
             return self.filtered_values[key]
         raise KeyError(f"Key must be a MapAttribute, " f"got {type(key)} instead.")

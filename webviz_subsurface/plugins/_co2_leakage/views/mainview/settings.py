@@ -22,6 +22,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     LayoutStyle,
     MapAttribute,
     MapGroup,
+    map_group_labels,
     MapThresholds,
     MapType,
     MenuOptions,
@@ -1246,7 +1247,12 @@ def _create_left_side_menu(
         for key in map_attribute_names.filtered_values.keys()
         if MapGroup[key.name].value == map_group
     ]
-    return [title] + map_attribute_list
+    map_attribute_list2 = [
+        {"label": MapAttribute[key.name].value, "value": MapAttribute[key.name].value}
+        for key in map_attribute_names.filtered_values.keys()
+        if map_group_labels[MapGroup[key.name].value] == map_group
+    ]
+    return [title] + map_attribute_list2
 
 
 def _compile_property_options(
@@ -1255,7 +1261,14 @@ def _compile_property_options(
     requested_map_groups = [
         MapGroup[key.name].value for key in map_attribute_names.filtered_values.keys()
     ]
-    unique_requested_map_groups = list(set(requested_map_groups))
+    requested_map_groups2 = [
+        map_group_labels[MapGroup[key.name].value] for key in map_attribute_names.filtered_values.keys()
+    ]
+    print("requested_map_groups:")
+    print(requested_map_groups)
+    print("requested_map_groups2:")
+    print(requested_map_groups2)
+    unique_requested_map_groups = list(set(requested_map_groups2))
     return [
         element
         for group in unique_requested_map_groups
