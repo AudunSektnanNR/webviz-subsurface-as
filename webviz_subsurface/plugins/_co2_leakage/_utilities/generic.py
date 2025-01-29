@@ -92,9 +92,6 @@ class MapNamingConvention(StrEnum):
 class FilteredMapAttribute:
     def __init__(self, mapping: Dict):
         self.mapping = mapping
-        print(f"\nself.mapping:")
-        for k, v in self.mapping.items():
-            print(f"{k}: {v}")
         map_types = {
             key: MapType[key].value
             for key in MapAttribute.__members__
@@ -105,24 +102,14 @@ class FilteredMapAttribute:
             for key in MapAttribute.__members__
             if MapAttribute[key].value in self.mapping
         }
-        print(f"\nmap_groups:")
-        for k, v in map_groups.items():
-            print(f"{k}: {v}")
         map_attrs_with_plume = [
             map_groups[key] for key, value in map_types.items() if value == "MAX"
         ]
-        print(f"\nmap_attrs_with_plume:")
-        for k in map_attrs_with_plume:
-            print(f"{k}")
         plume_request = {
             f"Plume ({item})": f"{item.lower()}_plume" for item in map_attrs_with_plume
         }
-        print(plume_request)
         self.mapping.update(plume_request)
         self.filtered_values = self.filter_map_attribute()
-        print(f"\nself.filtered_values:")
-        for k, v in self.filtered_values.items():
-            print(f"{k}: {v}")
 
     def filter_map_attribute(self) -> Dict:
         return {
@@ -132,7 +119,6 @@ class FilteredMapAttribute:
         }
 
     def __getitem__(self, key: MapAttribute) -> MapAttribute:
-        print(f"key: {key}")
         if isinstance(key, MapAttribute):
             return self.filtered_values[key]
         raise KeyError(f"Key must be a MapAttribute, " f"got {type(key)} instead.")

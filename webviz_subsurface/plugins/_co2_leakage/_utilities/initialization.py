@@ -48,7 +48,6 @@ def build_mapping(
     webviz_settings: WebvizSettings,
     ensembles: List[str],
 ) -> Dict[str, str]:
-    print(f"\nbuild_mapping()")
     available_attrs_per_ensemble = [
         discover_per_realization_surface_files(
             webviz_settings.shared_settings["scratch_ensembles"][ens],
@@ -56,34 +55,20 @@ def build_mapping(
         )
         for ens in ensembles
     ]
-    print("available_attrs_per_ensemble:")
-    print(available_attrs_per_ensemble)
     full_attr_list = [
         [attr.attribute for attr in ens] for ens in available_attrs_per_ensemble
     ]
-    print("full_attr_list:")
-    print(full_attr_list)
     unique_attributes = set()
     for ens_attr in full_attr_list:
         unique_attributes.update(ens_attr)
     unique_attributes_list = list(unique_attributes)
-    print("unique_attributes_list:")
-    print(unique_attributes_list)
-    print("")
     mapping = {}
     for attr in unique_attributes_list:
-        print(f"Checking: {attr}")
         for name_convention in MapNamingConvention:
             if attr == name_convention.value:
-                print("  -> Found!")
-                print(f"  name_convention.name: {name_convention.name}")
                 attribute_key = MapAttribute[name_convention.name].name
-                print(f"  Attribute key: {attribute_key}")
                 mapping[attribute_key] = attr
                 break
-    print("mapping:")
-    for k, v in mapping.items():
-        print(f"{k:<20}: {v}")
     return mapping
 
 
@@ -92,22 +77,13 @@ def init_map_attribute_names(
     ensembles: List[str],
     mapping: Optional[Dict[str, str]],
 ) -> FilteredMapAttribute:
-    print("init_map_attribute_names")
     if mapping is None:
         # Based on name convention of xtgeoapp_grd3dmaps:
         mapping = build_mapping(webviz_settings, ensembles)
-    else:
-        print("mapping from config file:")
-        for k, v in mapping.items():
-            print(f"{k:<25}: {v}")
     final_attributes = {
         (MapAttribute[key].value if key in MapAttribute.__members__ else key): value
         for key, value in mapping.items()
     }
-    print("final_attributes:")
-    for k, v in final_attributes.items():
-        print(f"{k:<25}: {v}")
-
     return FilteredMapAttribute(final_attributes)
 
 

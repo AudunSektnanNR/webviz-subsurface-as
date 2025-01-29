@@ -1256,8 +1256,6 @@ def _compile_property_options(
     requested_map_groups = [
         map_group_labels[MapGroup[key.name].value] for key in map_attribute_names.filtered_values.keys()
     ]
-    print("requested_map_groups:")
-    print(requested_map_groups)
     unique_requested_map_groups = list(set(requested_map_groups))
     return [
         element
