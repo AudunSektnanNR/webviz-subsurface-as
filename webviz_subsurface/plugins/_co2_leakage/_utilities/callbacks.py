@@ -130,7 +130,7 @@ def derive_surface_address(
     contour_data: Optional[Dict[str, Any]],
 ) -> Union[SurfaceAddress, TruncatedSurfaceAddress]:
     if MapType[MapAttribute(attribute).name].value == "PLUME":
-        max_attr_name = f"MAX_{MapGroup[MapAttribute(attribute).name]}".upper()
+        max_attr_name = f"MAX_{MapGroup[MapAttribute(attribute).name]}"
         assert date is not None
         basis = getattr(MapAttribute, max_attr_name)
         return TruncatedSurfaceAddress(
