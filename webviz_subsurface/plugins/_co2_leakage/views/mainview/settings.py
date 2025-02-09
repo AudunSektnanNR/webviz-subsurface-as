@@ -22,10 +22,10 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     LayoutStyle,
     MapAttribute,
     MapGroup,
-    map_group_labels,
     MapThresholds,
     MapType,
     MenuOptions,
+    map_group_labels,
 )
 
 

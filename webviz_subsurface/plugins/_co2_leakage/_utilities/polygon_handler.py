@@ -1,8 +1,8 @@
 from typing import List, Optional
 
 from webviz_subsurface._providers.ensemble_polygon_provider import (
-    PolygonServer,
     EnsemblePolygonProviderFactory,
+    PolygonServer,
 )
 from webviz_subsurface._providers.ensemble_polygon_provider.ensemble_polygon_provider import (
     PolygonsAddress,

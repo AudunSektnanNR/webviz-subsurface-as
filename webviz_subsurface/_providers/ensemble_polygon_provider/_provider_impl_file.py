@@ -8,6 +8,7 @@ import xtgeo
 
 from webviz_subsurface._utils.enum_shim import StrEnum
 from webviz_subsurface._utils.perf_timer import PerfTimer
+
 from ._polygon_discovery import PolygonsFileInfo
 from .ensemble_polygon_provider import (
     EnsemblePolygonProvider,
