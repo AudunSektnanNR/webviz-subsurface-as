@@ -428,7 +428,7 @@ def _adjust_figure(fig: go.Figure, plot_title: Optional[str] = None) -> None:
     fig.layout.legend.itemwidth = 40
     fig.layout.xaxis.exponentformat = "power"
     if plot_title is not None:
-        fig.layout.title = plot_title
+        fig.layout.title.text = plot_title
         fig.layout.title.font = {"size": 14}
         fig.layout.margin.t = 40
         fig.layout.title.y = 0.95
