@@ -634,13 +634,15 @@ def _connect_plume_groups(
     color_choice: str,
     mark_choice: str,
 ) -> None:
-    cols = ["realization"]
+    col_list = ["realization"]
     if color_choice == "plume_group" and mark_choice != "none":
-        cols.append(mark_choice)
+        col_list.append(mark_choice)
     elif mark_choice == "plume_group":
-        cols.append(color_choice)
-    if len(cols) == 1:
-        cols = cols[0]
+        col_list.append(color_choice)
+
+    cols: Union[List[str], str] = col_list
+    if len(col_list) == 1:
+        cols = col_list[0]
     # Find points where plumes start or end, to connect the lines
     end_points = []
     start_points = []
