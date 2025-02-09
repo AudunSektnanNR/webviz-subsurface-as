@@ -694,9 +694,7 @@ def _connect_plume_groups(
                         df.loc[row_to_change, "amount"] = start_point["amount"]
     df["is_merged"] = ["+" in x for x in df["plume_group"].values]
     df.loc[
-        (df["plume_group"] != "all")
-        & (df["is_merged"])
-        & (df["amount"] == 0.0),
+        (df["plume_group"] != "all") & (df["is_merged"]) & (df["amount"] == 0.0),
         "amount",
     ] = np.nan
     df.drop(columns="is_merged", inplace=True)
