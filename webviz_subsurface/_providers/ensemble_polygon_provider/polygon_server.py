@@ -114,12 +114,12 @@ class PolygonServer:
 
 def _create_polygons_geojson(polygons: xtgeo.Polygons) -> Dict:
     feature_arr = []
-    prop_style = dict(color=[0, 0, 0, 255])
+    prop_style = {"color": [0, 0, 0, 255]}
     for name, polygon in polygons.dataframe.groupby("POLY_ID"):
         coords = [list(zip(polygon.X_UTME, polygon.Y_UTMN))]
         feature = geojson.Feature(
             geometry=geojson.Polygon(coords),
-            properties=dict(name=f"id:{name}", **prop_style),
+            properties={"name": f"id:{name}", **prop_style},
         )
         feature_arr.append(feature)
     return geojson.FeatureCollection(features=feature_arr)
