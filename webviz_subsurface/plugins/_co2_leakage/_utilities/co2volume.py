@@ -691,11 +691,11 @@ def _connect_plume_groups(
                 if row1.equals(row2):
                     row_to_change = df.eq(end_point).all(axis=1)
                     if sum(row_to_change) == 1:
-                        df.loc[row_to_change == True, "amount"] = start_point["amount"]
+                        df.loc[row_to_change, "amount"] = start_point["amount"]
     df["is_merged"] = ["+" in x for x in df["plume_group"].values]
     df.loc[
         (df["plume_group"] != "all")
-        & (df["is_merged"] == True)
+        & (df["is_merged"])
         & (df["amount"] == 0.0),
         "amount",
     ] = np.nan
@@ -722,7 +722,7 @@ def generate_co2_time_containment_figure(
     if "plume_group" in df:
         try:
             _connect_plume_groups(df, color_choice, mark_choice)
-        except Exception:
+        except ValueError:
             pass
 
     fig = go.Figure()
@@ -812,7 +812,6 @@ def generate_co2_time_containment_figure(
     return fig
 
 
-# pylint: disable=too-many-locals
 def generate_co2_statistics_figure(
     table_provider: ContainmentDataProvider,
     realizations: List[int],

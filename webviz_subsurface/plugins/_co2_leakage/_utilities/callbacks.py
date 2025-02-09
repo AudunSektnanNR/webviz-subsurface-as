@@ -498,8 +498,6 @@ def process_containment_info(
 
         plume_groups = sorted(plume_groups, key=plume_sort_key)
 
-    containments = ["hazardous", "outside", "contained"]
-    phases = [phase for phase in menu_options["phases"] if phase != "total"]
     if "zone" in [mark_choice, color_choice]:
         region = "all"
     if "region" in [mark_choice, color_choice]:
@@ -515,8 +513,8 @@ def process_containment_info(
         "color_choice": color_choice,
         "mark_choice": mark_choice,
         "sorting": sorting,
-        "phases": phases,
-        "containments": containments,
+        "phases": [phase for phase in menu_options["phases"] if phase != "total"],
+        "containments": ["hazardous", "outside", "contained"],
         "plume_groups": plume_groups,
         "use_stats": lines_to_show == "stat",
         "date_option": date_option,
