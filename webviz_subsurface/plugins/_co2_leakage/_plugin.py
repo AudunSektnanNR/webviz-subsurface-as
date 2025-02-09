@@ -69,8 +69,6 @@ class CO2Leakage(WebvizPluginABC):
     ensemble
 
     * **`ensembles`:** Which ensembles in `shared_settings` to visualize.
-    * **`file_containment_boundary`:** Path to a polygon representing the containment area
-    * **`file_hazardous_boundary`:** Path to a polygon representing the hazardous area
     * **`well_pick_file`:** Path to a file containing well picks
     * **`plume_mass_relpath`:** Path to a table of co2 containment data (amount of
         CO2 outside/inside a boundary), for co2 mass. Relative to each realization.
@@ -89,6 +87,8 @@ class CO2Leakage(WebvizPluginABC):
         names and surface names used in the well pick file
     * **`map_surface_names_to_fault_polygons`:** Optional mapping between surface map
         names and surface names used by the fault polygons
+    * **`boundary_settings`:** Settings (paths etc) for polygons representing the
+        containment and hazardous areas
     """
 
     class Ids(StrEnum):
