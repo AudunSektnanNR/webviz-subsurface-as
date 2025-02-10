@@ -22,10 +22,10 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     LayoutStyle,
     MapAttribute,
     MapGroup,
-    map_group_labels,
     MapThresholds,
     MapType,
     MenuOptions,
+    map_group_labels,
 )
 
 
@@ -1254,7 +1254,8 @@ def _compile_property_options(
     map_attribute_names: FilteredMapAttribute,
 ) -> List[Dict[str, Any]]:
     requested_map_groups = [
-        map_group_labels[MapGroup[key.name].value] for key in map_attribute_names.filtered_values.keys()
+        map_group_labels[MapGroup[key.name].value]
+        for key in map_attribute_names.filtered_values.keys()
     ]
     unique_requested_map_groups = list(set(requested_map_groups))
     return [

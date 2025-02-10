@@ -24,12 +24,12 @@ from webviz_subsurface.plugins._co2_leakage._utilities.ensemble_well_picks impor
     EnsembleWellPicks,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
+    BoundarySettings,
     FilteredMapAttribute,
     GraphSource,
     MapAttribute,
     MapNamingConvention,
     MenuOptions,
-    BoundarySettings,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.polygon_handler import (
     PolygonHandler,

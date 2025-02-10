@@ -49,7 +49,14 @@ class MapGroup(StrEnum):
     TRAPPED_GAS = "CO2 MASS"
 
 
-map_group_labels = {"SGAS": "Gas phase", "AMFG": "Dissolved phase", "XMF2": "Dissolved phase", "SGSTRAND": "Trapped gas phase", "SGTRH": "Trapped gas phase", "CO2 MASS": "CO2 mass"}
+map_group_labels = {
+    "SGAS": "Gas phase",
+    "AMFG": "Dissolved phase",
+    "XMF2": "Dissolved phase",
+    "SGSTRAND": "Trapped gas phase",
+    "SGTRH": "Trapped gas phase",
+    "CO2 MASS": "CO2 mass",
+}
 
 
 class MapType(StrEnum):

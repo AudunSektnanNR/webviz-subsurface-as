@@ -1,8 +1,8 @@
 from typing import List, Optional
 
 from webviz_subsurface._providers.ensemble_polygon_provider import (
-    PolygonServer,
     EnsemblePolygonProviderFactory,
+    PolygonServer,
 )
 from webviz_subsurface._providers.ensemble_polygon_provider.ensemble_polygon_provider import (
     PolygonsAddress,
@@ -29,10 +29,14 @@ class PolygonHandler:
         server.add_provider(self._provider)
 
     def extract_hazardous_poly_url(self, realization: List[int]) -> Optional[str]:
-        return self._extract_polygon_url(self._hazardous_name, self._attribute, realization)
+        return self._extract_polygon_url(
+            self._hazardous_name, self._attribute, realization
+        )
 
     def extract_containment_poly_url(self, realization: List[int]) -> Optional[str]:
-        return self._extract_polygon_url(self._containment_name, self._attribute, realization)
+        return self._extract_polygon_url(
+            self._containment_name, self._attribute, realization
+        )
 
     def _extract_polygon_url(
         self,

@@ -8,6 +8,7 @@ from webviz_config import WebvizPluginABC, WebvizSettings
 from webviz_config.utils import StrEnum, callback_typecheck
 
 from webviz_subsurface._providers import FaultPolygonsServer, SurfaceImageServer
+from webviz_subsurface._providers.ensemble_polygon_provider import PolygonServer
 from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import (
     SurfaceData,
     create_map_annotations,
@@ -29,31 +30,30 @@ from webviz_subsurface.plugins._co2_leakage._utilities.fault_polygons_handler im
     FaultPolygonsHandler,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
+    BoundarySettings,
     Co2MassScale,
     Co2VolumeScale,
     GraphSource,
     MapAttribute,
     MapThresholds,
     MapType,
-    BoundarySettings,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
     init_containment_data_providers,
     init_dictionary_of_content,
     init_map_attribute_names,
     init_menu_options,
+    init_polygon_provider_handlers,
     init_realizations,
     init_surface_providers,
     init_unsmry_data_providers,
     init_well_pick_provider,
-    init_polygon_provider_handlers,
 )
 from webviz_subsurface.plugins._co2_leakage.views.mainview.mainview import (
     MainView,
     MapViewElement,
 )
 from webviz_subsurface.plugins._co2_leakage.views.mainview.settings import ViewSettings
-from webviz_subsurface._providers.ensemble_polygon_provider import PolygonServer
 
 from . import _error
 from ._utilities.color_tables import co2leakage_color_tables
@@ -69,8 +69,6 @@ class CO2Leakage(WebvizPluginABC):
     ensemble
 
     * **`ensembles`:** Which ensembles in `shared_settings` to visualize.
-    * **`file_containment_boundary`:** Path to a polygon representing the containment area
-    * **`file_hazardous_boundary`:** Path to a polygon representing the hazardous area
     * **`well_pick_file`:** Path to a file containing well picks
     * **`plume_mass_relpath`:** Path to a table of co2 containment data (amount of
         CO2 outside/inside a boundary), for co2 mass. Relative to each realization.
@@ -89,6 +87,8 @@ class CO2Leakage(WebvizPluginABC):
         names and surface names used in the well pick file
     * **`map_surface_names_to_fault_polygons`:** Optional mapping between surface map
         names and surface names used by the fault polygons
+    * **`boundary_settings`:** Settings (paths etc) for polygons representing the
+        containment and hazardous areas
     """
 
     class Ids(StrEnum):

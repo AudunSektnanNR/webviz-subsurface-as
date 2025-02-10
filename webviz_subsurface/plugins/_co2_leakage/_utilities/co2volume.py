@@ -428,7 +428,7 @@ def _adjust_figure(fig: go.Figure, plot_title: Optional[str] = None) -> None:
     fig.layout.legend.itemwidth = 40
     fig.layout.xaxis.exponentformat = "power"
     if plot_title is not None:
-        fig.layout.title = plot_title
+        fig.layout.title.text = plot_title
         fig.layout.title.font = {"size": 14}
         fig.layout.margin.t = 40
         fig.layout.title.y = 0.95
@@ -634,13 +634,15 @@ def _connect_plume_groups(
     color_choice: str,
     mark_choice: str,
 ) -> None:
-    cols = ["realization"]
+    col_list = ["realization"]
     if color_choice == "plume_group" and mark_choice != "none":
-        cols.append(mark_choice)
+        col_list.append(mark_choice)
     elif mark_choice == "plume_group":
-        cols.append(color_choice)
-    if len(cols) == 1:
-        cols = cols[0]
+        col_list.append(color_choice)
+
+    cols: Union[List[str], str] = col_list
+    if len(col_list) == 1:
+        cols = col_list[0]
     # Find points where plumes start or end, to connect the lines
     end_points = []
     start_points = []
@@ -691,12 +693,10 @@ def _connect_plume_groups(
                 if row1.equals(row2):
                     row_to_change = df.eq(end_point).all(axis=1)
                     if sum(row_to_change) == 1:
-                        df.loc[row_to_change == True, "amount"] = start_point["amount"]
+                        df.loc[row_to_change, "amount"] = start_point["amount"]
     df["is_merged"] = ["+" in x for x in df["plume_group"].values]
     df.loc[
-        (df["plume_group"] != "all")
-        & (df["is_merged"] == True)
-        & (df["amount"] == 0.0),
+        (df["plume_group"] != "all") & (df["is_merged"]) & (df["amount"] == 0.0),
         "amount",
     ] = np.nan
     df.drop(columns="is_merged", inplace=True)
@@ -722,7 +722,7 @@ def generate_co2_time_containment_figure(
     if "plume_group" in df:
         try:
             _connect_plume_groups(df, color_choice, mark_choice)
-        except Exception:
+        except ValueError:
             pass
 
     fig = go.Figure()
@@ -812,7 +812,6 @@ def generate_co2_time_containment_figure(
     return fig
 
 
-# pylint: disable=too-many-locals
 def generate_co2_statistics_figure(
     table_provider: ContainmentDataProvider,
     realizations: List[int],
