@@ -56,7 +56,7 @@ def _find_first_non_increasing_date_pair(
 ) -> Tuple[Optional[np.datetime64], Optional[np.datetime64]]:
     dates_np = table.column("DATE").to_numpy()
     offending_indices = np.asarray(np.diff(dates_np) <= np.timedelta64(0)).nonzero()[0]
-    if not offending_indices:
+    if len(offending_indices) == 0:
         return (None, None)
 
     return (dates_np[offending_indices[0]], dates_np[offending_indices[0] + 1])
@@ -313,7 +313,7 @@ class ProviderImplArrowLazy(EnsembleSummaryProvider):
             f"find_unique={et_find_unique_ms}ms)"
         )
 
-        return intersected_dates.astype(datetime.datetime).tolist()
+        return intersected_dates.astype(datetime.datetime).tolist()  # type: ignore
 
     def get_vectors_df(
         self,
@@ -377,7 +377,7 @@ class ProviderImplArrowLazy(EnsembleSummaryProvider):
             table = table.filter(real_mask)
         et_filter_ms = timer.lap_ms()
 
-        np_lookup_date = np.datetime64(date, "ms")
+        np_lookup_date = np.datetime64(date).astype("M8[ms]")
         table = sample_segmented_multi_real_table_at_date(table, np_lookup_date)
 
         et_resample_ms = timer.lap_ms()
