@@ -877,6 +877,8 @@ def generate_co2_statistics_figure2(
     df = df.drop(columns=["date"]).reset_index(drop=True)
     color_choice = containment_info["color_choice"]
     mark_choice = containment_info["mark_choice"]
+    print(f"mark_choice: {mark_choice}")
+    print(f"mark_choice: {type(mark_choice)}")
     _filter_columns(df, color_choice, mark_choice, containment_info)
     cat_ord, colors, line_types = _prepare_pattern_and_color_options_statistics_plot(
         df,
@@ -884,6 +886,12 @@ def generate_co2_statistics_figure2(
         color_choice,
         mark_choice,
     )
+    print("\n\n")
+    print(cat_ord)
+    print(colors)
+    print(line_types)
+    for a,b,c in zip(cat_ord["type"], colors, line_types):
+        print(f"{a:>24} - {b:>15} - {c:>15}")
 
     # Remove if we want realization as label?
     df = df.drop(columns=["REAL", "realization"]).reset_index(drop=True)
@@ -902,19 +910,19 @@ def generate_co2_statistics_figure2(
     plot_points = False
     print("\n\ndf:")
     print(df)
-    print("\ncolors:")
-    print(colors)
-    print(cat_ord)
+    # colors = [colors[0], colors[3], colors[6], colors[9]]
+    # print(colors)
     if not plot_points:
         fig = px.box(
             df,
             # x="phase",
-            x="phase",
+            x=mark_choice if mark_choice != "none" else None,
             y="amount",
             color="type",
             # notched=True,
             color_discrete_sequence=colors,
             # points="all",
+            category_orders=cat_ord,
         )
     else:
         fig = px.strip(
