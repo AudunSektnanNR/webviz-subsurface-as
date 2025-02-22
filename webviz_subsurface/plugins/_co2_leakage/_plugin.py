@@ -296,6 +296,7 @@ class CO2Leakage(WebvizPluginABC):
                 Input(self._settings_component(ViewSettings.Ids.SORT_PLOT), "value"),
                 Input(self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "value"),
                 Input(self._settings_component(ViewSettings.Ids.DATE_OPTION), "value"),
+                Input(self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION), "value"),
                 Input(self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS), "value"),
             )
             @callback_typecheck
@@ -318,6 +319,7 @@ class CO2Leakage(WebvizPluginABC):
                 sorting: str,
                 lines_to_show: str,
                 date_option: str,
+                statistics_tab_option: str,
                 box_show_points: bool,
             ) -> Tuple[Dict, go.Figure, go.Figure, go.Figure]:
                 # pylint: disable=too-many-locals
@@ -333,6 +335,7 @@ class CO2Leakage(WebvizPluginABC):
                     sorting,
                     lines_to_show,
                     date_option,
+                    statistics_tab_option,
                     box_show_points,
                     self._menu_options[ensemble][source],
                 )
@@ -340,7 +343,7 @@ class CO2Leakage(WebvizPluginABC):
                     GraphSource.CONTAINMENT_MASS,
                     GraphSource.CONTAINMENT_ACTUAL_VOLUME,
                 ]:
-                    plot_ids = make_plot_ids(
+                    plot_ids = make_plot_ids(  # NBNB-AS: Change here?
                         ensemble,
                         source,
                         co2_scale,

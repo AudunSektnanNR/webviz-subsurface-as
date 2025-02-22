@@ -415,12 +415,20 @@ def generate_containment_figures(
                 containment_info,
             )
         )
-        fig2 = generate_co2_statistics_figure2(
-            table_provider,
-            realizations,
-            co2_scale,
-            containment_info,
-        )
+        if containment_info["statistics_tab_option"] == "probability_plot":
+            fig2 = generate_co2_statistics_figure(
+                table_provider,
+                realizations,
+                co2_scale,
+                containment_info,
+            )
+        else:  # "box_plot"
+            fig2 = generate_co2_statistics_figure2(
+                table_provider,
+                realizations,
+                co2_scale,
+                containment_info,
+            )
     except KeyError as exc:
         warnings.warn(f"Could not generate CO2 figures: {exc}")
         raise exc
@@ -478,6 +486,7 @@ def process_containment_info(
     sorting: str,
     lines_to_show: str,
     date_option: str,
+    statistics_tab_option: str,
     box_show_points: bool,
     menu_options: MenuOptions,
 ) -> Dict[str, Union[str, None, List[str], int]]:
@@ -520,6 +529,7 @@ def process_containment_info(
         "plume_groups": plume_groups,
         "use_stats": lines_to_show == "stat",
         "date_option": date_option,
+        "statistics_tab_option": statistics_tab_option,
         "box_show_points": box_show_points,
     }
 
