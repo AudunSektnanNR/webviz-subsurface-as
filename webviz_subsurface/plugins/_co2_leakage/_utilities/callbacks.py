@@ -478,7 +478,7 @@ def process_containment_info(
     sorting: str,
     lines_to_show: str,
     date_option: str,
-    box_plot_points: bool,
+    box_show_points: bool,
     menu_options: MenuOptions,
 ) -> Dict[str, Union[str, None, List[str], int]]:
     if mark_choice is None:
@@ -520,7 +520,7 @@ def process_containment_info(
         "plume_groups": plume_groups,
         "use_stats": lines_to_show == "stat",
         "date_option": date_option,
-        "box_plot_points": box_plot_points,
+        "box_show_points": box_show_points,
     }
 
 

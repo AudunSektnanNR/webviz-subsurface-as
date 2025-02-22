@@ -296,7 +296,7 @@ class CO2Leakage(WebvizPluginABC):
                 Input(self._settings_component(ViewSettings.Ids.SORT_PLOT), "value"),
                 Input(self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "value"),
                 Input(self._settings_component(ViewSettings.Ids.DATE_OPTION), "value"),
-                Input(self._settings_component(ViewSettings.Ids.BOX_PLOT_POINTS), "value"),
+                Input(self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS), "value"),
             )
             @callback_typecheck
             def update_graphs(
@@ -318,10 +318,9 @@ class CO2Leakage(WebvizPluginABC):
                 sorting: str,
                 lines_to_show: str,
                 date_option: str,
-                box_plot_points: bool,
+                box_show_points: bool,
             ) -> Tuple[Dict, go.Figure, go.Figure, go.Figure]:
                 # pylint: disable=too-many-locals
-                print(f"\n\nbox_plot_points = {box_plot_points}")
                 figs = [no_update] * 3
                 cont_info = process_containment_info(
                     zone,
@@ -334,7 +333,7 @@ class CO2Leakage(WebvizPluginABC):
                     sorting,
                     lines_to_show,
                     date_option,
-                    box_plot_points,
+                    box_show_points,
                     self._menu_options[ensemble][source],
                 )
                 if source in [
