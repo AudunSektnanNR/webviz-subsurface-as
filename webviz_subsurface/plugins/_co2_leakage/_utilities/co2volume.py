@@ -878,7 +878,7 @@ def generate_co2_statistics_figure2(
     color_choice = containment_info["color_choice"]
     mark_choice = containment_info["mark_choice"]
     print(f"mark_choice: {mark_choice}")
-    print(f"mark_choice: {type(mark_choice)}")
+    print(containment_info["box_plot_points"])
     _filter_columns(df, color_choice, mark_choice, containment_info)
     cat_ord, colors, line_types = _prepare_pattern_and_color_options_statistics_plot(
         df,
@@ -921,7 +921,7 @@ def generate_co2_statistics_figure2(
             color="type",
             # notched=True,
             color_discrete_sequence=colors,
-            # points="all",
+            points="all" if containment_info["box_plot_points"] else False,  # or outliers or suspectedoutliers
             category_orders=cat_ord,
         )
     else:
