@@ -895,59 +895,31 @@ def generate_co2_statistics_figure2(
 
     # Remove if we want realization as label?
     df = df.drop(columns=["REAL", "realization"]).reset_index(drop=True)
-    # fig = px.ecdf(
-    #     df,
-    #     x="amount",
-    #     ecdfmode="reversed",
-    #     ecdfnorm="probability",
-    #     markers=True,
-    #     color="type",
-    #     color_discrete_sequence=colors,
-    #     line_dash="type" if mark_choice != "none" else None,
-    #     line_dash_sequence=line_types,
-    #     category_orders=cat_ord,
-    # )
-    plot_points = False
     print("\n\ndf:")
     print(df)
-    # colors = [colors[0], colors[3], colors[6], colors[9]]
-    # print(colors)
-    if not plot_points:
-        fig = px.box(
-            df,
-            # x="phase",
-            x=mark_choice if mark_choice != "none" else None,
-            y="amount",
-            color="type",
-            # notched=True,
-            color_discrete_sequence=colors,
-            points="all" if containment_info["box_show_points"] else False,  # or outliers or suspectedoutliers
-            category_orders=cat_ord,
-        )
-    else:
-        fig = px.strip(
-            df,
-            # x="phase",
-            # x="type",
-            y="amount",
-            color="type",
-            # notched=True,
-            color_discrete_sequence=colors,
-        )
+    fig = px.box(
+        df,
+        x=mark_choice if mark_choice != "none" else None,
+        y="amount",
+        color="type",
+        # notched=True,
+        color_discrete_sequence=colors,
+        points="all" if containment_info["box_show_points"] else False,  # or outliers or suspectedoutliers
+        category_orders=cat_ord,
+    )
 
-    # default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
-    # for trace in fig.data:
-    #     if trace.name != default_option:
-    #         trace.visible = "legendonly"
+    default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
+    for trace in fig.data:
+        if trace.name != default_option:
+            trace.visible = "legendonly"
 
     # fig.update_traces(
     #     hovertemplate="Type: %{data.name}<br>Amount: %{x:.3f}<br>"
     #     "Probability: %{y:.3f}<extra></extra>",
     # )
-    # fig.layout.yaxis.range = [-0.02, 1.02]
-    # fig.layout.legend.tracegroupgap = 0
-    # fig.layout.xaxis.title = scale.value
-    # fig.layout.yaxis.title = "Probability"
-    # _adjust_figure(fig, plot_title=containment_info["date_option"])
+    fig.layout.yaxis.autorange = True
+    fig.layout.legend.tracegroupgap = 0
+    fig.layout.yaxis.title = scale.value
+    _adjust_figure(fig, plot_title=containment_info["date_option"])
 
     return fig
