@@ -885,7 +885,6 @@ def generate_co2_box_plot_figure(
         mark_choice,
     )
 
-    # df = df.drop(columns=["REAL", "realization"]).reset_index(drop=True)
     fig = px.box(
         df,
         x=mark_choice if mark_choice != "none" else None,
