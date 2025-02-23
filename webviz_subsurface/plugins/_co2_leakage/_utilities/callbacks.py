@@ -23,7 +23,7 @@ from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_pro
 from webviz_subsurface.plugins._co2_leakage._utilities import plume_extent
 from webviz_subsurface.plugins._co2_leakage._utilities.co2volume import (
     generate_co2_statistics_figure,
-    generate_co2_statistics_figure2,
+    generate_co2_box_plot_figure,
     generate_co2_time_containment_figure,
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
@@ -423,7 +423,7 @@ def generate_containment_figures(
                 containment_info,
             )
         else:  # "box_plot"
-            fig2 = generate_co2_statistics_figure2(
+            fig2 = generate_co2_box_plot_figure(
                 table_provider,
                 realizations,
                 co2_scale,

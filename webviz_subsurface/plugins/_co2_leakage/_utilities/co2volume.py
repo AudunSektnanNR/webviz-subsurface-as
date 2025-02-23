@@ -865,7 +865,7 @@ def generate_co2_statistics_figure(
     return fig
 
 
-def generate_co2_statistics_figure2(
+def generate_co2_box_plot_figure(
     table_provider: ContainmentDataProvider,
     realizations: List[int],
     scale: Union[Co2MassScale, Co2VolumeScale],
@@ -902,7 +902,6 @@ def generate_co2_statistics_figure2(
         x=mark_choice if mark_choice != "none" else None,
         y="amount",
         color="type",
-        # notched=True,
         color_discrete_sequence=colors,
         points="all" if containment_info["box_show_points"] else False,  # or outliers or suspectedoutliers
         category_orders=cat_ord,
@@ -913,10 +912,6 @@ def generate_co2_statistics_figure2(
         if trace.name != default_option:
             trace.visible = "legendonly"
 
-    # fig.update_traces(
-    #     hovertemplate="Type: %{data.name}<br>Amount: %{x:.3f}<br>"
-    #     "Probability: %{y:.3f}<extra></extra>",
-    # )
     fig.layout.yaxis.autorange = True
     fig.layout.legend.tracegroupgap = 0
     fig.layout.yaxis.title = scale.value
