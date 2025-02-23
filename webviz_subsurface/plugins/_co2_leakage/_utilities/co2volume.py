@@ -877,26 +877,15 @@ def generate_co2_box_plot_figure(
     df = df.drop(columns=["date"]).reset_index(drop=True)
     color_choice = containment_info["color_choice"]
     mark_choice = containment_info["mark_choice"]
-    print(f"mark_choice: {mark_choice}")
-    print(containment_info["box_show_points"])
     _filter_columns(df, color_choice, mark_choice, containment_info)
-    cat_ord, colors, line_types = _prepare_pattern_and_color_options_statistics_plot(
+    cat_ord, colors, _ = _prepare_pattern_and_color_options_statistics_plot(
         df,
         containment_info,
         color_choice,
         mark_choice,
     )
-    print("\n\n")
-    print(cat_ord)
-    print(colors)
-    print(line_types)
-    for a,b,c in zip(cat_ord["type"], colors, line_types):
-        print(f"{a:>24} - {b:>15} - {c:>15}")
 
-    # Remove if we want realization as label?
-    df = df.drop(columns=["REAL", "realization"]).reset_index(drop=True)
-    print("\n\ndf:")
-    print(df)
+    # df = df.drop(columns=["REAL", "realization"]).reset_index(drop=True)
     fig = px.box(
         df,
         x=mark_choice if mark_choice != "none" else None,
