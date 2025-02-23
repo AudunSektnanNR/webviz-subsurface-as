@@ -893,6 +893,7 @@ def generate_co2_box_plot_figure(
         color_discrete_sequence=colors,
         points="all" if containment_info["box_show_points"] else False,  # or outliers or suspectedoutliers
         category_orders=cat_ord,
+        hover_data=["realization"],
     )
 
     default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
@@ -900,6 +901,10 @@ def generate_co2_box_plot_figure(
         if trace.name != default_option:
             trace.visible = "legendonly"
 
+    fig.update_traces(
+        hovertemplate="Type: %{data.name}<br>Amount: %{y:.3f}<br>"
+        "Realization: %{customdata[0]}<extra></extra>",
+    )
     fig.layout.yaxis.autorange = True
     fig.layout.legend.tracegroupgap = 0
     fig.layout.yaxis.title = scale.value
