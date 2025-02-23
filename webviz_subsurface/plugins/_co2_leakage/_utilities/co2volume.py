@@ -508,7 +508,7 @@ def generate_co2_volume_figure(
     )
     fig.layout.yaxis.title = "Realization"
     fig.layout.xaxis.title = scale.value
-    _adjust_figure(fig, plot_title=containment_info["date_option"])
+    _adjust_figure(fig, plot_title=_make_title(containment_info))
     return fig
 
 
@@ -860,7 +860,7 @@ def generate_co2_statistics_figure(
     fig.layout.legend.tracegroupgap = 0
     fig.layout.xaxis.title = scale.value
     fig.layout.yaxis.title = "Probability"
-    _adjust_figure(fig, plot_title=containment_info["date_option"])
+    _adjust_figure(fig, plot_title=_make_title(containment_info))
 
     return fig
 
@@ -905,9 +905,33 @@ def generate_co2_box_plot_figure(
         hovertemplate="Type: %{data.name}<br>Amount: %{y:.3f}<br>"
         "Realization: %{customdata[0]}<extra></extra>",
     )
+
+    print("\n\n--------------------")
+    print(containment_info["zone"])
+    print(containment_info["region"])
+    print(containment_info["phase"])
+    print(containment_info["containment"])
+    print(containment_info["plume_group"])
+    print(_make_title(containment_info))
+
     fig.layout.yaxis.autorange = True
     fig.layout.legend.tracegroupgap = 0
     fig.layout.yaxis.title = scale.value
-    _adjust_figure(fig, plot_title=containment_info["date_option"])
+    _adjust_figure(fig, plot_title=_make_title(containment_info))
 
     return fig
+
+def _make_title(containment_info: Dict[str, Any]):
+    components = []
+    if containment_info["containment"] != "total":
+        components.append(containment_info["containment"].capitalize())
+    if containment_info["phase"] != "total":
+        components.append(containment_info["phase"].capitalize())
+    if containment_info["zone"] != "all":
+        components.append(containment_info["zone"])
+    if containment_info["region"] != "all":
+        components.append(containment_info["region"])
+    if containment_info["plume_group"] != "all":
+        components.append(containment_info["plume_group"])
+    components.append(containment_info["date_option"])
+    return " - ".join(components)
