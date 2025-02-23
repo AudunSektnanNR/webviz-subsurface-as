@@ -343,13 +343,14 @@ class CO2Leakage(WebvizPluginABC):
                     GraphSource.CONTAINMENT_MASS,
                     GraphSource.CONTAINMENT_ACTUAL_VOLUME,
                 ]:
-                    plot_ids = make_plot_ids(  # NBNB-AS: Change here?
+                    plot_ids = make_plot_ids(
                         ensemble,
                         source,
                         co2_scale,
                         cont_info,
                         realizations,
                         lines_to_show,
+                        statistics_tab_option,
                         len(figs),
                     )
                     cont_info["update_first_figure"] = self._plot_id != plot_ids[0]

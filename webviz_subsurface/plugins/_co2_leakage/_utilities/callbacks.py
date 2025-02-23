@@ -541,6 +541,7 @@ def make_plot_ids(
     containment_info: Dict,
     realizations: List[int],
     lines_to_show: str,
+    statistics_tab_option: str,
     num_figs: int,
 ) -> List[str]:
     zone_str = (
@@ -578,6 +579,7 @@ def make_plot_ids(
     ids = [plot_id]
     ids += [plot_id + f"-{realizations}"] * (num_figs - 1)
     ids[1] += f"-{lines_to_show}"
+    ids[2] += f"-{statistics_tab_option}"
     return ids
 
 
