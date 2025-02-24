@@ -187,7 +187,9 @@ class ViewSettings(SettingsGroupABC):
                         self.register_component_unique_id(self.Ids.Y_LIM_OPTIONS),
                         self.register_component_unique_id(self.Ids.DATE_OPTION),
                         self.register_component_unique_id(self.Ids.DATE_OPTION_COL),
-                        self.register_component_unique_id(self.Ids.STATISTICS_TAB_OPTION),
+                        self.register_component_unique_id(
+                            self.Ids.STATISTICS_TAB_OPTION
+                        ),
                         self.register_component_unique_id(self.Ids.BOX_SHOW_POINTS),
                     ],
                     self._content,
@@ -1156,7 +1158,10 @@ class GraphSelectorsLayout(wcc.Selectors):
                     [
                         dcc.RadioItems(
                             options=[
-                                {"label": "Probability plot", "value": "probability_plot"},
+                                {
+                                    "label": "Probability plot",
+                                    "value": "probability_plot",
+                                },
                                 {"label": "Box plot", "value": "box_plot"},
                             ],
                             value="probability_plot",
@@ -1176,7 +1181,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                             id=containment_ids[19],
                         ),
                     ]
-                )
+                ),
             ],
         )
 

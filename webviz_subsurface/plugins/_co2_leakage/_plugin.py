@@ -296,8 +296,13 @@ class CO2Leakage(WebvizPluginABC):
                 Input(self._settings_component(ViewSettings.Ids.SORT_PLOT), "value"),
                 Input(self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "value"),
                 Input(self._settings_component(ViewSettings.Ids.DATE_OPTION), "value"),
-                Input(self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION), "value"),
-                Input(self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS), "value"),
+                Input(
+                    self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
+                    "value",
+                ),
+                Input(
+                    self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS), "value"
+                ),
             )
             @callback_typecheck
             def update_graphs(

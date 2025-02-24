@@ -912,6 +912,7 @@ def generate_co2_box_plot_figure(
 
     return fig
 
+
 def _make_title(containment_info: Dict[str, Any], include_date: bool = True):
     components = []
     if containment_info["containment"] != "total":
