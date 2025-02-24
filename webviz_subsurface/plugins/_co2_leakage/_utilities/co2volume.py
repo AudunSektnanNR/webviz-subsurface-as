@@ -890,7 +890,7 @@ def generate_co2_box_plot_figure(
         y="amount",
         color="type",
         color_discrete_sequence=colors,
-        points="all" if containment_info["box_show_points"] else False,  # or outliers or suspectedoutliers
+        points="all" if containment_info["box_show_points"] else "outliers",
         category_orders=cat_ord,
         hover_data=["realization"],
     )
@@ -904,14 +904,6 @@ def generate_co2_box_plot_figure(
         hovertemplate="Type: %{data.name}<br>Amount: %{y:.3f}<br>"
         "Realization: %{customdata[0]}<extra></extra>",
     )
-
-    print("\n\n--------------------")
-    print(containment_info["zone"])
-    print(containment_info["region"])
-    print(containment_info["phase"])
-    print(containment_info["containment"])
-    print(containment_info["plume_group"])
-    print(_make_title(containment_info))
 
     fig.layout.yaxis.autorange = True
     fig.layout.legend.tracegroupgap = 0
