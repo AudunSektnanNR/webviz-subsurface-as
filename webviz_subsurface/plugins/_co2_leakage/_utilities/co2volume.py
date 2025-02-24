@@ -422,19 +422,18 @@ def _change_names(
         df["name"] = df["name"].replace(f"{m}, all", m)
 
 
-def _adjust_figure(fig: go.Figure, plot_title: Optional[str] = None) -> None:
+def _adjust_figure(fig: go.Figure, plot_title: str) -> None:
     fig.layout.legend.orientation = "v"
     fig.layout.legend.title.text = ""
     fig.layout.legend.itemwidth = 40
     fig.layout.xaxis.exponentformat = "power"
-    if plot_title is not None:
-        fig.layout.title.text = plot_title
-        fig.layout.title.font = {"size": 14}
-        fig.layout.margin.t = 40
-        fig.layout.title.y = 0.95
-    else:
-        fig.layout.margin.t = 15
+
+    fig.layout.title.text = plot_title
+    fig.layout.title.font = {"size": 14}
+    fig.layout.margin.t = 40
+    fig.layout.title.y = 0.95
     fig.layout.title.x = 0.4
+
     fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
     fig.layout.margin.b = 6
     fig.layout.margin.l = 10
@@ -562,7 +561,7 @@ def generate_co2_time_containment_one_realization_figure(
     fig.layout.yaxis.range = y_limits
     fig.layout.xaxis.title = "Time"
     fig.layout.yaxis.title = scale.value
-    _adjust_figure(fig)
+    _adjust_figure(fig, plot_title=_make_title(containment_info, include_date=False))
     return fig
 
 
@@ -808,7 +807,7 @@ def generate_co2_time_containment_figure(
     fig.layout.xaxis.title = "Time"
     fig.layout.yaxis.title = scale.value
     fig.layout.yaxis.autorange = True
-    _adjust_figure(fig)
+    _adjust_figure(fig, plot_title=_make_title(containment_info, include_date=False))
     return fig
 
 
@@ -921,7 +920,7 @@ def generate_co2_box_plot_figure(
 
     return fig
 
-def _make_title(containment_info: Dict[str, Any]):
+def _make_title(containment_info: Dict[str, Any], include_date: bool = True):
     components = []
     if containment_info["containment"] != "total":
         components.append(containment_info["containment"].capitalize())
@@ -933,5 +932,6 @@ def _make_title(containment_info: Dict[str, Any]):
         components.append(containment_info["region"])
     if containment_info["plume_group"] != "all":
         components.append(containment_info["plume_group"])
-    components.append(containment_info["date_option"])
+    if include_date:
+        components.append(containment_info["date_option"])
     return " - ".join(components)
