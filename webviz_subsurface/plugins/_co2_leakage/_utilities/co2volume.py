@@ -900,16 +900,196 @@ def generate_co2_box_plot_figure(
         category_orders=cat_ord,
         hover_data=["realization"],
     )
+    fig.update_traces(quartilemethod="linear")  # NBNB-AS: inclusive vs exclusive vs linear (default)
+
+    # fig.update_traces(selector=dict(type='box'), hoverinfo='none')
+
+    # for trace in fig.data:
+    #     if trace.type == "box":
+    #         trace.hoverinfo = "none"  # NBNB-AS: Hva med points?
+    #         print("YES")
+
+    # print("\n\n\n\n\n\n\n\n\n\n\n\n\n\ntraces:")
+    # for trace in fig.data:
+    #     print(trace)
+    #     if trace.type == 'box':
+    #         print("    BOX")
+    #         # trace.hovertemplate = 'Median=%{median}<br>Q1=%{q1}<br>Q3=%{q3}<extra></extra>'
+    #     elif trace.type == 'scatter':
+    #         print("    SCATTER")
+    #         # trace.hovertemplate = 'Value=%{y}<extra></extra>'
+
+    # fig.update_traces(
+    #     hovertemplate="Type: %{data.name}<br>Amount: %{y:.3f}<br>"
+    #     "Realization: %{customdata[0]}<extra></extra>",
+    # )
+
+    for trace in fig.data:
+        trace.hoverinfo = 'none'
+
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    for k, v in cat_ord.items():
+        print(f"{k}: {v}")
+
+    add_bars = True
+    if add_bars:
+        for count, type_val in enumerate(cat_ord["type"], 1):
+            print(f"\n\n\n\ntype_val: {type_val}")
+            df_sub = df[df["type"] == type_val]
+            print(df_sub)
+            print(f"mark_choice: {mark_choice}")
+            mark_choices = df_sub[mark_choice].unique() if mark_choice != "none" else [None]
+            print(mark_choices)
+            # for mark_val in cat_ord[mark_choice] if mark_choice != "none" else [None]:
+            # for mark_val in mark_choices:
+                # print(f"mark_val: {mark_val}")
+            # df_sub = df[(df["type"] == type_val) & (df[mark_choice] == mark_choice)] if mark_choice is not None else df[
+            #     df["type"] == type_val]
+            median_val = df_sub['amount'].median()
+            # q1_val = df_sub['amount'].quantile(0.25)
+            # q3_val = df_sub['amount'].quantile(0.75)
+            # print(f"median_val: {median_val}")
+            # print(f"mark_choices[0]: {mark_choices[0]}")
+
+            # methods = ['linear', 'lower', 'higher', 'midpoint', 'nearest']
+            # results = {}
+            # for method in methods:
+            #     q1 = df_sub['amount'].quantile(0.25, interpolation=method)
+            #     q3 = df_sub['amount'].quantile(0.75, interpolation=method)
+            #     results[method] = (q1, q3)
+
+            # print("Default Method Results (Linear):", (q1_val, q3_val))
+            # print("Other Methods Results:")
+            # for method, result in results.items():
+            #     print(f"{method}: Q1={result[0]}, Q3={result[1]}")
+
+            # def tukey_hinges(data):
+            #     sorted_data = np.sort(data)
+            #     quartiles = np.percentile(sorted_data, [25, 50, 75])
+#
+            #     return quartiles
+
+            # a, b, c = tukey_hinges(df_sub['amount'].values)
+            # print(f"Q1: {a}, Median: {b}, Q3: {c}")
+
+            values = df_sub['amount'].to_numpy()
+            # values.sort()
+            # methods = ['linear', 'lower', 'higher', 'nearest', 'midpoint']
+            # for method in methods:
+            #     d = np.percentile(values, 25, interpolation=method)
+            #     e = np.percentile(values, 75, interpolation=method)
+            #     print(f"d: {d:>8.4f}, e: {e:>8.4f}")
+
+            q1_val = _calculate_plotly_quantiles(values, 0.25)
+            q3_val = _calculate_plotly_quantiles(values, 0.75)
+
+            # Construct x-axis label as it appears in the plot
+            x_label = f"{mark_choice} {type_val}" if mark_choice != "none" else type_val
+            x_label2 = f"{mark_choices[0]} {type_val}" if mark_choice != "none" else type_val
+
+            fig.add_trace(go.Bar(
+                x=[mark_choices[0]] if mark_choices[0] is not None else [""],
+                # x=[count],
+                # x=[x_label2],
+                y=[q3_val-q1_val],
+                base=[q1_val],
+                opacity=0.35,  # Fully invisible
+                hoverinfo='none',  # Disable default hover for bar
+                hovertemplate=(
+                    "<span style='font-family:Courier New;'>"
+                    f"Type  : {type_val}<br>"
+                    f"Min   : {values.min():.3f}<br>"
+                    f"Q1    : {q1_val:.3f}<br>"
+                    f"Median: {median_val:.3f}<br>"
+                    f"Q3    : {q3_val:.3f}<br>"
+                    f"Max   : {values.max():.3f}"
+                    "</span><extra></extra>"
+                ),
+                # marker=dict(color='rgba(0,0,0,0)'),  # Ensure bar is invisible
+                showlegend=False,
+                legendgroup=type_val,
+                name=type_val,
+                # width=0.5,
+            ))
 
     default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
+    print("\n\n\n\n\ntraces:")
     for trace in fig.data:
+        print(trace.name)
         if trace.name != default_option:
             trace.visible = "legendonly"
+        else:
+            print("----->")
 
-    fig.update_traces(
-        hovertemplate="Type: %{data.name}<br>Amount: %{y:.3f}<br>"
-        "Realization: %{customdata[0]}<extra></extra>",
-    )
+    # for type_val in cat_ord["type"]:
+    #     print(f"type_val: {type_val}")
+    #     df_sub = df[df["type"] == type_val]
+    #     print(df_sub)
+    #     if mark_choice is not None:
+    #         print("A")
+    #     else:
+    #         print("B")
+    #     median_val = df_sub['amount'].median()
+    #     q1_val = df_sub['amount'].quantile(0.25)
+    #     q3_val = df_sub['amount'].quantile(0.75)
+    #     print(f"median_val: {median_val}")
+    #     print(f"q1_val: {q1_val}")
+    #     print(f"q3_val: {q3_val}")
+#
+    #     fig.add_trace(go.Bar(
+    #         x=[type_val],
+    #         y=[median_val],
+    #         opacity=0.55,  # Fully invisible
+    #         hoverinfo='none',  # Disable default hover for bar
+    #         hovertemplate=(
+    #             f"Type: {type_val}<br>"
+    #             f"Median: {median_val:.2f}<br>"
+    #             f"Q1: {q1_val:.2f}<br>"
+    #             f"Q3: {q3_val:.2f}<extra></extra>"
+    #         ),
+    #         # marker=dict(color='rgba(0,0,0,0)'),  # Ensure bar is invisible
+    #         showlegend=False
+    #     ))
+    # for type_val in df["type"].unique():
+    #     # continue
+    #     for cat in cat_ord.get(mark_choice, [None]):
+    #         # continue
+    #         print(f"cat: {cat}")
+    #         subset = df[(df['type'] == type_val) & (df[mark_choice] == cat)] if cat is not None else df[
+    #             df['type'] == type_val]
+    #         print(subset)
+    #         median_val = subset['amount'].median()
+    #         q1_val = subset['amount'].quantile(0.25)
+    #         q3_val = subset['amount'].quantile(0.75)
+    #         print(f"median_val: {median_val}")
+    #         print(f"q1_val: {q1_val}")
+    #         print(f"q3_val: {q3_val}")
+#
+    #         print([cat] if mark_choice != "none" else [type_val])
+    #         fig.add_trace(go.Bar(
+    #             x=[cat] if mark_choice != "none" else [type_val],
+    #             y=[median_val],
+    #             opacity=0.55,  # Fully invisible
+    #             hoverinfo='none',  # Disable default hover for bar
+    #             hovertemplate=(
+    #                 f"Type: {type_val}<br>"
+    #                 f"Median: {median_val:.2f}<br>"
+    #                 f"Q1: {q1_val:.2f}<br>"
+    #                 f"Q3: {q3_val:.2f}<extra></extra>"
+    #             ),
+    #             # marker=dict(color='rgba(0,0,0,0)'),  # Ensure bar is invisible
+    #             showlegend=False
+    #         ))
+
+    # for cat in cat_ord:
+    # fig.add_trace(go.Bar(
+    #     x=["total"],
+    #     y=[1.05],
+    #     opacity=0.15,
+    #     hoverinfo="none",  # We will use hovertemplate instead
+    #     hovertemplate=f"Median: {1.0}<br>Q1: {-1.0}<br>Q3: {3.0}<extra></extra>",
+    #     showlegend=False,
+    # ))
 
     fig.layout.yaxis.autorange = True
     fig.layout.legend.tracegroupgap = 0
@@ -964,3 +1144,13 @@ def _make_title(c_info: Dict[str, Any], include_date: bool = True):
         else:
             components.append("All plume groups")
     return " - ".join(components)
+
+
+def _calculate_plotly_quantiles(values: np.ndarray[float], percentile: float):
+    values.sort()
+    n_val = len(values)
+    a = n_val * percentile - 0.5
+    if a.is_integer():
+        return values[int(a)]
+    else:
+        return np.interp(a, [x for x in range(0, n_val)], values)

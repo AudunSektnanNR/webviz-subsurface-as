@@ -1164,7 +1164,8 @@ class GraphSelectorsLayout(wcc.Selectors):
                                 },
                                 {"label": "Box plot", "value": "box_plot"},
                             ],
-                            value="probability_plot",
+                            # value="probability_plot",
+                            value="box_plot",  # NBNB-AS: Temp
                             id=containment_ids[18],
                         ),
                     ],
