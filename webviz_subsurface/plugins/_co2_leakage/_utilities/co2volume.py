@@ -919,18 +919,48 @@ def generate_co2_box_plot_figure(
     return fig
 
 
-def _make_title(containment_info: Dict[str, Any], include_date: bool = True):
+def _make_title(c_info: Dict[str, Any], include_date: bool = True):
     components = []
-    if containment_info["containment"] != "total":
-        components.append(containment_info["containment"].capitalize())
-    if containment_info["phase"] != "total":
-        components.append(containment_info["phase"].capitalize())
-    if containment_info["zone"] != "all":
-        components.append(containment_info["zone"])
-    if containment_info["region"] != "all":
-        components.append(containment_info["region"])
-    if containment_info["plume_group"] != "all":
-        components.append(containment_info["plume_group"])
     if include_date:
-        components.append(containment_info["date_option"])
+        components.append(c_info["date_option"])
+    if len(c_info["phases"]) > 0 and "phase" not in [
+        c_info["color_choice"],
+        c_info["mark_choice"],
+    ]:
+        if c_info["phase"] != "total":
+            components.append(c_info["phase"].capitalize())
+        else:
+            components.append("Phase: Total")
+    if len(c_info["containments"]) > 0 and "containment" not in [
+        c_info["color_choice"],
+        c_info["mark_choice"],
+    ]:
+        if c_info["containment"] != "total":
+            components.append(c_info["containment"].capitalize())
+        else:
+            components.append("All containments areas")
+    if len(c_info["zones"]) > 0 and "zone" not in [
+        c_info["color_choice"],
+        c_info["mark_choice"],
+    ]:
+        if c_info["zone"] != "all":
+            components.append(c_info["zone"])
+        else:
+            components.append("All zones")
+    if len(c_info["regions"]) > 0 and "region" not in [
+        c_info["color_choice"],
+        c_info["mark_choice"],
+    ]:
+        if c_info["region"] != "all":
+            components.append(c_info["region"])
+        else:
+            components.append("All regions")
+    if len(c_info["plume_groups"]) > 0 and "plume_group" not in [
+        c_info["color_choice"],
+        c_info["mark_choice"],
+    ]:
+        if c_info["plume_group"] != "all":
+            components.append(c_info["plume_group"])
+        else:
+            components.append("All plume groups")
     return " - ".join(components)
