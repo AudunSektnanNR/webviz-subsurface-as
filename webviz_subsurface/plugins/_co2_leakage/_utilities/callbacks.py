@@ -24,6 +24,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities import plume_extent
 from webviz_subsurface.plugins._co2_leakage._utilities.co2volume import (
     generate_co2_statistics_figure,
     generate_co2_box_plot_figure,
+    generate_co2_box_plot_figure2,
     generate_co2_time_containment_figure,
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,

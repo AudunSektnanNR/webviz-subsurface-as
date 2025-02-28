@@ -863,6 +863,51 @@ def generate_co2_statistics_figure(
 
     return fig
 
+def generate_co2_box_plot_figure2(
+    table_provider: ContainmentDataProvider,
+    realizations: List[int],
+    scale: Union[Co2MassScale, Co2VolumeScale],
+    containment_info: Dict[str, Any],
+) -> go.Figure:
+
+    lst = [['2020'], ['2021'], ['2022'], ['2023'], ['2024'], ['2025']]
+    numbers = [20, 25, 25, 25, 25, 25]
+    r = [x for i, j in zip(lst, numbers) for x in i * j]
+
+    df = pd.DataFrame(r, columns=['year'])
+    df['obs'] = np.arange(1, len(df) + 1) * np.random.random()
+
+    mean = df.groupby('year').mean()[['obs']]
+    median = df.groupby('year').median()[['obs']]
+    iqr = df.groupby('year').quantile(0.75)[['obs']] - df.groupby('year').quantile(0.25)[['obs']]
+
+    stats = pd.concat([mean, median, iqr], axis=1)
+    stats.columns = ['Mean', 'Median', 'IQR']
+    tot_df = pd.merge(df, stats, right_index=True, left_on='year', how='left')
+
+    fig = px.box(tot_df, x="year", y="obs", points=False)
+
+    fig2 = px.bar(
+        tot_df.groupby("year", as_index=False)
+        .agg(base=("obs", "min"), bar=("obs", lambda s: s.max() - s.min()))
+        .merge(
+            tot_df.groupby("year", as_index=False).agg(
+                {c: "first" for c in tot_df.columns if c not in ["year", "obs"]}
+            ),
+            on="year",
+        ),
+        x="year",
+        y="bar",
+        base="base",
+        hover_data={
+            **{c: True for c in tot_df.columns if c not in ["year", "obs"]},
+            **{"base": False, "bar": False},
+        },
+    ).update_traces(opacity=0.5)
+
+    fig.add_traces(fig2.data)
+    return fig
+
 
 def generate_co2_box_plot_figure(
     table_provider: ContainmentDataProvider,
@@ -898,41 +943,41 @@ def generate_co2_box_plot_figure(
         color_discrete_sequence=colors,
         points=points,
         category_orders=cat_ord,
-        hover_data=["realization"],
+        # hover_data=["realization"],
+        hover_data=None,
     )
     fig.update_traces(quartilemethod="linear")  # NBNB-AS: inclusive vs exclusive vs linear (default)
 
     # fig.update_traces(selector=dict(type='box'), hoverinfo='none')
-
-    # for trace in fig.data:
-    #     if trace.type == "box":
-    #         trace.hoverinfo = "none"  # NBNB-AS: Hva med points?
-    #         print("YES")
-
-    # print("\n\n\n\n\n\n\n\n\n\n\n\n\n\ntraces:")
-    # for trace in fig.data:
-    #     print(trace)
-    #     if trace.type == 'box':
-    #         print("    BOX")
-    #         # trace.hovertemplate = 'Median=%{median}<br>Q1=%{q1}<br>Q3=%{q3}<extra></extra>'
-    #     elif trace.type == 'scatter':
-    #         print("    SCATTER")
-    #         # trace.hovertemplate = 'Value=%{y}<extra></extra>'
 
     # fig.update_traces(
     #     hovertemplate="Type: %{data.name}<br>Amount: %{y:.3f}<br>"
     #     "Realization: %{customdata[0]}<extra></extra>",
     # )
 
-    for trace in fig.data:
-        trace.hoverinfo = 'none'
 
-    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     for k, v in cat_ord.items():
         print(f"{k}: {v}")
 
-    add_bars = True
-    if add_bars:
+    add_bars1 = False
+    add_bars2 = False
+    if add_bars1:
+        # fig = px.box(tot_df, x="year", y="obs", points=False)
+
+        fig2 = px.bar(
+            df,
+            x=mark_choice if mark_choice != "none" else None,
+            y="amount",
+            base=mark_choice if mark_choice != "none" else None,
+            color="type",
+            hover_data={
+                **{c: True for c in df.columns if c not in ["year", "obs"]},
+            },
+        ).update_traces(opacity=0.5)
+
+        fig.add_traces(fig2.data)
+    if add_bars2:
         for count, type_val in enumerate(cat_ord["type"], 1):
             print(f"\n\n\n\ntype_val: {type_val}")
             df_sub = df[df["type"] == type_val]
@@ -988,7 +1033,9 @@ def generate_co2_box_plot_figure(
             x_label2 = f"{mark_choices[0]} {type_val}" if mark_choice != "none" else type_val
 
             fig.add_trace(go.Bar(
+                # df_sub,
                 x=[mark_choices[0]] if mark_choices[0] is not None else [""],
+                # x=mark_choice if mark_choice != "none" else None,
                 # x=[count],
                 # x=[x_label2],
                 y=[q3_val-q1_val],
