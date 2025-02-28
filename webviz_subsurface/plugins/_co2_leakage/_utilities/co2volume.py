@@ -884,13 +884,19 @@ def generate_co2_box_plot_figure(
         mark_choice,
     )
 
+    if containment_info["box_show_points"] == "all_points":
+        points = "all"
+    elif containment_info["box_show_points"] == "only_outliers":
+        points = "outliers"
+    else:
+        points = False
     fig = px.box(
         df,
         x=mark_choice if mark_choice != "none" else None,
         y="amount",
         color="type",
         color_discrete_sequence=colors,
-        points="all" if containment_info["box_show_points"] else "outliers",
+        points=points,
         category_orders=cat_ord,
         hover_data=["realization"],
     )
