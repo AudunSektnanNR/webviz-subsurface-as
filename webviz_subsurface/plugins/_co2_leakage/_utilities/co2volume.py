@@ -1041,6 +1041,7 @@ def generate_co2_box_plot_figure(
             # Copy to make sure df_sub is not changed:
             values = df_sub['amount'].to_numpy()
             real = df_sub['realization'].to_numpy()
+
             # values.sort()
             # methods = ['linear', 'lower', 'higher', 'nearest', 'midpoint']
             # for method in methods:
@@ -1050,7 +1051,9 @@ def generate_co2_box_plot_figure(
 
             q1 = _calculate_plotly_quantiles(values, 0.25)
             q3 = _calculate_plotly_quantiles(values, 0.75)
-            min_fence, max_fence = _calculate_plotly_fences(values, q1, q3, points)
+            # q1 = np.percentile(values, 25)
+            # q3 = np.percentile(values, 75)
+            min_fence, max_fence = _calculate_plotly_whiskers(values, q1, q3, points)
 
             # if type_val == "hazardous":
             #     print("df_sub after sort")
@@ -1072,7 +1075,7 @@ def generate_co2_box_plot_figure(
                               "Realization: %{customdata}"
                         "</span><extra></extra>",
                     legendgroup=type_val,
-                    width=0.5,
+                    width=0.55,
                 )
             )
 
@@ -1091,25 +1094,25 @@ def generate_co2_box_plot_figure(
                 # x=[x_label2],
                 y=[values.max() - values.min() + 2 * eps],
                 base=[values.min() - eps],
-                opacity=0.35,  # Fully invisible
+                opacity=0.00,  # Fully invisible
                 hoverinfo='none',  # Disable default hover for bar
                 hovertemplate=(
                     "<span style='font-family:Courier New;'>"
-                    f"Type  : {type_val}<br>"
-                    f"Min   : {values.min():.3f}<br>"
-                    f"Min f : {min_fence:.3f}<br>"
-                    f"Q1    : {q1:.3f}<br>"
-                    f"Median: {median_val:.3f}<br>"
-                    f"Q3    : {q3:.3f}<br>"
-                    f"Max f : {max_fence:.3f}<br>"
-                    f"Max   : {values.max():.3f}"
+                    f"Type         : {type_val}<br>"
+                    f"Min          : {values.min():.3f}<br>"
+                    f"Lower whisker: {min_fence:.3f}<br>"
+                    f"Q1           : {q1:.3f}<br>"
+                    f"Median       : {median_val:.3f}<br>"
+                    f"Q3           : {q3:.3f}<br>"
+                    f"Top whisker  : {max_fence:.3f}<br>"
+                    f"Max          : {values.max():.3f}"
                     "</span><extra></extra>"
                 ),
                 # marker=dict(color='rgba(0,0,0,0)'),  # Ensure bar is invisible
                 showlegend=False,
                 legendgroup=type_val,
                 name=type_val,
-                width=1.0,
+                width=0.56,
             ))
 
     # fig.update_traces(
@@ -1280,7 +1283,7 @@ def _calculate_plotly_quantiles(values: np.ndarray[float], percentile: float):
         return np.interp(a, [x for x in range(0, n_val)], values_sorted)
 
 
-def _calculate_plotly_fences(values: np.ndarray[float], q1: float, q3: float, points: Union[str, bool]):
+def _calculate_plotly_whiskers(values: np.ndarray[float], q1: float, q3: float, points: Union[str, bool]):
     if not points:
         return min(values), max(values)
     else:
@@ -1288,4 +1291,5 @@ def _calculate_plotly_fences(values: np.ndarray[float], q1: float, q3: float, po
         values_sorted.sort()
         a = q1 - 1.5 * (q3-q1)
         b = q3 + 1.5 * (q3-q1)
-        return max(a, min(values_sorted)), min(b, max(values_sorted))
+        # return max(a, min(values_sorted)), min(b, max(values_sorted))
+        return values[values>=a].min(), values[values<=b].max()
