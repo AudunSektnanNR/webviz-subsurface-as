@@ -915,6 +915,7 @@ def generate_co2_box_plot_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
 ) -> go.Figure:
+    containment_info["sorting"] = "marking"  # Always override this for the box plot
     date_option = containment_info["date_option"]
     df = _read_co2_volumes(table_provider, realizations, scale)
     df = df[df["date"] == date_option]
@@ -935,18 +936,29 @@ def generate_co2_box_plot_figure(
         points = "outliers"
     else:
         points = False
-    fig = px.box(
-        df,
-        x=mark_choice if mark_choice != "none" else None,
-        y="amount",
-        color="type",
-        color_discrete_sequence=colors,
-        points=points,
-        category_orders=cat_ord,
-        # hover_data=["realization"],
-        hover_data=None,
-    )
-    fig.update_traces(quartilemethod="linear")  # NBNB-AS: inclusive vs exclusive vs linear (default)
+    # fig = px.box(
+    #     df,
+    #     x=mark_choice if mark_choice != "none" else None,
+    #     y="amount",
+    #     color="type",
+    #     color_discrete_sequence=colors,
+    #     points=points,
+    #     category_orders=cat_ord,
+    #     # hover_data=["realization"],
+    #     hover_data=None,
+    # )
+    # fig.update_traces(quartilemethod="linear")  # NBNB-AS: inclusive vs exclusive vs linear (default)
+
+    # y0 = np.random.randn(50)
+    # y1 = np.random.randn(50) + 1  # shift mean
+#
+    # fig = go.Figure()
+    # fig.add_trace(go.Box(y=y0, name='Sample A',
+    #                      marker_color='indianred'))
+    # fig.add_trace(go.Box(y=y1, name='Sample B',
+    #                      marker_color='lightseagreen'))
+
+    # fig.update_traces(boxmean='sd')  # Show mean and standard deviation
 
     # fig.update_traces(selector=dict(type='box'), hoverinfo='none')
 
@@ -955,13 +967,13 @@ def generate_co2_box_plot_figure(
     #     "Realization: %{customdata[0]}<extra></extra>",
     # )
 
-
+    fig = go.Figure()
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
     for k, v in cat_ord.items():
         print(f"{k}: {v}")
 
     add_bars1 = False
-    add_bars2 = False
+    add_bars2 = True
     if add_bars1:
         # fig = px.box(tot_df, x="year", y="obs", points=False)
 
@@ -978,7 +990,7 @@ def generate_co2_box_plot_figure(
 
         fig.add_traces(fig2.data)
     if add_bars2:
-        for count, type_val in enumerate(cat_ord["type"], 1):
+        for count, type_val in enumerate(cat_ord["type"], 0):
             print(f"\n\n\n\ntype_val: {type_val}")
             df_sub = df[df["type"] == type_val]
             print(df_sub)
@@ -1025,30 +1037,43 @@ def generate_co2_box_plot_figure(
             #     e = np.percentile(values, 75, interpolation=method)
             #     print(f"d: {d:>8.4f}, e: {e:>8.4f}")
 
-            q1_val = _calculate_plotly_quantiles(values, 0.25)
-            q3_val = _calculate_plotly_quantiles(values, 0.75)
+            q1 = _calculate_plotly_quantiles(values, 0.25)
+            q3 = _calculate_plotly_quantiles(values, 0.75)
+            min_fence, max_fence = _calculate_plotly_fences(values, q1, q3)
 
             # Construct x-axis label as it appears in the plot
             x_label = f"{mark_choice} {type_val}" if mark_choice != "none" else type_val
             x_label2 = f"{mark_choices[0]} {type_val}" if mark_choice != "none" else type_val
 
+            # values = print(df_sub["amount"].to_list())
+            fig.add_trace(go.Box(
+                    x=[count] * len(values),
+                    y=values,
+                    name=type_val,
+                    marker_color=colors[count],
+                    boxpoints=points,
+                )
+            )
+
             fig.add_trace(go.Bar(
                 # df_sub,
-                x=[mark_choices[0]] if mark_choices[0] is not None else [""],
+                #    x=[mark_choices[0]] if mark_choices[0] is not None else [""],
                 # x=mark_choice if mark_choice != "none" else None,
-                # x=[count],
+                x=[count],
                 # x=[x_label2],
-                y=[q3_val-q1_val],
-                base=[q1_val],
+                y=[max_fence-min_fence],
+                base=[min_fence],
                 opacity=0.35,  # Fully invisible
                 hoverinfo='none',  # Disable default hover for bar
                 hovertemplate=(
                     "<span style='font-family:Courier New;'>"
                     f"Type  : {type_val}<br>"
                     f"Min   : {values.min():.3f}<br>"
-                    f"Q1    : {q1_val:.3f}<br>"
+                    f"Min f : {min_fence:.3f}<br>"
+                    f"Q1    : {q1:.3f}<br>"
                     f"Median: {median_val:.3f}<br>"
-                    f"Q3    : {q3_val:.3f}<br>"
+                    f"Q3    : {q3:.3f}<br>"
+                    f"Max f : {max_fence:.3f}<br>"
                     f"Max   : {values.max():.3f}"
                     "</span><extra></extra>"
                 ),
@@ -1058,6 +1083,14 @@ def generate_co2_box_plot_figure(
                 name=type_val,
                 # width=0.5,
             ))
+
+    fig.update_layout(
+        xaxis=dict(
+            tickmode='array',
+            tickvals=[i for i in range(len(cat_ord["type"]))],
+            ticktext=cat_ord["type"]
+        )
+    )
 
     default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
     print("\n\n\n\n\ntraces:")
@@ -1138,10 +1171,10 @@ def generate_co2_box_plot_figure(
     #     showlegend=False,
     # ))
 
-    fig.layout.yaxis.autorange = True
-    fig.layout.legend.tracegroupgap = 0
-    fig.layout.yaxis.title = scale.value
-    _adjust_figure(fig, plot_title=_make_title(containment_info))
+    # fig.layout.yaxis.autorange = True
+    # fig.layout.legend.tracegroupgap = 0
+    # fig.layout.yaxis.title = scale.value
+    # _adjust_figure(fig, plot_title=_make_title(containment_info))
 
     return fig
 
@@ -1201,3 +1234,11 @@ def _calculate_plotly_quantiles(values: np.ndarray[float], percentile: float):
         return values[int(a)]
     else:
         return np.interp(a, [x for x in range(0, n_val)], values)
+
+
+def _calculate_plotly_fences(values: np.ndarray[float], q1: float, q3: float):
+    # NBNB-AS: Depends on points option
+    values.sort()
+    a = q1 - 1.5 * (q3-q1)
+    b = q3 + 1.5 * (q3-q1)
+    return max(a, min(values)), min(b, max(values))
