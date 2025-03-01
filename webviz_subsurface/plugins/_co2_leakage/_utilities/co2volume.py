@@ -898,61 +898,63 @@ def generate_co2_box_plot_figure(
 
     for count, type_val in enumerate(cat_ord["type"], 0):
         df_sub = df[df["type"] == type_val]
-        values = df_sub['amount'].to_numpy()
-        real = df_sub['realization'].to_numpy()
+        values = df_sub["amount"].to_numpy()
+        real = df_sub["realization"].to_numpy()
 
-        median_val = df_sub['amount'].median()
+        median_val = df_sub["amount"].median()
         q1 = _calculate_plotly_quantiles(values, 0.25)
         q3 = _calculate_plotly_quantiles(values, 0.75)
         min_fence, max_fence = _calculate_plotly_whiskers(values, q1, q3, points)
 
-        fig.add_trace(go.Box(
+        fig.add_trace(
+            go.Box(
                 x=[count] * len(values),
                 y=values,
                 name=type_val,
                 marker_color=colors[count],
                 boxpoints=points,
                 customdata=real,
-                hovertemplate=
-                    "<span style='font-family:Courier New;'>"
-                    "Type       : %{data.name}<br>Amount     : %{y:.3f}<br>"
-                          "Realization: %{customdata}"
-                    "</span><extra></extra>",
+                hovertemplate="<span style='font-family:Courier New;'>"
+                "Type       : %{data.name}<br>Amount     : %{y:.3f}<br>"
+                "Realization: %{customdata}"
+                "</span><extra></extra>",
                 legendgroup=type_val,
                 width=0.55,
             )
         )
 
-        fig.add_trace(go.Bar(
-            x=[count],
-            y=[values.max() - values.min() + 2 * eps],
-            base=[values.min() - eps],
-            opacity=0.0,
-            hoverinfo='none',
-            hovertemplate=(
-                "<span style='font-family:Courier New;'>"
-                f"Type         : {type_val}<br>"
-                f"Min          : {values.min():.3f}<br>"
-                f"Lower whisker: {min_fence:.3f}<br>"
-                f"Q1           : {q1:.3f}<br>"
-                f"Median       : {median_val:.3f}<br>"
-                f"Q3           : {q3:.3f}<br>"
-                f"Top whisker  : {max_fence:.3f}<br>"
-                f"Max          : {values.max():.3f}"
-                "</span><extra></extra>"
-            ),
-            showlegend=False,
-            legendgroup=type_val,
-            name=type_val,
-            marker_color=colors[count],
-            width=0.56,
-        ))
+        fig.add_trace(
+            go.Bar(
+                x=[count],
+                y=[values.max() - values.min() + 2 * eps],
+                base=[values.min() - eps],
+                opacity=0.0,
+                hoverinfo="none",
+                hovertemplate=(
+                    "<span style='font-family:Courier New;'>"
+                    f"Type         : {type_val}<br>"
+                    f"Min          : {values.min():.3f}<br>"
+                    f"Lower whisker: {min_fence:.3f}<br>"
+                    f"Q1           : {q1:.3f}<br>"
+                    f"Median       : {median_val:.3f}<br>"
+                    f"Q3           : {q3:.3f}<br>"
+                    f"Top whisker  : {max_fence:.3f}<br>"
+                    f"Max          : {values.max():.3f}"
+                    "</span><extra></extra>"
+                ),
+                showlegend=False,
+                legendgroup=type_val,
+                name=type_val,
+                marker_color=colors[count],
+                width=0.56,
+            )
+        )
 
     fig.update_layout(
         xaxis=dict(
-            tickmode='array',
+            tickmode="array",
             tickvals=[i for i in range(len(cat_ord["type"]))],
-            ticktext=cat_ord["type"]
+            ticktext=cat_ord["type"],
         )
     )
 
@@ -1028,12 +1030,14 @@ def _calculate_plotly_quantiles(values: np.ndarray[float], percentile: float):
         return np.interp(a, [x for x in range(0, n_val)], values_sorted)
 
 
-def _calculate_plotly_whiskers(values: np.ndarray[float], q1: float, q3: float, points: Union[str, bool]):
+def _calculate_plotly_whiskers(
+    values: np.ndarray[float], q1: float, q3: float, points: Union[str, bool]
+):
     if not points:
         return min(values), max(values)
     else:
         values_sorted = values.copy()
         values_sorted.sort()
-        a = q1 - 1.5 * (q3-q1)
-        b = q3 + 1.5 * (q3-q1)
-        return values[values>=a].min(), values[values<=b].max()
+        a = q1 - 1.5 * (q3 - q1)
+        b = q3 + 1.5 * (q3 - q1)
+        return values[values >= a].min(), values[values <= b].max()
