@@ -1094,7 +1094,7 @@ def generate_co2_box_plot_figure(
                 # x=[x_label2],
                 y=[values.max() - values.min() + 2 * eps],
                 base=[values.min() - eps],
-                opacity=0.00,  # Fully invisible
+                opacity=0.99,  # Fully invisible
                 hoverinfo='none',  # Disable default hover for bar
                 hovertemplate=(
                     "<span style='font-family:Courier New;'>"
@@ -1120,6 +1120,15 @@ def generate_co2_box_plot_figure(
     #     "Realization: %{customdata[0]}<extra></extra>",
     # )
 
+    # fig.update_layout(
+    #     xaxis=dict(
+    #         range=[-0.5, 11.5],  # Setting the range of x-axis
+    #         tickmode='linear',  # Setting tick mode to linear for evenly spaced ticks
+    #         tick0=1,  # Start ticks from 1
+    #         dtick=1  # Space between ticks
+    #     ),
+    # )
+
     # for trace in fig.data:
     #     if isinstance(trace, go.Box):
     #         trace.hovertemplate = ("Type: %{data.name}<br>Amount: %{y:.3f}<br>"
@@ -1137,15 +1146,17 @@ def generate_co2_box_plot_figure(
         )
     )
 
-    default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
-    # print("\n\n\n\n\ntraces:")
-    for trace in fig.data:
-        # print(trace)
-        # print(trace.name)
-        if trace.name != default_option:
-            trace.visible = "legendonly"
-        # else:
-        #     print("----->")
+    if len(cat_ord["type"]) > 20:
+        # Only plot single box as default if there are many categories
+        default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
+        # print("\n\n\n\n\ntraces:")
+        for trace in fig.data:
+            # print(trace)
+            # print(trace.name)
+            if trace.name != default_option:
+                trace.visible = "legendonly"
+            # else:
+            #     print("----->")
 
     # for type_val in cat_ord["type"]:
     #     print(f"type_val: {type_val}")
