@@ -1072,6 +1072,7 @@ def generate_co2_box_plot_figure(
                               "Realization: %{customdata}"
                         "</span><extra></extra>",
                     legendgroup=type_val,
+                    width=0.5,
                 )
             )
 
@@ -1108,7 +1109,7 @@ def generate_co2_box_plot_figure(
                 showlegend=False,
                 legendgroup=type_val,
                 name=type_val,
-                # width=0.5,
+                width=1.0,
             ))
 
     # fig.update_traces(
