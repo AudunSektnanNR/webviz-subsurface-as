@@ -993,10 +993,10 @@ def generate_co2_box_plot_figure(
         for count, type_val in enumerate(cat_ord["type"], 0):
             print(f"\n\n\n\ntype_val: {type_val}")
             df_sub = df[df["type"] == type_val]
-            print(df_sub)
-            print(f"mark_choice: {mark_choice}")
+            # print(df_sub)
+            # print(f"mark_choice: {mark_choice}")
             mark_choices = df_sub[mark_choice].unique() if mark_choice != "none" else [None]
-            print(mark_choices)
+            # print(mark_choices)
             # for mark_val in cat_ord[mark_choice] if mark_choice != "none" else [None]:
             # for mark_val in mark_choices:
                 # print(f"mark_val: {mark_val}")
@@ -1040,11 +1040,7 @@ def generate_co2_box_plot_figure(
 
             q1 = _calculate_plotly_quantiles(values, 0.25)
             q3 = _calculate_plotly_quantiles(values, 0.75)
-            min_fence, max_fence = _calculate_plotly_fences(values, q1, q3)
-
-            # Construct x-axis label as it appears in the plot
-            x_label = f"{mark_choice} {type_val}" if mark_choice != "none" else type_val
-            x_label2 = f"{mark_choices[0]} {type_val}" if mark_choice != "none" else type_val
+            min_fence, max_fence = _calculate_plotly_fences(values, q1, q3, points)
 
             # values = print(df_sub["amount"].to_list())
             fig.add_trace(go.Box(
@@ -1060,8 +1056,17 @@ def generate_co2_box_plot_figure(
                         "Type       : %{data.name}<br>Amount     : %{y:.3f}<br>"
                               "Realization: %{customdata}"
                         "</span><extra></extra>",
+                    legendgroup=type_val,
                 )
             )
+
+            eps = 0.00001
+            # if not points:  # No points plotted => whiskers are min/max of all values
+            #     base = [values.min() - eps]
+            #     y = [values.max() - values.min() + 2 * eps]
+            # else:
+            #     base = [min_fence - eps]
+            #     y = [max_fence - min_fence + 2 * eps]
 
             fig.add_trace(go.Bar(
                 # df_sub,
@@ -1069,8 +1074,8 @@ def generate_co2_box_plot_figure(
                 # x=mark_choice if mark_choice != "none" else None,
                 x=[count],
                 # x=[x_label2],
-                y=[max_fence-min_fence+0.00002],
-                base=[min_fence-0.00001],
+                y=[values.max() - values.min() + 2 * eps],
+                base=[values.min() - eps],
                 opacity=0.35,  # Fully invisible
                 hoverinfo='none',  # Disable default hover for bar
                 hovertemplate=(
@@ -1115,7 +1120,7 @@ def generate_co2_box_plot_figure(
     )
 
     default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
-    print("\n\n\n\n\ntraces:")
+    # print("\n\n\n\n\ntraces:")
     for trace in fig.data:
         # print(trace)
         # print(trace.name)
@@ -1194,10 +1199,10 @@ def generate_co2_box_plot_figure(
     #     showlegend=False,
     # ))
 
-    # fig.layout.yaxis.autorange = True
-    # fig.layout.legend.tracegroupgap = 0
-    # fig.layout.yaxis.title = scale.value
-    # _adjust_figure(fig, plot_title=_make_title(containment_info))
+    fig.layout.yaxis.autorange = True
+    fig.layout.legend.tracegroupgap = 0
+    fig.layout.yaxis.title = scale.value
+    _adjust_figure(fig, plot_title=_make_title(containment_info))
 
     return fig
 
@@ -1259,9 +1264,11 @@ def _calculate_plotly_quantiles(values: np.ndarray[float], percentile: float):
         return np.interp(a, [x for x in range(0, n_val)], values)
 
 
-def _calculate_plotly_fences(values: np.ndarray[float], q1: float, q3: float):
-    # NBNB-AS: Depends on points option
-    values.sort()
-    a = q1 - 1.5 * (q3-q1)
-    b = q3 + 1.5 * (q3-q1)
-    return max(a, min(values)), min(b, max(values))
+def _calculate_plotly_fences(values: np.ndarray[float], q1: float, q3: float, points: Union[str, bool]):
+    if not points:
+        return min(values), max(values)
+    else:
+        values.sort()
+        a = q1 - 1.5 * (q3-q1)
+        b = q3 + 1.5 * (q3-q1)
+        return max(a, min(values)), min(b, max(values))
