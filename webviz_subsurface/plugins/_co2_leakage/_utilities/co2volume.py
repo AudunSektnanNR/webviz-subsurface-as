@@ -959,7 +959,6 @@ def generate_co2_box_plot_figure(
                 name=type_val,
                 marker_color=colors[count],
                 boxpoints=points,
-                # hover_data=["realization"],
                 customdata=real,
                 hovertemplate=
                     "<span style='font-family:Courier New;'>"
@@ -989,7 +988,6 @@ def generate_co2_box_plot_figure(
                 f"Max          : {values.max():.3f}"
                 "</span><extra></extra>"
             ),
-            # marker=dict(color='rgba(0,0,0,0)'),  # Ensure bar is invisible
             showlegend=False,
             legendgroup=type_val,
             name=type_val,
@@ -1084,5 +1082,4 @@ def _calculate_plotly_whiskers(values: np.ndarray[float], q1: float, q3: float, 
         values_sorted.sort()
         a = q1 - 1.5 * (q3-q1)
         b = q3 + 1.5 * (q3-q1)
-        # return max(a, min(values_sorted)), min(b, max(values_sorted))
         return values[values>=a].min(), values[values<=b].max()
