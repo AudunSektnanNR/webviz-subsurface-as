@@ -1030,6 +1030,7 @@ def generate_co2_box_plot_figure(
             # print(f"Q1: {a}, Median: {b}, Q3: {c}")
 
             values = df_sub['amount'].to_numpy()
+            real = df_sub['realization'].to_numpy()
             # values.sort()
             # methods = ['linear', 'lower', 'higher', 'nearest', 'midpoint']
             # for method in methods:
@@ -1052,6 +1053,13 @@ def generate_co2_box_plot_figure(
                     name=type_val,
                     marker_color=colors[count],
                     boxpoints=points,
+                    # hover_data=["realization"],
+                    customdata=real,
+                    hovertemplate=
+                        "<span style='font-family:Courier New;'>"
+                        "Type       : %{data.name}<br>Amount     : %{y:.3f}<br>"
+                              "Realization: %{customdata}"
+                        "</span><extra></extra>",
                 )
             )
 
@@ -1061,8 +1069,8 @@ def generate_co2_box_plot_figure(
                 # x=mark_choice if mark_choice != "none" else None,
                 x=[count],
                 # x=[x_label2],
-                y=[max_fence-min_fence],
-                base=[min_fence],
+                y=[max_fence-min_fence+0.00002],
+                base=[min_fence-0.00001],
                 opacity=0.35,  # Fully invisible
                 hoverinfo='none',  # Disable default hover for bar
                 hovertemplate=(
@@ -1084,6 +1092,20 @@ def generate_co2_box_plot_figure(
                 # width=0.5,
             ))
 
+    # fig.update_traces(
+    #     hovertemplate="Type: %{data.name}<br>Amount: %{y:.3f}<br>"
+    #     "Realization: %{customdata[0]}<extra></extra>",
+    # )
+
+    # for trace in fig.data:
+    #     if isinstance(trace, go.Box):
+    #         trace.hovertemplate = ("Type: %{data.name}<br>Amount: %{y:.3f}<br>"
+    #                          "Realization: %{customdata[0]}<extra></extra>",
+    #         )
+    #         print("BINGO")
+    #     else:
+    #         print("NOPE")
+
     fig.update_layout(
         xaxis=dict(
             tickmode='array',
@@ -1095,11 +1117,12 @@ def generate_co2_box_plot_figure(
     default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
     print("\n\n\n\n\ntraces:")
     for trace in fig.data:
-        print(trace.name)
+        # print(trace)
+        # print(trace.name)
         if trace.name != default_option:
             trace.visible = "legendonly"
-        else:
-            print("----->")
+        # else:
+        #     print("----->")
 
     # for type_val in cat_ord["type"]:
     #     print(f"type_val: {type_val}")
