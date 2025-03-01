@@ -922,8 +922,6 @@ def generate_co2_box_plot_figure(
     df = df[df["date"] == date_option]
     df = df.drop(columns=["date"]).reset_index(drop=True)
 
-    # print("\n\n\nData frame:")
-    # print(df)
     color_choice = containment_info["color_choice"]
     mark_choice = containment_info["mark_choice"]
     _filter_columns(df, color_choice, mark_choice, containment_info)
@@ -933,8 +931,6 @@ def generate_co2_box_plot_figure(
         color_choice,
         mark_choice,
     )
-    # print("\nData frame after:")
-    # print(df)
 
     if containment_info["box_show_points"] == "all_points":
         points = "all"
@@ -942,201 +938,63 @@ def generate_co2_box_plot_figure(
         points = "outliers"
     else:
         points = False
-    # fig = px.box(
-    #     df,
-    #     x=mark_choice if mark_choice != "none" else None,
-    #     y="amount",
-    #     color="type",
-    #     color_discrete_sequence=colors,
-    #     points=points,
-    #     category_orders=cat_ord,
-    #     # hover_data=["realization"],
-    #     hover_data=None,
-    # )
-    # fig.update_traces(quartilemethod="linear")  # NBNB-AS: inclusive vs exclusive vs linear (default)
-
-    # y0 = np.random.randn(50)
-    # y1 = np.random.randn(50) + 1  # shift mean
-#
-    # fig = go.Figure()
-    # fig.add_trace(go.Box(y=y0, name='Sample A',
-    #                      marker_color='indianred'))
-    # fig.add_trace(go.Box(y=y1, name='Sample B',
-    #                      marker_color='lightseagreen'))
-
-    # fig.update_traces(boxmean='sd')  # Show mean and standard deviation
-
-    # fig.update_traces(selector=dict(type='box'), hoverinfo='none')
-
-    # fig.update_traces(
-    #     hovertemplate="Type: %{data.name}<br>Amount: %{y:.3f}<br>"
-    #     "Realization: %{customdata[0]}<extra></extra>",
-    # )
 
     fig = go.Figure()
-    # print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-    # for k, v in cat_ord.items():
-    #     print(f"{k}: {v}")
 
-    add_bars1 = False
-    add_bars2 = True
-    if add_bars1:
-        # fig = px.box(tot_df, x="year", y="obs", points=False)
+    for count, type_val in enumerate(cat_ord["type"], 0):
+        df_sub = df[df["type"] == type_val]
+        values = df_sub['amount'].to_numpy()
+        real = df_sub['realization'].to_numpy()
 
-        fig2 = px.bar(
-            df,
-            x=mark_choice if mark_choice != "none" else None,
-            y="amount",
-            base=mark_choice if mark_choice != "none" else None,
-            color="type",
-            hover_data={
-                **{c: True for c in df.columns if c not in ["year", "obs"]},
-            },
-        ).update_traces(opacity=0.5)
+        median_val = df_sub['amount'].median()
+        # q1 = _calculate_plotly_quantiles(values, 0.25)
+        # q3 = _calculate_plotly_quantiles(values, 0.75)
+        q1 = np.percentile(values, 25)
+        q3 = np.percentile(values, 75)
+        min_fence, max_fence = _calculate_plotly_whiskers(values, q1, q3, points)
 
-        fig.add_traces(fig2.data)
-    if add_bars2:
-        for count, type_val in enumerate(cat_ord["type"], 0):
-            # print(f"\n\n\n\ntype_val: {type_val}")
-            df_sub = df[df["type"] == type_val]
-            # print(df_sub)
-            # print(f"mark_choice: {mark_choice}")
-            mark_choices = df_sub[mark_choice].unique() if mark_choice != "none" else [None]
-            # print(mark_choices)
-            # for mark_val in cat_ord[mark_choice] if mark_choice != "none" else [None]:
-            # for mark_val in mark_choices:
-                # print(f"mark_val: {mark_val}")
-            # df_sub = df[(df["type"] == type_val) & (df[mark_choice] == mark_choice)] if mark_choice is not None else df[
-            #     df["type"] == type_val]
-            median_val = df_sub['amount'].median()
-            # q1_val = df_sub['amount'].quantile(0.25)
-            # q3_val = df_sub['amount'].quantile(0.75)
-            # print(f"median_val: {median_val}")
-            # print(f"mark_choices[0]: {mark_choices[0]}")
-
-            # methods = ['linear', 'lower', 'higher', 'midpoint', 'nearest']
-            # results = {}
-            # for method in methods:
-            #     q1 = df_sub['amount'].quantile(0.25, interpolation=method)
-            #     q3 = df_sub['amount'].quantile(0.75, interpolation=method)
-            #     results[method] = (q1, q3)
-
-            # print("Default Method Results (Linear):", (q1_val, q3_val))
-            # print("Other Methods Results:")
-            # for method, result in results.items():
-            #     print(f"{method}: Q1={result[0]}, Q3={result[1]}")
-
-            # def tukey_hinges(data):
-            #     sorted_data = np.sort(data)
-            #     quartiles = np.percentile(sorted_data, [25, 50, 75])
-#
-            #     return quartiles
-
-            # a, b, c = tukey_hinges(df_sub['amount'].values)
-            # print(f"Q1: {a}, Median: {b}, Q3: {c}")
-
-            # if type_val == "hazardous":
-            #     print("df_sub before sort")
-            #     print(df_sub)
-            # Copy to make sure df_sub is not changed:
-            values = df_sub['amount'].to_numpy()
-            real = df_sub['realization'].to_numpy()
-
-            # values.sort()
-            # methods = ['linear', 'lower', 'higher', 'nearest', 'midpoint']
-            # for method in methods:
-            #     d = np.percentile(values, 25, interpolation=method)
-            #     e = np.percentile(values, 75, interpolation=method)
-            #     print(f"d: {d:>8.4f}, e: {e:>8.4f}")
-
-            q1 = _calculate_plotly_quantiles(values, 0.25)
-            q3 = _calculate_plotly_quantiles(values, 0.75)
-            # q1 = np.percentile(values, 25)
-            # q3 = np.percentile(values, 75)
-            min_fence, max_fence = _calculate_plotly_whiskers(values, q1, q3, points)
-
-            # if type_val == "hazardous":
-            #     print("df_sub after sort")
-            #     print(df_sub)
-            #     print(values)
-            #     print(real)
-            # values = print(df_sub["amount"].to_list())
-            fig.add_trace(go.Box(
-                    x=[count] * len(values),
-                    y=values,
-                    name=type_val,
-                    marker_color=colors[count],
-                    boxpoints=points,
-                    # hover_data=["realization"],
-                    customdata=real,
-                    hovertemplate=
-                        "<span style='font-family:Courier New;'>"
-                        "Type       : %{data.name}<br>Amount     : %{y:.3f}<br>"
-                              "Realization: %{customdata}"
-                        "</span><extra></extra>",
-                    legendgroup=type_val,
-                    width=0.55,
-                )
-            )
-
-            # if not points:  # No points plotted => whiskers are min/max of all values
-            #     base = [values.min() - eps]
-            #     y = [values.max() - values.min() + 2 * eps]
-            # else:
-            #     base = [min_fence - eps]
-            #     y = [max_fence - min_fence + 2 * eps]
-
-            fig.add_trace(go.Bar(
-                # df_sub,
-                #    x=[mark_choices[0]] if mark_choices[0] is not None else [""],
-                # x=mark_choice if mark_choice != "none" else None,
-                x=[count],
-                # x=[x_label2],
-                y=[values.max() - values.min() + 2 * eps],
-                base=[values.min() - eps],
-                opacity=0.99,  # Fully invisible
-                hoverinfo='none',  # Disable default hover for bar
-                hovertemplate=(
-                    "<span style='font-family:Courier New;'>"
-                    f"Type         : {type_val}<br>"
-                    f"Min          : {values.min():.3f}<br>"
-                    f"Lower whisker: {min_fence:.3f}<br>"
-                    f"Q1           : {q1:.3f}<br>"
-                    f"Median       : {median_val:.3f}<br>"
-                    f"Q3           : {q3:.3f}<br>"
-                    f"Top whisker  : {max_fence:.3f}<br>"
-                    f"Max          : {values.max():.3f}"
-                    "</span><extra></extra>"
-                ),
-                # marker=dict(color='rgba(0,0,0,0)'),  # Ensure bar is invisible
-                showlegend=False,
-                legendgroup=type_val,
+        fig.add_trace(go.Box(
+                x=[count] * len(values),
+                y=values,
                 name=type_val,
-                width=0.56,
-            ))
+                marker_color=colors[count],
+                boxpoints=points,
+                # hover_data=["realization"],
+                customdata=real,
+                hovertemplate=
+                    "<span style='font-family:Courier New;'>"
+                    "Type       : %{data.name}<br>Amount     : %{y:.3f}<br>"
+                          "Realization: %{customdata}"
+                    "</span><extra></extra>",
+                legendgroup=type_val,
+                width=0.55,
+            )
+        )
 
-    # fig.update_traces(
-    #     hovertemplate="Type: %{data.name}<br>Amount: %{y:.3f}<br>"
-    #     "Realization: %{customdata[0]}<extra></extra>",
-    # )
-
-    # fig.update_layout(
-    #     xaxis=dict(
-    #         range=[-0.5, 11.5],  # Setting the range of x-axis
-    #         tickmode='linear',  # Setting tick mode to linear for evenly spaced ticks
-    #         tick0=1,  # Start ticks from 1
-    #         dtick=1  # Space between ticks
-    #     ),
-    # )
-
-    # for trace in fig.data:
-    #     if isinstance(trace, go.Box):
-    #         trace.hovertemplate = ("Type: %{data.name}<br>Amount: %{y:.3f}<br>"
-    #                          "Realization: %{customdata[0]}<extra></extra>",
-    #         )
-    #         print("BINGO")
-    #     else:
-    #         print("NOPE")
+        fig.add_trace(go.Bar(
+            x=[count],
+            y=[values.max() - values.min() + 2 * eps],
+            base=[values.min() - eps],
+            opacity=0.99,
+            hoverinfo='none',
+            hovertemplate=(
+                "<span style='font-family:Courier New;'>"
+                f"Type         : {type_val}<br>"
+                f"Min          : {values.min():.3f}<br>"
+                f"Lower whisker: {min_fence:.3f}<br>"
+                f"Q1           : {q1:.3f}<br>"
+                f"Median       : {median_val:.3f}<br>"
+                f"Q3           : {q3:.3f}<br>"
+                f"Top whisker  : {max_fence:.3f}<br>"
+                f"Max          : {values.max():.3f}"
+                "</span><extra></extra>"
+            ),
+            # marker=dict(color='rgba(0,0,0,0)'),  # Ensure bar is invisible
+            showlegend=False,
+            legendgroup=type_val,
+            name=type_val,
+            width=0.56,
+        ))
 
     fig.update_layout(
         xaxis=dict(
@@ -1147,86 +1005,10 @@ def generate_co2_box_plot_figure(
     )
 
     if len(cat_ord["type"]) > 20:
-        # Only plot single box as default if there are many categories
         default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
-        # print("\n\n\n\n\ntraces:")
         for trace in fig.data:
-            # print(trace)
-            # print(trace.name)
             if trace.name != default_option:
                 trace.visible = "legendonly"
-            # else:
-            #     print("----->")
-
-    # for type_val in cat_ord["type"]:
-    #     print(f"type_val: {type_val}")
-    #     df_sub = df[df["type"] == type_val]
-    #     print(df_sub)
-    #     if mark_choice is not None:
-    #         print("A")
-    #     else:
-    #         print("B")
-    #     median_val = df_sub['amount'].median()
-    #     q1_val = df_sub['amount'].quantile(0.25)
-    #     q3_val = df_sub['amount'].quantile(0.75)
-    #     print(f"median_val: {median_val}")
-    #     print(f"q1_val: {q1_val}")
-    #     print(f"q3_val: {q3_val}")
-#
-    #     fig.add_trace(go.Bar(
-    #         x=[type_val],
-    #         y=[median_val],
-    #         opacity=0.55,  # Fully invisible
-    #         hoverinfo='none',  # Disable default hover for bar
-    #         hovertemplate=(
-    #             f"Type: {type_val}<br>"
-    #             f"Median: {median_val:.2f}<br>"
-    #             f"Q1: {q1_val:.2f}<br>"
-    #             f"Q3: {q3_val:.2f}<extra></extra>"
-    #         ),
-    #         # marker=dict(color='rgba(0,0,0,0)'),  # Ensure bar is invisible
-    #         showlegend=False
-    #     ))
-    # for type_val in df["type"].unique():
-    #     # continue
-    #     for cat in cat_ord.get(mark_choice, [None]):
-    #         # continue
-    #         print(f"cat: {cat}")
-    #         subset = df[(df['type'] == type_val) & (df[mark_choice] == cat)] if cat is not None else df[
-    #             df['type'] == type_val]
-    #         print(subset)
-    #         median_val = subset['amount'].median()
-    #         q1_val = subset['amount'].quantile(0.25)
-    #         q3_val = subset['amount'].quantile(0.75)
-    #         print(f"median_val: {median_val}")
-    #         print(f"q1_val: {q1_val}")
-    #         print(f"q3_val: {q3_val}")
-#
-    #         print([cat] if mark_choice != "none" else [type_val])
-    #         fig.add_trace(go.Bar(
-    #             x=[cat] if mark_choice != "none" else [type_val],
-    #             y=[median_val],
-    #             opacity=0.55,  # Fully invisible
-    #             hoverinfo='none',  # Disable default hover for bar
-    #             hovertemplate=(
-    #                 f"Type: {type_val}<br>"
-    #                 f"Median: {median_val:.2f}<br>"
-    #                 f"Q1: {q1_val:.2f}<br>"
-    #                 f"Q3: {q3_val:.2f}<extra></extra>"
-    #             ),
-    #             # marker=dict(color='rgba(0,0,0,0)'),  # Ensure bar is invisible
-    #             showlegend=False
-    #         ))
-
-    # for cat in cat_ord:
-    # fig.add_trace(go.Bar(
-    #     x=["total"],
-    #     y=[1.05],
-    #     opacity=0.15,
-    #     hoverinfo="none",  # We will use hovertemplate instead
-    #     hovertemplate=f"Median: {1.0}<br>Q1: {-1.0}<br>Q3: {3.0}<extra></extra>",
-    #     showlegend=False,
-    # ))
 
     fig.layout.yaxis.autorange = True
     fig.layout.legend.tracegroupgap = 0
