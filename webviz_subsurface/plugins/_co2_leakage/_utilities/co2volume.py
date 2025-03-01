@@ -863,51 +863,6 @@ def generate_co2_statistics_figure(
 
     return fig
 
-def generate_co2_box_plot_figure2(
-    table_provider: ContainmentDataProvider,
-    realizations: List[int],
-    scale: Union[Co2MassScale, Co2VolumeScale],
-    containment_info: Dict[str, Any],
-) -> go.Figure:
-
-    lst = [['2020'], ['2021'], ['2022'], ['2023'], ['2024'], ['2025']]
-    numbers = [20, 25, 25, 25, 25, 25]
-    r = [x for i, j in zip(lst, numbers) for x in i * j]
-
-    df = pd.DataFrame(r, columns=['year'])
-    df['obs'] = np.arange(1, len(df) + 1) * np.random.random()
-
-    mean = df.groupby('year').mean()[['obs']]
-    median = df.groupby('year').median()[['obs']]
-    iqr = df.groupby('year').quantile(0.75)[['obs']] - df.groupby('year').quantile(0.25)[['obs']]
-
-    stats = pd.concat([mean, median, iqr], axis=1)
-    stats.columns = ['Mean', 'Median', 'IQR']
-    tot_df = pd.merge(df, stats, right_index=True, left_on='year', how='left')
-
-    fig = px.box(tot_df, x="year", y="obs", points=False)
-
-    fig2 = px.bar(
-        tot_df.groupby("year", as_index=False)
-        .agg(base=("obs", "min"), bar=("obs", lambda s: s.max() - s.min()))
-        .merge(
-            tot_df.groupby("year", as_index=False).agg(
-                {c: "first" for c in tot_df.columns if c not in ["year", "obs"]}
-            ),
-            on="year",
-        ),
-        x="year",
-        y="bar",
-        base="base",
-        hover_data={
-            **{c: True for c in tot_df.columns if c not in ["year", "obs"]},
-            **{"base": False, "bar": False},
-        },
-    ).update_traces(opacity=0.5)
-
-    fig.add_traces(fig2.data)
-    return fig
-
 
 def generate_co2_box_plot_figure(
     table_provider: ContainmentDataProvider,
@@ -947,10 +902,8 @@ def generate_co2_box_plot_figure(
         real = df_sub['realization'].to_numpy()
 
         median_val = df_sub['amount'].median()
-        # q1 = _calculate_plotly_quantiles(values, 0.25)
-        # q3 = _calculate_plotly_quantiles(values, 0.75)
-        q1 = np.percentile(values, 25)
-        q3 = np.percentile(values, 75)
+        q1 = _calculate_plotly_quantiles(values, 0.25)
+        q3 = _calculate_plotly_quantiles(values, 0.75)
         min_fence, max_fence = _calculate_plotly_whiskers(values, q1, q3, points)
 
         fig.add_trace(go.Box(
@@ -974,7 +927,7 @@ def generate_co2_box_plot_figure(
             x=[count],
             y=[values.max() - values.min() + 2 * eps],
             base=[values.min() - eps],
-            opacity=0.99,
+            opacity=0.0,
             hoverinfo='none',
             hovertemplate=(
                 "<span style='font-family:Courier New;'>"
@@ -991,6 +944,7 @@ def generate_co2_box_plot_figure(
             showlegend=False,
             legendgroup=type_val,
             name=type_val,
+            marker_color=colors[count],
             width=0.56,
         ))
 
