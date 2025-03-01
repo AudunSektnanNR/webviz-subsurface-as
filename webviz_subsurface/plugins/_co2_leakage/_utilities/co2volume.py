@@ -915,11 +915,15 @@ def generate_co2_box_plot_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
 ) -> go.Figure:
+    eps = 0.00001
     containment_info["sorting"] = "marking"  # Always override this for the box plot
     date_option = containment_info["date_option"]
     df = _read_co2_volumes(table_provider, realizations, scale)
     df = df[df["date"] == date_option]
     df = df.drop(columns=["date"]).reset_index(drop=True)
+
+    # print("\n\n\nData frame:")
+    # print(df)
     color_choice = containment_info["color_choice"]
     mark_choice = containment_info["mark_choice"]
     _filter_columns(df, color_choice, mark_choice, containment_info)
@@ -929,6 +933,8 @@ def generate_co2_box_plot_figure(
         color_choice,
         mark_choice,
     )
+    # print("\nData frame after:")
+    # print(df)
 
     if containment_info["box_show_points"] == "all_points":
         points = "all"
@@ -968,9 +974,9 @@ def generate_co2_box_plot_figure(
     # )
 
     fig = go.Figure()
-    print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
-    for k, v in cat_ord.items():
-        print(f"{k}: {v}")
+    # print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n")
+    # for k, v in cat_ord.items():
+    #     print(f"{k}: {v}")
 
     add_bars1 = False
     add_bars2 = True
@@ -991,7 +997,7 @@ def generate_co2_box_plot_figure(
         fig.add_traces(fig2.data)
     if add_bars2:
         for count, type_val in enumerate(cat_ord["type"], 0):
-            print(f"\n\n\n\ntype_val: {type_val}")
+            # print(f"\n\n\n\ntype_val: {type_val}")
             df_sub = df[df["type"] == type_val]
             # print(df_sub)
             # print(f"mark_choice: {mark_choice}")
@@ -1029,6 +1035,10 @@ def generate_co2_box_plot_figure(
             # a, b, c = tukey_hinges(df_sub['amount'].values)
             # print(f"Q1: {a}, Median: {b}, Q3: {c}")
 
+            # if type_val == "hazardous":
+            #     print("df_sub before sort")
+            #     print(df_sub)
+            # Copy to make sure df_sub is not changed:
             values = df_sub['amount'].to_numpy()
             real = df_sub['realization'].to_numpy()
             # values.sort()
@@ -1042,6 +1052,11 @@ def generate_co2_box_plot_figure(
             q3 = _calculate_plotly_quantiles(values, 0.75)
             min_fence, max_fence = _calculate_plotly_fences(values, q1, q3, points)
 
+            # if type_val == "hazardous":
+            #     print("df_sub after sort")
+            #     print(df_sub)
+            #     print(values)
+            #     print(real)
             # values = print(df_sub["amount"].to_list())
             fig.add_trace(go.Box(
                     x=[count] * len(values),
@@ -1060,7 +1075,6 @@ def generate_co2_box_plot_figure(
                 )
             )
 
-            eps = 0.00001
             # if not points:  # No points plotted => whiskers are min/max of all values
             #     base = [values.min() - eps]
             #     y = [values.max() - values.min() + 2 * eps]
@@ -1255,20 +1269,22 @@ def _make_title(c_info: Dict[str, Any], include_date: bool = True):
 
 
 def _calculate_plotly_quantiles(values: np.ndarray[float], percentile: float):
-    values.sort()
-    n_val = len(values)
+    values_sorted = values.copy()
+    values_sorted.sort()
+    n_val = len(values_sorted)
     a = n_val * percentile - 0.5
     if a.is_integer():
-        return values[int(a)]
+        return values_sorted[int(a)]
     else:
-        return np.interp(a, [x for x in range(0, n_val)], values)
+        return np.interp(a, [x for x in range(0, n_val)], values_sorted)
 
 
 def _calculate_plotly_fences(values: np.ndarray[float], q1: float, q3: float, points: Union[str, bool]):
     if not points:
         return min(values), max(values)
     else:
-        values.sort()
+        values_sorted = values.copy()
+        values_sorted.sort()
         a = q1 - 1.5 * (q3-q1)
         b = q3 + 1.5 * (q3-q1)
-        return max(a, min(values)), min(b, max(values))
+        return max(a, min(values_sorted)), min(b, max(values_sorted))
