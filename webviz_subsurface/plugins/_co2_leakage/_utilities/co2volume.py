@@ -933,13 +933,13 @@ def generate_co2_box_plot_figure(
                 hovertemplate=(
                     "<span style='font-family:Courier New;'>"
                     f"Type         : {type_val}<br>"
-                    f"Min          : {values.min():.3f}<br>"
-                    f"Lower whisker: {min_fence:.3f}<br>"
-                    f"Q1           : {q1:.3f}<br>"
-                    f"Median       : {median_val:.3f}<br>"
-                    f"Q3           : {q3:.3f}<br>"
+                    f"Max          : {values.max():.3f}<br>"
                     f"Top whisker  : {max_fence:.3f}<br>"
-                    f"Max          : {values.max():.3f}"
+                    f"Q3           : {q3:.3f}<br>"
+                    f"Median       : {median_val:.3f}<br>"
+                    f"Q1           : {q1:.3f}<br>"
+                    f"Lower whisker: {min_fence:.3f}<br>"
+                    f"Min          : {values.min():.3f}"
                     "</span><extra></extra>"
                 ),
                 showlegend=False,
