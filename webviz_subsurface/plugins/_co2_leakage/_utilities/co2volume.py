@@ -871,7 +871,6 @@ def generate_co2_box_plot_figure(
     containment_info: Dict[str, Any],
 ) -> go.Figure:
     eps = 0.00001
-    containment_info["sorting"] = "marking"  # Always override this for the box plot
     date_option = containment_info["date_option"]
     df = _read_co2_volumes(table_provider, realizations, scale)
     df = df[df["date"] == date_option]
