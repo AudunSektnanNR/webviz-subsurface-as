@@ -903,6 +903,8 @@ def generate_co2_box_plot_figure(
         median_val = df_sub["amount"].median()
         q1 = _calculate_plotly_quantiles(values, 0.25)
         q3 = _calculate_plotly_quantiles(values, 0.75)
+        p10 = np.percentile(values, 90)
+        p90 = np.percentile(values, 10)
         min_fence, max_fence = _calculate_plotly_whiskers(values, q1, q3, points)
 
         fig.add_trace(
@@ -931,14 +933,16 @@ def generate_co2_box_plot_figure(
                 hoverinfo="none",
                 hovertemplate=(
                     "<span style='font-family:Courier New;'>"
-                    f"Type         : {type_val}<br>"
-                    f"Max          : {values.max():.3f}<br>"
-                    f"Top whisker  : {max_fence:.3f}<br>"
-                    f"Q3           : {q3:.3f}<br>"
-                    f"Median       : {median_val:.3f}<br>"
-                    f"Q1           : {q1:.3f}<br>"
-                    f"Lower whisker: {min_fence:.3f}<br>"
-                    f"Min          : {values.min():.3f}"
+                    f"Type           : {type_val}<br>"
+                    f"Max            : {values.max():.3f}<br>"
+                    f"Top whisker    : {max_fence:.3f}<br>"
+                    f"p10 (not shown): {p10:.3f}<br>"
+                    f"Q3             : {q3:.3f}<br>"
+                    f"Median         : {median_val:.3f}<br>"
+                    f"Q1             : {q1:.3f}<br>"
+                    f"p90 (not shown): {p90:.3f}<br>"
+                    f"Lower whisker  : {min_fence:.3f}<br>"
+                    f"Min            : {values.min():.3f}"
                     "</span><extra></extra>"
                 ),
                 showlegend=False,
