@@ -886,15 +886,7 @@ def generate_co2_box_plot_figure(
         mark_choice,
     )
 
-    if containment_info["box_show_points"] == "all_points":
-        points = "all"
-    elif containment_info["box_show_points"] == "only_outliers":
-        points = "outliers"
-    else:
-        points = False
-
     fig = go.Figure()
-
     for count, type_val in enumerate(cat_ord["type"], 0):
         df_sub = df[df["type"] == type_val]
         values = df_sub["amount"].to_numpy()
@@ -905,7 +897,7 @@ def generate_co2_box_plot_figure(
         q3 = _calculate_plotly_quantiles(values, 0.75)
         p10 = np.percentile(values, 90)
         p90 = np.percentile(values, 10)
-        min_fence, max_fence = _calculate_plotly_whiskers(values, q1, q3, points)
+        min_fence, max_fence = _calculate_plotly_whiskers(values, q1, q3)
 
         fig.add_trace(
             go.Box(
@@ -913,7 +905,7 @@ def generate_co2_box_plot_figure(
                 y=values,
                 name=type_val,
                 marker_color=colors[count],
-                boxpoints=points,
+                boxpoints="all" if containment_info["box_show_points"] == "all_points" else "outliers",
                 customdata=real,
                 hovertemplate="<span style='font-family:Courier New;'>"
                 "Type       : %{data.name}<br>Amount     : %{y:.3f}<br>"
@@ -1034,13 +1026,10 @@ def _calculate_plotly_quantiles(values: np.ndarray[float], percentile: float):
 
 
 def _calculate_plotly_whiskers(
-    values: np.ndarray[float], q1: float, q3: float, points: Union[str, bool]
+    values: np.ndarray[float], q1: float, q3: float
 ):
-    if not points:
-        return min(values), max(values)
-    else:
-        values_sorted = values.copy()
-        values_sorted.sort()
-        a = q1 - 1.5 * (q3 - q1)
-        b = q3 + 1.5 * (q3 - q1)
-        return values[values >= a].min(), values[values <= b].max()
+    values_sorted = values.copy()
+    values_sorted.sort()
+    a = q1 - 1.5 * (q3 - q1)
+    b = q3 + 1.5 * (q3 - q1)
+    return values[values >= a].min(), values[values <= b].max()

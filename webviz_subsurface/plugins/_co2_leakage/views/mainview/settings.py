@@ -1179,10 +1179,6 @@ class GraphSelectorsLayout(wcc.Selectors):
                             options=[
                                 {"label": "All", "value": "all_points"},
                                 {"label": "Outliers", "value": "only_outliers"},
-                                {
-                                    "label": "None",
-                                    "value": "no_points",
-                                },
                             ],
                             value="only_outliers",
                             id=containment_ids[19],
