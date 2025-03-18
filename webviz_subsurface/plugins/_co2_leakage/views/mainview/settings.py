@@ -1450,6 +1450,59 @@ def _make_styles(
             else:
                 phase["width"] = plume_group["width"] = "100%"
             phase["display"] = "flex"
+    elif color_choice == "phase":
+        if mark_choice == "containment":
+            zone["display"] = "flex" if has_zones else "none"
+            region["display"] = "flex" if has_regions else "none"
+            plume_group["display"] = "flex" if has_plume_groups else "none"
+            n_categories = has_regions + has_zones + has_plume_groups
+            if n_categories == 3:
+                zone["width"] = region["width"] = plume_group["width"] = "33%"
+            elif n_categories == 2:
+                zone["width"] = region["width"] = plume_group["width"] = "50%"
+            else:
+                zone["width"] = region["width"] = plume_group["width"] = "100%"
+        elif mark_choice == "plume_group":
+            zone["display"] = "flex" if has_zones else "none"
+            region["display"] = "flex" if has_regions else "none"
+            containment["display"] = "flex"
+            n_categories = 1 + has_regions + has_zones
+            if n_categories == 3:
+                zone["width"] = region["width"] = containment["width"] = "33%"
+            elif n_categories == 2:
+                zone["width"] = region["width"] = containment["width"] = "50%"
+            else:
+                zone["width"] = region["width"] = containment["width"] = "100%"
+        elif mark_choice == "none":
+            zone["display"] = "flex" if has_zones else "none"
+            region["display"] = "flex" if has_regions else "none"
+            plume_group["display"] = "flex" if has_plume_groups else "none"
+            containment["display"] = "flex"
+            n_categories = 1 + has_regions + has_zones + has_plume_groups
+            if n_categories == 4:
+                containment["width"] = zone["width"] = region["width"] = plume_group[
+                    "width"
+                ] = "25%"
+            elif n_categories == 3:
+                containment["width"] = zone["width"] = region["width"] = plume_group[
+                    "width"
+                ] = "33%"
+            elif n_categories == 2:
+                containment["width"] = zone["width"] = region["width"] = plume_group[
+                    "width"
+                ] = "50%"
+            else:
+                containment["width"] = zone["width"] = region["width"] = plume_group[
+                    "width"
+                ] = "100%"
+        else:  # mark_choice == "zone" / "region"
+            plume_group["display"] = "flex" if has_plume_groups else "none"
+            n_categories = 1 + has_plume_groups
+            if n_categories == 2:
+                containment["width"] = plume_group["width"] = "50%"
+            else:
+                containment["width"] = plume_group["width"] = "100%"
+            containment["display"] = "flex"
     elif color_choice == "plume_group":
         if mark_choice == "phase":
             zone["display"] = "flex" if has_zones else "none"
@@ -1499,8 +1552,6 @@ def _make_styles(
             phase["display"] = "flex"
             containment["display"] = "flex"
             phase["width"] = containment["width"] = "50%"
-    elif color_choice == "phase":
-        pass  # Not an option
     else:  # color_choice == "zone" / "region"
         if mark_choice == "phase":
             plume_group["display"] = "flex" if has_plume_groups else "none"
