@@ -29,10 +29,10 @@ _COLOR_TOTAL = "#222222"
 _COLOR_CONTAINED = "#00aa00"
 _COLOR_OUTSIDE = "#006ddd"
 _COLOR_HAZARDOUS = "#dd4300"
-_COLOR_GAS = "#e91451"
-_COLOR_DISSOLVED = "#daa218"
-_COLOR_FREE = "#208eb7"
-_COLOR_TRAPPED = "#84bc04"
+_COLOR_GAS = "#84bc04"
+_COLOR_DISSOLVED = "#208eb7"
+_COLOR_FREE = "#256b33"
+_COLOR_TRAPPED = "#b74532"
 _COLOR_ZONES = [
     "#e91451",
     "#daa218",
@@ -89,9 +89,9 @@ def _get_colors(num_cols: int = 3, split: str = "zone") -> List[str]:
         return [_COLOR_HAZARDOUS, _COLOR_OUTSIDE, _COLOR_CONTAINED]
     elif split == "phase":
         if num_cols == 2:
-            return [_COLOR_DISSOLVED, _COLOR_GAS]
+            return [_COLOR_GAS, _COLOR_DISSOLVED]
         else:
-            return [_COLOR_DISSOLVED, _COLOR_FREE, _COLOR_TRAPPED]
+            return [_COLOR_FREE, _COLOR_TRAPPED, _COLOR_DISSOLVED]
     options = list(_COLOR_ZONES)
     if split == "region":
         options.reverse()
