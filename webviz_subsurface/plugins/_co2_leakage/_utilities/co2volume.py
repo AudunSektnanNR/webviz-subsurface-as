@@ -29,6 +29,10 @@ _COLOR_TOTAL = "#222222"
 _COLOR_CONTAINED = "#00aa00"
 _COLOR_OUTSIDE = "#006ddd"
 _COLOR_HAZARDOUS = "#dd4300"
+_COLOR_GAS = "#e91451"
+_COLOR_DISSOLVED = "#daa218"
+_COLOR_FREE = "#208eb7"
+_COLOR_TRAPPED = "#84bc04"
 _COLOR_ZONES = [
     "#e91451",
     "#daa218",
@@ -78,8 +82,16 @@ def _read_dataframe(
 
 
 def _get_colors(num_cols: int = 3, split: str = "zone") -> List[str]:
+    print(f"\n_get_colors()")
+    print(f"split   : {split}")
+    print(f"num_cols: {num_cols}")
     if split == "containment":
         return [_COLOR_HAZARDOUS, _COLOR_OUTSIDE, _COLOR_CONTAINED]
+    elif split == "phase":
+        if num_cols == 2:
+            return [_COLOR_DISSOLVED, _COLOR_GAS]
+        else:
+            return [_COLOR_DISSOLVED, _COLOR_FREE, _COLOR_TRAPPED]
     options = list(_COLOR_ZONES)
     if split == "region":
         options.reverse()
@@ -91,6 +103,9 @@ def _get_colors(num_cols: int = 3, split: str = "zone") -> List[str]:
 
 
 def _get_marks(num_marks: int, mark_choice: str) -> List[str]:
+    print(f"\n_get_marks()")
+    print(f"mark_choice: {mark_choice}")
+    print(f"num_marks  : {num_marks}")
     if mark_choice == "none":
         return [""] * num_marks
     if mark_choice == "containment":
@@ -104,6 +119,7 @@ def _get_marks(num_marks: int, mark_choice: str) -> List[str]:
                 f"Some {mark_choice}s will share pattern."
             )
         return base_pattern[:num_marks]
+    # mark_choice == "phase":
     return ["", "/"] if num_marks == 2 else ["", ".", "/"]
 
 
@@ -121,6 +137,7 @@ def _get_line_types(mark_options: List[str], mark_choice: str) -> List[str]:
         return [
             f"{round(i / len(mark_options) * 25)}px" for i in range(len(mark_options))
         ]
+    # mark_choice == "phase":
     return ["dot", "dash"] if "gas" in mark_options else ["dot", "dashdot", "dash"]
 
 
@@ -167,13 +184,17 @@ def _prepare_pattern_and_color_options_statistics_plot(
     num_colors = len(color_options)
     num_marks = num_colors if mark_choice == "none" else len(mark_options)
     line_types = _get_line_types(mark_options, mark_choice)
+    print(f"line_types: {line_types}")
     colors = _get_colors(num_colors, color_choice)
+    print(f"colors    : {colors}")
 
+    #if mark_choice in ["containment", "phase"]:
     if mark_choice == "phase":
         mark_options = ["total"] + mark_options
         line_types = ["solid"] + line_types
         num_marks += 1
-    if color_choice == "containment":
+    if color_choice in ["containment", "phase"]:
+    # if color_choice == "containment":
         color_options = ["total"] + color_options
         colors = ["black"] + colors
         num_colors += 1
@@ -258,11 +279,11 @@ def _prepare_line_type_and_color_options(
     colors = _get_colors(num_colors, color_choice)
 
     filter_mark = True
-    if mark_choice == "phase":
+    if mark_choice in ["containment", "phase"]:
         mark_options = ["total"] + mark_options
         line_types = ["solid"] + line_types
         filter_mark = False
-    if color_choice == "containment":
+    if color_choice in ["containment", "phase"]:
         color_options = ["total"] + color_options
         colors = ["black"] + colors
     else:
@@ -477,6 +498,7 @@ def generate_co2_volume_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
 ) -> go.Figure:
+    print("\n\ngenerate_co2_volume_figure")
     df = _read_terminal_co2_volumes(
         table_provider, realizations, scale, containment_info
     )
@@ -708,6 +730,7 @@ def generate_co2_time_containment_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
 ) -> go.Figure:
+    print("\n\ngenerate_co2_time_containment_figure")
     df = _read_co2_volumes(table_provider, realizations, scale)
     color_choice = containment_info["color_choice"]
     mark_choice = containment_info["mark_choice"]
@@ -817,6 +840,7 @@ def generate_co2_statistics_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
 ) -> go.Figure:
+    print("\n\ngenerate_co2_statistics_figure")
     date_option = containment_info["date_option"]
     df = _read_co2_volumes(table_provider, realizations, scale)
     df = df[df["date"] == date_option]
@@ -870,6 +894,7 @@ def generate_co2_box_plot_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
 ) -> go.Figure:
+    print("\n\ngenerate_co2_box_plot_figure")
     eps = 0.00001
     date_option = containment_info["date_option"]
     df = _read_co2_volumes(table_provider, realizations, scale)
