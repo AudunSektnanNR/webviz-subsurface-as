@@ -506,7 +506,9 @@ class ViewSettings(SettingsGroupABC):
                     if color_choice == "containment":
                         mark_options.append({"label": "Phase", "value": "phase"})
                     elif color_choice == "phase":
-                        mark_options.append({"label": "Containment", "value": "containment"})
+                        mark_options.append(
+                            {"label": "Containment", "value": "containment"}
+                        )
                     if self._content["zones"]:
                         mark_options.append({"label": "Zone", "value": "zone"})
                     if self._content["regions"]:
@@ -516,7 +518,10 @@ class ViewSettings(SettingsGroupABC):
                             {"label": "Plume group", "value": "plume_group"}
                         )
                 elif color_choice in ["zone", "region", "plume_group"]:
-                    mark_options += [{"label": "Containment", "value": "containment"}, {"label": "Phase", "value": "phase"}]
+                    mark_options += [
+                        {"label": "Containment", "value": "containment"},
+                        {"label": "Phase", "value": "phase"},
+                    ]
                     if (
                         color_choice in ["zone", "region"]
                         and self._content["plume_groups"]
@@ -871,8 +876,14 @@ class GraphSelectorsLayout(wcc.Selectors):
         disp_zone = "flex" if content["zones"] else "none"
         disp_region = "flex" if content["regions"] else "none"
         disp_plume_group = "flex" if content["plume_groups"] else "none"
-        color_options = [{"label": "Containment", "value": "containment"}, {"label": "Phase", "value": "phase"}]
-        mark_options = [{"label": "Phase", "value": "phase"}, {"label": "Containment", "value": "containment"}]
+        color_options = [
+            {"label": "Containment", "value": "containment"},
+            {"label": "Phase", "value": "phase"},
+        ]
+        mark_options = [
+            {"label": "Phase", "value": "phase"},
+            {"label": "Containment", "value": "containment"},
+        ]
         if content["zones"]:
             color_options.append({"label": "Zone", "value": "zone"})
             mark_options.append({"label": "Zone", "value": "zone"})
