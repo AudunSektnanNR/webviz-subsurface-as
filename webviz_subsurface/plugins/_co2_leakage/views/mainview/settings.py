@@ -499,9 +499,6 @@ class ViewSettings(SettingsGroupABC):
                 color_choice: str,
                 mark_choice: str,
             ) -> Tuple[List[Dict], str, Dict, Dict, Dict, Dict, Dict]:
-                print(f"\n\norganize_color_and_mark_menus()")
-                print(f"color_choice: {color_choice}")
-                print(f"mark_choice : {mark_choice}")
                 mark_options = [
                     {"label": "None", "value": "none"},
                 ]
@@ -532,8 +529,6 @@ class ViewSettings(SettingsGroupABC):
                             mark_options.append({"label": "Zone", "value": "zone"})
                         if self._content["regions"]:
                             mark_options.append({"label": "Region", "value": "region"})
-                print(f"A mark_options: {mark_options}")
-                print(f"A mark_choice : {mark_choice}")
                 if mark_choice is None or mark_choice == color_choice:
                     if color_choice != "phase":
                         mark_choice = "phase"
@@ -551,8 +546,6 @@ class ViewSettings(SettingsGroupABC):
                     self._content["regions"],
                     self._content["plume_groups"],
                 )
-                print(f"B mark_options: {mark_options}")
-                print(f"B mark_choice : {mark_choice}")
                 return (
                     mark_options,
                     mark_choice,
