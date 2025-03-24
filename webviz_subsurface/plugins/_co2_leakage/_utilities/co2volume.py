@@ -123,14 +123,23 @@ def _get_line_types(mark_options: List[str], mark_choice: str) -> List[str]:
     if mark_choice == "containment":
         return ["dash", "dot", "solid"]
     if mark_choice in ["zone", "region", "plume_group"]:
-        if len(mark_options) > 8:
-            warnings.warn(
-                f"Large number of {mark_choice}s might make it hard "
-                f"to distinguish different dashed lines."
-            )
-        return [
-            f"{round(i / len(mark_options) * 25)}px" for i in range(len(mark_options))
-        ]
+        if False:
+            if len(mark_options) > 8:
+                warnings.warn(
+                    f"Large number of {mark_choice}s might make it hard "
+                    f"to distinguish different dashed lines."
+                )
+            return [
+                f"{round(i / len(mark_options) * 25)}px" for i in range(len(mark_options))
+            ]
+        else:
+            options = ["solid", "dash", "dot", "dashdot", "longdash", "longdashdot"]
+            if len(mark_options) > 6:
+                warnings.warn(
+                    f"Large number of {mark_choice}s might make it hard "
+                    f"to distinguish different dashed lines."
+                )
+            return [options[i%6] for i in range(len(mark_options))]
     # mark_choice == "phase":
     return ["dot", "dash"] if "gas" in mark_options else ["dot", "dashdot", "dash"]
 
@@ -841,6 +850,17 @@ def generate_co2_statistics_figure(
         color_choice,
         mark_choice,
     )
+
+    print(f"\nDebug print CCS-276:")
+    print("====================")
+    try:
+        import plotly
+        print(f"plotly version: {plotly.__version__}")
+    except Exception as e:
+        print(f"Exception...")
+    print(f"Line types:")
+    for l in line_types:
+        print(f"  - {l}  ({type(l)})")
 
     # Remove if we want realization as label?
     df = df.drop(columns=["REAL", "realization"]).reset_index(drop=True)
