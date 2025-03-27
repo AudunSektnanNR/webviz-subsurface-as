@@ -81,12 +81,13 @@ def init_map_attribute_names(
 ) -> FilteredMapAttribute:
     default_mapping = build_mapping(webviz_settings, ensembles)
     final_mapping = dict(default_mapping)
-    for key, value in input_mapping.items():
-        if key in final_mapping and final_mapping[key] != value:
-            LOGGER.info(
-                f"Conflict on attribute '{key}': prioritizing '{value}' (from input attributes) "
-                f"over '{final_mapping[key]}' (from default attributes)")
-        final_mapping[key] = value
+    if input_mapping is not None:
+        for key, value in input_mapping.items():
+            if key in final_mapping and final_mapping[key] != value:
+                LOGGER.info(
+                    f"Conflict on attribute '{key}': prioritizing '{value}' (from input attributes) "
+                    f"over '{final_mapping[key]}' (from default attributes)")
+            final_mapping[key] = value
     final_attributes = {
         (MapAttribute[key].value if key in MapAttribute.__members__ else key): value
         for key, value in final_mapping.items()
