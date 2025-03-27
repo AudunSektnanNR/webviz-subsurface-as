@@ -129,7 +129,7 @@ def _get_line_types(mark_options: List[str], mark_choice: str) -> List[str]:
                 f"Large number of {mark_choice}s might make it hard "
                 f"to distinguish different dashed lines."
             )
-        return [options[i%6] for i in range(len(mark_options))]
+        return [options[i % 6] for i in range(len(mark_options))]
     # mark_choice == "phase":
     return ["dot", "dash"] if "gas" in mark_options else ["dot", "dashdot", "dash"]
 
