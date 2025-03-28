@@ -20,6 +20,7 @@ from webviz_subsurface._providers import (
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
 )
+from webviz_subsurface.plugins._co2_leakage._types import LegendData
 from webviz_subsurface.plugins._co2_leakage._utilities import plume_extent
 from webviz_subsurface.plugins._co2_leakage._utilities.co2volume import (
     generate_co2_box_plot_figure,
@@ -119,6 +120,17 @@ class SurfaceData:
             ),
             summed_mass,
         )
+
+
+def extract_legendonly(figure: go.Figure) -> List[str]:
+    # Finds the names OR legendgroup of the traces in the figure which have their
+    # visibility set to "legendonly". In the figure, these traces are toggled OFF in the
+    # legend.
+    return [
+        d.get('legendgroup', d.get('name'))
+        for d in figure['data']
+        if d.get('visible', '') == 'legendonly'
+    ]
 
 
 def derive_surface_address(
@@ -387,6 +399,7 @@ def generate_containment_figures(
     realizations: List[int],
     y_limits: List[Optional[float]],
     containment_info: Dict[str, Union[str, None, List[str], int]],
+    legenddata: LegendData,
 ) -> Tuple[go.Figure, go.Figure, go.Figure]:
     try:
         fig0 = (
@@ -397,6 +410,7 @@ def generate_containment_figures(
                 table_provider.realizations,
                 co2_scale,
                 containment_info,
+                legenddata["bar_legendonly"],
             )
         )
         fig1 = (
@@ -405,6 +419,7 @@ def generate_containment_figures(
                 realizations,
                 co2_scale,
                 containment_info,
+                legenddata["time_legendonly"]
             )
             if len(realizations) > 1
             else generate_co2_time_containment_one_realization_figure(
@@ -421,6 +436,7 @@ def generate_containment_figures(
                 realizations,
                 co2_scale,
                 containment_info,
+                legenddata["stats_legendonly"],
             )
         else:  # "box_plot"
             fig2 = generate_co2_box_plot_figure(
@@ -428,6 +444,7 @@ def generate_containment_figures(
                 realizations,
                 co2_scale,
                 containment_info,
+                legenddata["box_legendonly"],
             )
     except KeyError as exc:
         warnings.warn(f"Could not generate CO2 figures: {exc}")
@@ -544,6 +561,15 @@ def make_plot_ids(
     statistics_tab_option: str,
     num_figs: int,
 ) -> List[str]:
+    """
+    Removed some keywords from plot id that we don't want to trigger updates for
+    with respect to visible legends and potentially zoom level.
+
+    Note: Currently the legends are reset if you swap to a plot with different plot id
+    and back, so it works temporarily, in a sense. This might be good enough for now.
+    If we want to store it more extensively, we need to do something like what's been
+    outlined in _plugin.py.
+    """
     zone_str = (
         containment_info["zone"] if containment_info["zone"] is not None else "None"
     )
@@ -576,9 +602,10 @@ def make_plot_ids(
             containment_info["date_option"],
         )
     )
-    ids = [plot_id]
-    ids += [plot_id + f"-{realizations}"] * (num_figs - 1)
-    ids[1] += f"-{lines_to_show}"
+    ids = [plot_id] * num_figs
+    #ids += [plot_id + f"-{realizations}"] * (num_figs - 1)
+    #ids[1] += f"-{lines_to_show}"
+    ids[1] += "-single" if len(realizations) == 1 else "-multiple"
     ids[2] += f"-{statistics_tab_option}"
     return ids
 

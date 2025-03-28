@@ -237,9 +237,9 @@ def _prepare_pattern_and_color_options_statistics_plot(
     return cat_ord, colors, line_types
 
 
-def _find_default_option_statistics_figure(
-    df: pd.DataFrame, categories: List[str]
-) -> str:
+def _find_default_legendonly(
+    df: pd.DataFrame, categories: list[str]
+) -> List[str]:
     if "hazardous" in categories:
         default_option = "hazardous"
     else:
@@ -250,7 +250,10 @@ def _find_default_option_statistics_figure(
             if df_filtered["amount"].max() > max_value:
                 max_value = df_filtered["amount"].max()
                 default_option = category
-    return default_option
+
+    # The default list should contain all categories HIDDEN in the legend, so we need
+    # to create a copy of the list with default_option excluded instead.
+    return [c for c in categories if c != default_option]
 
 
 def _prepare_line_type_and_color_options(
@@ -486,6 +489,7 @@ def generate_co2_volume_figure(
     realizations: List[int],
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
+    legendonly_traces: Optional[List[str]],
 ) -> go.Figure:
     df = _read_terminal_co2_volumes(
         table_provider, realizations, scale, containment_info
@@ -515,6 +519,8 @@ def generate_co2_volume_figure(
         hovertemplate="Type: %{customdata[0]}<br>Amount: %{x:.3f}<br>"
         "Realization: %{y}<br>Proportion: %{customdata[1]}<extra></extra>",
     )
+    if legendonly_traces is not None:
+        _toggle_trace_visibility(fig.data, legendonly_traces)
     fig.layout.yaxis.title = "Realization"
     fig.layout.xaxis.title = scale.value
     _adjust_figure(fig, plot_title=_make_title(containment_info))
@@ -717,6 +723,7 @@ def generate_co2_time_containment_figure(
     realizations: List[int],
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
+    legendonly_traces: Optional[List[str]],
 ) -> go.Figure:
     df = _read_co2_volumes(table_provider, realizations, scale)
     color_choice = containment_info["color_choice"]
@@ -725,9 +732,12 @@ def generate_co2_time_containment_figure(
     options = _prepare_line_type_and_color_options(
         df, containment_info, color_choice, mark_choice
     )
-    active_cols_at_startup = list(
-        options[options["line_type"].isin(["solid", "0px"])]["name"]
-    )
+    if legendonly_traces is None:
+        inactive_cols_at_startup = list(
+            options[~(options["line_type"].isin(["solid", "0px"]))]["name"]
+        )
+    else:
+        inactive_cols_at_startup = legendonly_traces
     if "plume_group" in df:
         try:
             _connect_plume_groups(df, color_choice, mark_choice)
@@ -746,7 +756,7 @@ def generate_co2_time_containment_figure(
             "legendgroup": name,
             "name": name,
         }
-        if name not in active_cols_at_startup:
+        if name in inactive_cols_at_startup:
             args["visible"] = "legendonly"
         fig.add_scatter(y=[0.0], **dummy_args, **args)
 
@@ -767,9 +777,9 @@ def generate_co2_time_containment_figure(
             )
         df_mean = df_grouped.agg("mean")
         df_mean["realization"] = ["mean"] * df_mean.shape[0]
-        df_p10 = df_grouped.agg(lambda x: np.quantile(x, 0.1))
+        df_p10 = df_grouped.agg(lambda x: np.quantile(x, 0.9))
         df_p10["realization"] = ["p10"] * df_p10.shape[0]
-        df_p90 = df_grouped.agg(lambda x: np.quantile(x, 0.9))
+        df_p90 = df_grouped.agg(lambda x: np.quantile(x, 0.1))
         df_p90["realization"] = ["p90"] * df_p90.shape[0]
         df = (
             pd.concat([df_mean, df_p10, df_p90])
@@ -808,7 +818,7 @@ def generate_co2_time_containment_figure(
             }
             if not containment_info["use_stats"]:
                 args["customdata"] = sub_df[sub_df["name"] == name]["prop"]
-            if name not in active_cols_at_startup:
+            if name in inactive_cols_at_startup:
                 args["visible"] = "legendonly"
             fig.add_scatter(
                 y=sub_df[sub_df["name"] == name]["amount"], **args, **common_args
@@ -826,6 +836,7 @@ def generate_co2_statistics_figure(
     realizations: List[int],
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
+    legend_only_traces: Optional[List[str]],
 ) -> go.Figure:
     date_option = containment_info["date_option"]
     df = _read_co2_volumes(table_provider, realizations, scale)
@@ -856,10 +867,11 @@ def generate_co2_statistics_figure(
         category_orders=cat_ord,
     )
 
-    default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
-    for trace in fig.data:
-        if trace.name != default_option:
-            trace.visible = "legendonly"
+    if legend_only_traces is None:
+        default_option = _find_default_legendonly(df, cat_ord["type"])
+        _toggle_trace_visibility(fig.data, default_option)
+    else:
+        _toggle_trace_visibility(fig.data, legend_only_traces)
 
     fig.update_traces(
         hovertemplate="Type: %{data.name}<br>Amount: %{x:.3f}<br>"
@@ -879,6 +891,7 @@ def generate_co2_box_plot_figure(
     realizations: List[int],
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: Dict[str, Any],
+    legendonly_traces: Optional[List[str]],
 ) -> go.Figure:
     eps = 0.00001
     date_option = containment_info["date_option"]
@@ -965,11 +978,11 @@ def generate_co2_box_plot_figure(
         )
     )
 
-    if len(cat_ord["type"]) > 20:
-        default_option = _find_default_option_statistics_figure(df, cat_ord["type"])
-        for trace in fig.data:
-            if trace.name != default_option:
-                trace.visible = "legendonly"
+    if len(cat_ord["type"]) > 20 or legendonly_traces is None:
+        default_option = _find_default_legendonly(df, cat_ord["type"])
+        _toggle_trace_visibility(fig.data, default_option)
+    else:
+        _toggle_trace_visibility(fig.data, legendonly_traces)
 
     fig.layout.yaxis.autorange = True
     fig.layout.legend.tracegroupgap = 0
@@ -1045,3 +1058,11 @@ def _calculate_plotly_whiskers(
     a = q1 - 1.5 * (q3 - q1)
     b = q3 + 1.5 * (q3 - q1)
     return values[values >= a].min(), values[values <= b].max()
+
+
+def _toggle_trace_visibility(traces, legendonly_names: List[str]):
+    for t in traces:
+        if t.name in legendonly_names:
+            t.visible = "legendonly"
+        else:
+            t.visible = True
