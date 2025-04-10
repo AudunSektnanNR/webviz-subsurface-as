@@ -13,8 +13,9 @@ from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_pro
     SurfaceStatistic,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import property_origin
-from webviz_subsurface.plugins._co2_leakage._utilities.containment_info import \
-    StatisticsTabOption
+from webviz_subsurface.plugins._co2_leakage._utilities.containment_info import (
+    StatisticsTabOption,
+)
 from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
@@ -1184,7 +1185,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                                 },
                                 {
                                     "label": "Box plot",
-                                    "value": StatisticsTabOption.BOX_PLOT
+                                    "value": StatisticsTabOption.BOX_PLOT,
                                 },
                             ],
                             value=StatisticsTabOption.PROBABILITY_PLOT,

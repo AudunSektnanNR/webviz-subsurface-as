@@ -68,90 +68,89 @@ TABLES_PATH = "share/results/tables"
 # pylint: disable=too-many-instance-attributes
 class CO2Leakage(WebvizPluginABC):
     """Plugin for analyzing CO2 leakage potential across multiple realizations in an
-FMU ensemble
+    FMU ensemble
 
----
+    ---
 
-* **`ensembles`:** Which ensembles in `shared_settings` to visualize.
-* **`well_pick_file`:** Path to a file containing well picks
-* **`plume_mass_relpath`:** Path to a table of co2 _containment data_ for co2 mass
-* **`plume_actual_volume_relpath`:** Path to a table of co2 _containment data_ for co2
-    volume of type "actual"
-* **`unsmry_relpath`:** Path to a csv/arrow version of a Cirrus/Eclipse unified summary
-    file
-* **`fault_polygon_attribute`:** Polygons with this attribute are used as fault polygons
-* **`map_attribute_names`:** Key-value pairs for overriding the default mapping between
-    attributes visualized by the plugin and attributes names used by
-    EnsembleSurfaceProvider
-* **`initial_surface`:** Name of the surface/formation to show when the plugin is
-    launched. If not provided, the first alphabetical surface is shown.
-* **`map_surface_names_to_well_pick_names`:** Mapping between surface map names and
-    surface names used in the well pick file
-* **`map_surface_names_to_fault_polygons`:** Mapping between surface map names and
-    surface names used by the fault polygons
-* **`boundary_settings`:** Settings for polygons representing the containment and
-    hazardous areas
----
+    * **`ensembles`:** Which ensembles in `shared_settings` to visualize.
+    * **`well_pick_file`:** Path to a file containing well picks
+    * **`plume_mass_relpath`:** Path to a table of co2 _containment data_ for co2 mass
+    * **`plume_actual_volume_relpath`:** Path to a table of co2 _containment data_ for co2
+        volume of type "actual"
+    * **`unsmry_relpath`:** Path to a csv/arrow version of a Cirrus/Eclipse unified summary
+        file
+    * **`fault_polygon_attribute`:** Polygons with this attribute are used as fault polygons
+    * **`map_attribute_names`:** Key-value pairs for overriding the default mapping between
+        attributes visualized by the plugin and attributes names used by
+        EnsembleSurfaceProvider
+    * **`initial_surface`:** Name of the surface/formation to show when the plugin is
+        launched. If not provided, the first alphabetical surface is shown.
+    * **`map_surface_names_to_well_pick_names`:** Mapping between surface map names and
+        surface names used in the well pick file
+    * **`map_surface_names_to_fault_polygons`:** Mapping between surface map names and
+        surface names used by the fault polygons
+    * **`boundary_settings`:** Settings for polygons representing the containment and
+        hazardous areas
+    ---
 
-This plugin is tightly linked to the FMU CCS post-process available in the ccs-scripts
-repository. If the ccs-scripts workflow is executed without alterations, there is no
-need for any configuration except the `ensembles` keyword. If any steps of the
-post-process are skipped, the plugin will exclude the respective results and
-functionality.
+    This plugin is tightly linked to the FMU CCS post-process available in the ccs-scripts
+    repository. If the ccs-scripts workflow is executed without alterations, there is no
+    need for any configuration except the `ensembles` keyword. If any steps of the
+    post-process are skipped, the plugin will exclude the respective results and
+    functionality.
 
-Even though the workflow is standardized, it is sometimes necessary to override
-specific settings. For all path settings, these are interpreted relative to the
-realization root, but can also be absolute paths. Their default values are
-- `well_pick_file`: `share/results/well_picks.csv`
-- `plume_mass_relpath`: `share/results/tables/plume_mass.csv`
-- `plume_actual_volume_relpath`: No value
-- `unsmry_relpath`: No value
+    Even though the workflow is standardized, it is sometimes necessary to override
+    specific settings. For all path settings, these are interpreted relative to the
+    realization root, but can also be absolute paths. Their default values are
+    - `well_pick_file`: `share/results/well_picks.csv`
+    - `plume_mass_relpath`: `share/results/tables/plume_mass.csv`
+    - `plume_actual_volume_relpath`: No value
+    - `unsmry_relpath`: No value
 
-Fault polygons are assumed to be stored in the `share/results/polygons` folder, and
-with a `dl_extracted_faultlines` attribute. This attribute can be overridden with
-`fault_polygon_attribute`, but the relative path to the polygons cannot.
+    Fault polygons are assumed to be stored in the `share/results/polygons` folder, and
+    with a `dl_extracted_faultlines` attribute. This attribute can be overridden with
+    `fault_polygon_attribute`, but the relative path to the polygons cannot.
 
-`map_attribute_names` can be used to override how attributes are mapped to specific
-features of the plugin. For instance, the attribute `migration_time_sgas` is mapped to
-the Migration Time (SGAS) visualization, but this can be overridden by specifying
-```
-map_attribute_names:
-  MIGRATION_TIME_SGAS: mig_time
-```
+    `map_attribute_names` can be used to override how attributes are mapped to specific
+    features of the plugin. For instance, the attribute `migration_time_sgas` is mapped to
+    the Migration Time (SGAS) visualization, but this can be overridden by specifying
+    ```
+    map_attribute_names:
+      MIGRATION_TIME_SGAS: mig_time
+    ```
 
-The following keys are allowed: `MIGRATION_TIME_SGAS, MIGRATION_TIME_AMFG,
-MIGRATION_TIME_XMF2, MAX_SGAS, MAX_AMFG, MAX_XMF2, MAX_SGSTRAND, MAX_SGTRH, MASS,
-DISSOLVED, FREE, FREE_GAS, TRAPPED_GAS`
+    The following keys are allowed: `MIGRATION_TIME_SGAS, MIGRATION_TIME_AMFG,
+    MIGRATION_TIME_XMF2, MAX_SGAS, MAX_AMFG, MAX_XMF2, MAX_SGSTRAND, MAX_SGTRH, MASS,
+    DISSOLVED, FREE, FREE_GAS, TRAPPED_GAS`
 
-Well pick files and fault polygons might name surfaces differently than the ones
-generated by the ccs-scripts workflow. The options
-`map_surface_names_to_well_pick_names` and `map_surface_names_to_fault_polygons` can
-be used to specify this mapping explicitly. For instance, if the well pick file
-contains a surface called `top_sgas`, but the ccs-scripts workflow generated a
-surface called `top_sgas_2`, this can be specified with
-```
-map_surface_names_to_well_pick_names:
-  top_sgas_2: top_sgas
-```
-Similar for `map_surface_names_to_fault_polygons`.
+    Well pick files and fault polygons might name surfaces differently than the ones
+    generated by the ccs-scripts workflow. The options
+    `map_surface_names_to_well_pick_names` and `map_surface_names_to_fault_polygons` can
+    be used to specify this mapping explicitly. For instance, if the well pick file
+    contains a surface called `top_sgas`, but the ccs-scripts workflow generated a
+    surface called `top_sgas_2`, this can be specified with
+    ```
+    map_surface_names_to_well_pick_names:
+      top_sgas_2: top_sgas
+    ```
+    Similar for `map_surface_names_to_fault_polygons`.
 
-`boundary_settings` is the final override option, and it can be used to specify
-polygons representing the containment and hazardous areas. By default, the polygons are
-expected to be named:
-- `share/results/polygons/containment--boundary.csv`
-- `share/results/polygons/hazarduous--boundary.csv`
+    `boundary_settings` is the final override option, and it can be used to specify
+    polygons representing the containment and hazardous areas. By default, the polygons are
+    expected to be named:
+    - `share/results/polygons/containment--boundary.csv`
+    - `share/results/polygons/hazarduous--boundary.csv`
 
-This corresponds to the following input:
-```
-boundary_settings:
-  polygon_file_pattern: share/results/polygons/*.csv
-  attribute: boundary
-  hazardous_name: hazardous
-  containment_name: containment
-```
-All four settings are optional, and if not specified, the default values are used.
-
-"""
+    This corresponds to the following input:
+    ```
+    boundary_settings:
+      polygon_file_pattern: share/results/polygons/*.csv
+      attribute: boundary
+      hazardous_name: hazardous
+      containment_name: containment
+    ```
+    All four settings are optional, and if not specified, the default values are used.
+    """
 
     class Ids(StrEnum):
         MAIN_VIEW = "main-view"
@@ -346,14 +345,10 @@ All four settings are optional, and if not specified, the default values are use
     def _add_resize_plot_callback(self):
         @callback(
             Output(self._view_component(MapViewElement.Ids.TOP_ELEMENT), "style"),
-            Output(
-                self._view_component(MapViewElement.Ids.BOTTOM_ELEMENT), "style"
-            ),
+            Output(self._view_component(MapViewElement.Ids.BOTTOM_ELEMENT), "style"),
             Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "style"),
             Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "style"),
-            Output(
-                self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "style"
-            ),
+            Output(self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "style"),
             Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
             Input(self._view_component(MapViewElement.Ids.SIZE_SLIDER), "value"),
             State(self._view_component(MapViewElement.Ids.TOP_ELEMENT), "style"),
@@ -361,11 +356,11 @@ All four settings are optional, and if not specified, the default values are use
             Input(self._settings_component(ViewSettings.Ids.GRAPH_SOURCE), "value"),
         )
         def resize_plots(
-                ensemble: str,
-                slider_value: float,
-                top_style: Dict,
-                bottom_style: Dict,
-                source: GraphSource,
+            ensemble: str,
+            slider_value: float,
+            top_style: Dict,
+            bottom_style: Dict,
+            source: GraphSource,
         ) -> List[Dict]:
             bottom_style["height"] = f"{slider_value}vh"
             top_style["height"] = f"{80 - slider_value}vh"
@@ -374,13 +369,13 @@ All four settings are optional, and if not specified, the default values are use
             if source == GraphSource.UNSMRY and self._unsmry_providers is None:
                 styles = [{"display": "none"}] * 3
             elif (
-                    source == GraphSource.CONTAINMENT_MASS
-                    and ensemble not in self._co2_table_providers
+                source == GraphSource.CONTAINMENT_MASS
+                and ensemble not in self._co2_table_providers
             ):
                 styles = [{"display": "none"}] * 3
             elif (
-                    source == GraphSource.CONTAINMENT_ACTUAL_VOLUME
-                    and ensemble not in self._co2_actual_volume_table_providers
+                source == GraphSource.CONTAINMENT_ACTUAL_VOLUME
+                and ensemble not in self._co2_actual_volume_table_providers
             ):
                 styles = [{"display": "none"}] * 3
 
@@ -490,26 +485,26 @@ All four settings are optional, and if not specified, the default values are use
             },
         )
         def update_map_attribute(
-                attribute: MapAttribute,
-                date: int,
-                formation: str,
-                realization: List[int],
-                statistic: str,
-                color_map_name: str,
-                cm_min_auto: List[str],
-                cm_min_val: Optional[float],
-                cm_max_auto: List[str],
-                cm_max_val: Optional[float],
-                plume_threshold: Optional[float],
-                plume_smoothing: Optional[float],
-                visualization_update: int,
-                mass_unit: str,
-                mass_unit_update: int,
-                options_dialog_options: List[int],
-                selected_wells: List[str],
-                ensemble: str,
-                current_views: List[Any],
-                thresholds: List[float],
+            attribute: MapAttribute,
+            date: int,
+            formation: str,
+            realization: List[int],
+            statistic: str,
+            color_map_name: str,
+            cm_min_auto: List[str],
+            cm_min_val: Optional[float],
+            cm_max_auto: List[str],
+            cm_max_val: Optional[float],
+            plume_threshold: Optional[float],
+            plume_smoothing: Optional[float],
+            visualization_update: int,
+            mass_unit: str,
+            mass_unit_update: int,
+            options_dialog_options: List[int],
+            selected_wells: List[str],
+            ensemble: str,
+            current_views: List[Any],
+            thresholds: List[float],
         ) -> Tuple[List[Dict[Any, Any]], Optional[List[Any]], Dict[Any, Any]]:
             # Unable to clear cache (when needed) without the protected member
             # pylint: disable=protected-access
@@ -536,9 +531,7 @@ All four settings are optional, and if not specified, the default values are use
             contour_data = None
             if MapType[MapAttribute(attribute).name].value == "PLUME":
                 contour_data = {
-                    "property": property_origin(
-                        attribute, self._map_attribute_names
-                    ),
+                    "property": property_origin(attribute, self._map_attribute_names),
                     "threshold": plume_threshold,
                     "smoothing": plume_smoothing,
                 }
@@ -627,23 +620,19 @@ All four settings are optional, and if not specified, the default values are use
             Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
         )
         def set_well_options(
-                ensemble: str,
+            ensemble: str,
         ) -> Tuple[List[Any], List[str], Dict[Any, Any], Dict[Any, Any]]:
             return (
                 [{"label": i, "value": i} for i in self._well_pick_names[ensemble]],
                 self._well_pick_names[ensemble],
                 {
-                    "display": (
-                        "block" if self._well_pick_names[ensemble] else "none"
-                    ),
+                    "display": ("block" if self._well_pick_names[ensemble] else "none"),
                     "height": f"{len(self._well_pick_names[ensemble]) * 22}px",
                 },
                 {
                     "flex": 3,
                     "minWidth": "20px",
-                    "display": (
-                        "block" if self._well_pick_names[ensemble] else "none"
-                    ),
+                    "display": ("block" if self._well_pick_names[ensemble] else "none"),
                 },
             )
 
@@ -664,7 +653,7 @@ All four settings are optional, and if not specified, the default values are use
             Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
         )
         def set_dates(
-                ensemble: str,
+            ensemble: str,
         ) -> Tuple[Dict[int, Dict[str, Any]], Optional[int]]:
             if ensemble is None:
                 return {}, None
@@ -683,16 +672,12 @@ All four settings are optional, and if not specified, the default values are use
 
     def _add_time_plot_visibility_callback(self):
         @callback(
-            Output(
-                self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "style"
-            ),
-            Output(
-                self._settings_component(ViewSettings.Ids.Y_LIM_OPTIONS), "style"
-            ),
+            Output(self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "style"),
+            Output(self._settings_component(ViewSettings.Ids.Y_LIM_OPTIONS), "style"),
             Input(self._settings_component(ViewSettings.Ids.REALIZATION), "value"),
         )
         def toggle_time_plot_options_visibility(
-                realizations: List[int],
+            realizations: List[int],
         ) -> Tuple[Dict[str, str], Dict[str, str]]:
             if len(realizations) == 1:
                 return (
@@ -711,11 +696,8 @@ All four settings are optional, and if not specified, the default values are use
             Input(self._settings_component(ViewSettings.Ids.GRAPH_SOURCE), "value"),
         )
         def make_unit_list(
-                attribute: str,
-        ) -> Union[
-            Tuple[List[Any], Co2MassScale],
-            Tuple[List[Any], Co2VolumeScale],
-        ]:
+            attribute: str,
+        ) -> Union[Tuple[List[Any], Co2MassScale], Tuple[List[Any], Co2VolumeScale],]:
             if attribute == GraphSource.CONTAINMENT_ACTUAL_VOLUME:
                 return list(Co2VolumeScale), Co2VolumeScale.BILLION_CUBIC_METERS
             return list(Co2MassScale), Co2MassScale.MTONS
@@ -739,13 +721,9 @@ All four settings are optional, and if not specified, the default values are use
             Input(self._settings_component(ViewSettings.Ids.GRAPH_SOURCE), "value"),
             Input(self._settings_component(ViewSettings.Ids.CO2_SCALE), "value"),
             Input(self._settings_component(ViewSettings.Ids.REALIZATION), "value"),
-            Input(
-                self._settings_component(ViewSettings.Ids.Y_MIN_AUTO_GRAPH), "value"
-            ),
+            Input(self._settings_component(ViewSettings.Ids.Y_MIN_AUTO_GRAPH), "value"),
             Input(self._settings_component(ViewSettings.Ids.Y_MIN_GRAPH), "value"),
-            Input(
-                self._settings_component(ViewSettings.Ids.Y_MAX_AUTO_GRAPH), "value"
-            ),
+            Input(self._settings_component(ViewSettings.Ids.Y_MAX_AUTO_GRAPH), "value"),
             Input(self._settings_component(ViewSettings.Ids.Y_MAX_GRAPH), "value"),
             Input(self._settings_component(ViewSettings.Ids.ZONE), "value"),
             Input(self._settings_component(ViewSettings.Ids.REGION), "value"),
@@ -761,33 +739,31 @@ All four settings are optional, and if not specified, the default values are use
                 self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
                 "value",
             ),
-            Input(
-                self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS), "value"
-            ),
+            Input(self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS), "value"),
         )
         @callback_typecheck
         def update_graphs(
-                legend_data: LegendData,
-                ensemble: str,
-                source: GraphSource,
-                co2_scale: Union[Co2MassScale, Co2VolumeScale],
-                realizations: List[int],
-                y_min_auto: List[str],
-                y_min_val: Optional[float],
-                y_max_auto: List[str],
-                y_max_val: Optional[float],
-                zone: Optional[str],
-                region: Optional[str],
-                phase: str,
-                containment: str,
-                plume_group: str,
-                color_choice: str,
-                mark_choice: Optional[str],
-                sorting: str,
-                lines_to_show: str,
-                date_option: str,
-                statistics_tab_option: StatisticsTabOption,
-                box_show_points: str,
+            legend_data: LegendData,
+            ensemble: str,
+            source: GraphSource,
+            co2_scale: Union[Co2MassScale, Co2VolumeScale],
+            realizations: List[int],
+            y_min_auto: List[str],
+            y_min_val: Optional[float],
+            y_max_auto: List[str],
+            y_max_val: Optional[float],
+            zone: Optional[str],
+            region: Optional[str],
+            phase: str,
+            containment: str,
+            plume_group: str,
+            color_choice: str,
+            mark_choice: Optional[str],
+            sorting: str,
+            lines_to_show: str,
+            date_option: str,
+            statistics_tab_option: StatisticsTabOption,
+            box_show_points: str,
         ) -> Tuple[Dict, go.Figure, go.Figure, go.Figure]:
             # pylint: disable=too-many-locals
             figs = [no_update] * 3
@@ -824,8 +800,8 @@ All four settings are optional, and if not specified, the default values are use
                     y_max_val if len(y_max_auto) == 0 else None,
                 ]
                 if (
-                        source == GraphSource.CONTAINMENT_MASS
-                        and ensemble in self._co2_table_providers
+                    source == GraphSource.CONTAINMENT_MASS
+                    and ensemble in self._co2_table_providers
                 ):
                     figs[: len(figs)] = generate_containment_figures(
                         self._co2_table_providers[ensemble],
@@ -836,8 +812,8 @@ All four settings are optional, and if not specified, the default values are use
                         legend_data,
                     )
                 elif (
-                        source == GraphSource.CONTAINMENT_ACTUAL_VOLUME
-                        and ensemble in self._co2_actual_volume_table_providers
+                    source == GraphSource.CONTAINMENT_ACTUAL_VOLUME
+                    and ensemble in self._co2_actual_volume_table_providers
                 ):
                     figs[: len(figs)] = generate_containment_figures(
                         self._co2_actual_volume_table_providers[ensemble],
@@ -872,9 +848,14 @@ All four settings are optional, and if not specified, the default values are use
             State(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
             Input(self._view_component(MapViewElement.Ids.TIME_PLOT), "restyleData"),
             State(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
-            Input(self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "restyleData"),
+            Input(
+                self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "restyleData"
+            ),
             State(self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "figure"),
-            Input(self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION), "value"),
+            Input(
+                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
+                "value",
+            ),
         )
         def on_bar_legend_update(
             bar_event: List[Any],
@@ -900,8 +881,8 @@ All four settings are optional, and if not specified, the default values are use
                 if self._is_legend_click_event(time_event):
                     p["time_legendonly"] = extract_legendonly(time_figure)
             elif _id in (
-                    self._view_component(MapViewElement.Ids.STATISTICS_PLOT),
-                    self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
+                self._view_component(MapViewElement.Ids.STATISTICS_PLOT),
+                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
             ):
                 if self._is_legend_click_event(stats_event):
                     p["stats_legendonly"] = extract_legendonly(stats_figure)
@@ -912,8 +893,4 @@ All four settings are optional, and if not specified, the default values are use
         # A typical legend click event would be: [{'visible': ['legendonly']}, [1]]
         if event is None or not isinstance(event, list):
             return False
-        return any(
-            'visible' in e
-            for e in event
-            if isinstance(e, dict)
-        )
+        return any("visible" in e for e in event if isinstance(e, dict))
