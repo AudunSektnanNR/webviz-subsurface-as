@@ -2,7 +2,7 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import plotly.graph_objects as go
-from dash import Dash, Input, Output, State, callback, html, no_update, Patch, ctx
+from dash import Dash, Input, Output, Patch, State, callback, ctx, html, no_update
 from dash.exceptions import PreventUpdate
 from webviz_config import WebvizPluginABC, WebvizSettings
 from webviz_config.utils import StrEnum, callback_typecheck
@@ -15,6 +15,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import (
     create_map_layers,
     create_map_viewports,
     derive_surface_address,
+    extract_legendonly,
     generate_containment_figures,
     generate_unsmry_figures,
     get_plume_polygon,
@@ -25,9 +26,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import (
     property_origin,
     readable_name,
     set_plot_ids,
-    extract_legendonly,
 )
-from ._types import LegendData
 from webviz_subsurface.plugins._co2_leakage._utilities.fault_polygons_handler import (
     FaultPolygonsHandler,
 )
@@ -58,6 +57,7 @@ from webviz_subsurface.plugins._co2_leakage.views.mainview.mainview import (
 from webviz_subsurface.plugins._co2_leakage.views.mainview.settings import ViewSettings
 
 from . import _error
+from ._types import LegendData
 from ._utilities.color_tables import co2leakage_color_tables
 from ._utilities.containment_info import StatisticsTabOption
 
