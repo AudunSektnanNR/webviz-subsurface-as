@@ -874,7 +874,7 @@ class GraphSelectorsLayout(wcc.Selectors):
         co2_scale_id: str,
         y_min_ids: List[str],
         y_max_ids: List[str],
-        containment_ids: Dict[ViewSettings.Ids, str],
+        containment_ids: Dict[str, str],  # ViewSettings.Ids
         content: Dict[str, bool],
     ):
         disp_zone = "flex" if content["zones"] else "none"

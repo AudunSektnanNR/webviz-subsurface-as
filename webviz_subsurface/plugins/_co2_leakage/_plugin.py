@@ -342,7 +342,7 @@ class CO2Leakage(WebvizPluginABC):
         if self._content["maps"] and self._content["any_table"]:
             self._add_resize_plot_callback()
 
-    def _add_resize_plot_callback(self):
+    def _add_resize_plot_callback(self) -> None:
         @callback(
             Output(self._view_component(MapViewElement.Ids.TOP_ELEMENT), "style"),
             Output(self._view_component(MapViewElement.Ids.BOTTOM_ELEMENT), "style"),
@@ -381,7 +381,7 @@ class CO2Leakage(WebvizPluginABC):
 
             return [top_style, bottom_style] + styles
 
-    def _add_feedback_dialog_callback(self):
+    def _add_feedback_dialog_callback(self) -> None:
         @callback(
             Output(ViewSettings.Ids.FEEDBACK, "open"),
             Input(ViewSettings.Ids.FEEDBACK_BUTTON, "n_clicks"),
@@ -391,7 +391,7 @@ class CO2Leakage(WebvizPluginABC):
                 return _n_clicks > 0
             raise PreventUpdate
 
-    def _add_thresholds_dialog_callback(self):
+    def _add_thresholds_dialog_callback(self) -> None:
         @callback(
             Output(ViewSettings.Ids.VISUALIZATION_THRESHOLD_DIALOG, "open"),
             Input(ViewSettings.Ids.VISUALIZATION_THRESHOLD_BUTTON, "n_clicks"),
@@ -401,7 +401,7 @@ class CO2Leakage(WebvizPluginABC):
                 return _n_clicks > 0
             raise PreventUpdate
 
-    def _add_options_dialog_callback(self):
+    def _add_options_dialog_callback(self) -> None:
         @callback(
             Output(ViewSettings.Ids.OPTIONS_DIALOG, "open"),
             Input(ViewSettings.Ids.OPTIONS_DIALOG_BUTTON, "n_clicks"),
@@ -411,7 +411,7 @@ class CO2Leakage(WebvizPluginABC):
                 return _n_clicks > 0
             raise PreventUpdate
 
-    def _add_create_map_callback(self):
+    def _add_create_map_callback(self) -> None:
         # Cannot avoid many arguments and/or locals since all layers of the DeckGL map
         # need to be updated simultaneously
         # pylint: disable=too-many-arguments,too-many-locals
@@ -611,7 +611,7 @@ class CO2Leakage(WebvizPluginABC):
             viewports = no_update if current_views else create_map_viewports()
             return layers, annotations, viewports
 
-    def _add_set_well_options_callback(self):
+    def _add_set_well_options_callback(self) -> None:
         @callback(
             Output(ViewSettings.Ids.OPTIONS_DIALOG_WELL_FILTER, "options"),
             Output(ViewSettings.Ids.OPTIONS_DIALOG_WELL_FILTER, "value"),
@@ -636,7 +636,7 @@ class CO2Leakage(WebvizPluginABC):
                 },
             )
 
-    def _add_date_slider_visibility_callback(self):
+    def _add_date_slider_visibility_callback(self) -> None:
         @callback(
             Output(self._view_component(MapViewElement.Ids.DATE_WRAPPER), "style"),
             Input(self._settings_component(ViewSettings.Ids.PROPERTY), "value"),
@@ -646,7 +646,7 @@ class CO2Leakage(WebvizPluginABC):
                 return {"display": "none"}
             return {}
 
-    def _add_set_dates_callback(self):
+    def _add_set_dates_callback(self) -> None:
         @callback(
             Output(self._view_component(MapViewElement.Ids.DATE_SLIDER), "marks"),
             Output(self._view_component(MapViewElement.Ids.DATE_SLIDER), "value"),
@@ -670,7 +670,7 @@ class CO2Leakage(WebvizPluginABC):
                 return dates, max(dates.keys())
             return dates, None
 
-    def _add_time_plot_visibility_callback(self):
+    def _add_time_plot_visibility_callback(self) -> None:
         @callback(
             Output(self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "style"),
             Output(self._settings_component(ViewSettings.Ids.Y_LIM_OPTIONS), "style"),
@@ -689,7 +689,7 @@ class CO2Leakage(WebvizPluginABC):
                 {"display": "none"},
             )
 
-    def _add_set_unit_list_callback(self):
+    def _add_set_unit_list_callback(self) -> None:
         @callback(
             Output(self._settings_component(ViewSettings.Ids.CO2_SCALE), "options"),
             Output(self._settings_component(ViewSettings.Ids.CO2_SCALE), "value"),
@@ -702,7 +702,7 @@ class CO2Leakage(WebvizPluginABC):
                 return list(Co2VolumeScale), Co2VolumeScale.BILLION_CUBIC_METERS
             return list(Co2MassScale), Co2MassScale.MTONS
 
-    def _add_graph_callback(self):
+    def _add_graph_callback(self) -> None:
         # Cannot avoid many arguments since all the parameters are needed
         # to determine what to plot
         # pylint: disable=too-many-arguments
@@ -841,7 +841,7 @@ class CO2Leakage(WebvizPluginABC):
                     )
             return figs  # type: ignore
 
-    def _add_legend_change_callback(self):
+    def _add_legend_change_callback(self) -> None:
         @callback(
             Output(self._view_component(MapViewElement.Ids.LEGEND_DATA_STORE), "data"),
             Input(self._view_component(MapViewElement.Ids.BAR_PLOT), "restyleData"),
@@ -865,7 +865,7 @@ class CO2Leakage(WebvizPluginABC):
             stats_event: List[Any],
             stats_figure: go.Figure,
             _: StatisticsTabOption,
-        ):
+        ) -> Patch:
             # We cannot subscribe to a legend click event directly, but we can subscribe
             # to the more general "restyleData" event, and then try to identify if this
             # was a click event or not. If yes, we update the appropriate store component

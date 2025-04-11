@@ -1009,7 +1009,7 @@ def _make_title(c_info: ContainmentInfo, include_date: bool = True) -> str:
         c_info.color_choice,
         c_info.mark_choice,
     ]:
-        if c_info.phase != "total":
+        if c_info.phase is not None and c_info.phase != "total":
             components.append(c_info.phase.capitalize())
         else:
             components.append("Phase: Total")
@@ -1017,7 +1017,7 @@ def _make_title(c_info: ContainmentInfo, include_date: bool = True) -> str:
         c_info.color_choice,
         c_info.mark_choice,
     ]:
-        if c_info.containment != "total":
+        if c_info.containment is not None and c_info.containment != "total":
             components.append(c_info.containment.capitalize())
         else:
             components.append("All containments areas")
@@ -1025,7 +1025,7 @@ def _make_title(c_info: ContainmentInfo, include_date: bool = True) -> str:
         c_info.color_choice,
         c_info.mark_choice,
     ]:
-        if c_info.zone != "all":
+        if c_info.zone is not None and c_info.zone != "all":
             components.append(c_info.zone)
         else:
             components.append("All zones")
@@ -1033,7 +1033,7 @@ def _make_title(c_info: ContainmentInfo, include_date: bool = True) -> str:
         c_info.color_choice,
         c_info.mark_choice,
     ]:
-        if c_info.region != "all":
+        if c_info.region is not None and c_info.region != "all":
             components.append(c_info.region)
         else:
             components.append("All regions")
@@ -1041,7 +1041,7 @@ def _make_title(c_info: ContainmentInfo, include_date: bool = True) -> str:
         c_info.color_choice,
         c_info.mark_choice,
     ]:
-        if c_info.plume_group != "all":
+        if c_info.plume_group is not None and c_info.plume_group != "all":
             components.append(c_info.plume_group)
         else:
             components.append("All plume groups")
@@ -1069,7 +1069,7 @@ def _calculate_plotly_whiskers(
     return values[values >= a].min(), values[values <= b].max()
 
 
-def _toggle_trace_visibility(traces, legendonly_names: List[str]):
+def _toggle_trace_visibility(traces: List, legendonly_names: List[str]) -> None:
     for t in traces:
         if t.name in legendonly_names:
             t.visible = "legendonly"
