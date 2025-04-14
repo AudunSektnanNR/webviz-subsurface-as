@@ -246,7 +246,7 @@ def _prepare_pattern_and_color_options_statistics_plot(
     return cat_ord, colors, line_types
 
 
-def _find_default_legendonly(df: pd.DataFrame, categories: list[str]) -> List[str]:
+def _find_default_legendonly(df: pd.DataFrame, categories: List[str]) -> List[str]:
     if "hazardous" in categories:
         default_option = "hazardous"
     else:
@@ -981,11 +981,11 @@ def generate_co2_box_plot_figure(
         )
 
     fig.update_layout(
-        xaxis=dict(
-            tickmode="array",
-            tickvals=list(range(len(cat_ord["type"]))),
-            ticktext=cat_ord["type"],
-        )
+        xaxis={
+            "tickmode": "array",
+            "tickvals": list(range(len(cat_ord["type"]))),
+            "ticktext": cat_ord["type"],
+        }
     )
 
     if len(cat_ord["type"]) > 20 or legendonly_traces is None:
@@ -1031,10 +1031,15 @@ def _make_title(c_info: ContainmentInfo, include_date: bool = True) -> str:
             components.append(c_info.zone)
         else:
             components.append("All zones")
-    if len(c_info.regions) > 0 and "region" not in [
-        c_info.color_choice,
-        c_info.mark_choice,
-    ]:
+    if (
+        c_info.regions is not None
+        and len(c_info.regions) > 0
+        and "region"
+        not in [
+            c_info.color_choice,
+            c_info.mark_choice,
+        ]
+    ):
         if c_info.region is not None and c_info.region != "all":
             components.append(c_info.region)
         else:
