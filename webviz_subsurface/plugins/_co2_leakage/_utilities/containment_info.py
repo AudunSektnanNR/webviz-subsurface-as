@@ -10,7 +10,7 @@ class StatisticsTabOption(StrEnum):
 
 
 # pylint: disable=too-many-instance-attributes
-@dataclass(slots=True, frozen=True)
+@dataclass(frozen=True)  # NBNB-AS: Removed slots=True (python>=3.10)
 class ContainmentInfo:
     zone: Optional[str]
     region: Optional[str]
