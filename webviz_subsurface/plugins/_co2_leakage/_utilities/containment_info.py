@@ -9,6 +9,7 @@ class StatisticsTabOption(StrEnum):
     BOX_PLOT = "box-plot"
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass(slots=True, frozen=True)
 class ContainmentInfo:
     zone: str | None

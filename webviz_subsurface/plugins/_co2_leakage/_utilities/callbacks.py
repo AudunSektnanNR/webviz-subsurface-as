@@ -496,6 +496,7 @@ def process_visualization_info(
     return stored_info
 
 
+# pylint: disable=too-many-locals
 def process_containment_info(
     zone: Optional[str],
     region: Optional[str],
@@ -561,7 +562,7 @@ def make_plot_ids(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: ContainmentInfo,
     realizations: List[int],
-    lines_to_show: str,
+    # lines_to_show: str,
     num_figs: int,
 ) -> List[str]:
     """

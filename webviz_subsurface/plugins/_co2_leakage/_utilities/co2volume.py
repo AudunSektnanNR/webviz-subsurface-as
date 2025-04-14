@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+# NBNB-AS: We should address this pylint message soon
 import warnings
 from datetime import datetime as dt
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -90,11 +92,10 @@ def _read_dataframe(
 def _get_colors(num_cols: int = 3, split: str = "zone") -> List[str]:
     if split == "containment":
         return [_COLOR_HAZARDOUS, _COLOR_OUTSIDE, _COLOR_CONTAINED]
-    elif split == "phase":
+    if split == "phase":
         if num_cols == 2:
             return [_COLOR_GAS, _COLOR_DISSOLVED]
-        else:
-            return [_COLOR_FREE, _COLOR_TRAPPED, _COLOR_DISSOLVED]
+        return [_COLOR_FREE, _COLOR_TRAPPED, _COLOR_DISSOLVED]
     options = list(_COLOR_ZONES)
     if split == "region":
         options.reverse()
@@ -723,7 +724,7 @@ def _connect_plume_groups(
     df.drop(columns="is_merged", inplace=True)
 
 
-# pylint: disable=too-many-locals
+# pylint: disable=too-many-locals, too-many-statements
 def generate_co2_time_containment_figure(
     table_provider: ContainmentDataProvider,
     realizations: List[int],

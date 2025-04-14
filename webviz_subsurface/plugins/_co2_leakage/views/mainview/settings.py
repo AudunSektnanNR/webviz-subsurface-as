@@ -474,6 +474,7 @@ class ViewSettings(SettingsGroupABC):
                     return options, no_update if current_value in dates else dates[-1]
                 return [], None
 
+            # pylint: disable=too-many-branches
             @callback(
                 Output(
                     self.component_unique_id(self.Ids.MARK_BY).to_string(), "options"
@@ -868,6 +869,7 @@ class GraphSelectorsLayout(wcc.Selectors):
         "flexDirection": "row",
     }
 
+    # pylint: disable=too-many-locals
     def __init__(
         self,
         graph_source_id: str,

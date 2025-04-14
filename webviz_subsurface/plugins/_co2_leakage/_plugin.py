@@ -321,7 +321,6 @@ class CO2Leakage(WebvizPluginABC):
         return dates
 
     # Might want to do some refactoring if this gets too big
-    # pylint: disable=too-many-statements
     def _set_callbacks(self) -> None:
         if self._content["any_table"]:
             self._add_graph_callback()
@@ -792,7 +791,6 @@ class CO2Leakage(WebvizPluginABC):
                     co2_scale,
                     cont_info,
                     realizations,
-                    lines_to_show,
                     len(figs),
                 )
                 y_limits = [

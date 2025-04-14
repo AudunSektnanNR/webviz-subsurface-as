@@ -85,8 +85,8 @@ def init_map_attribute_names(
         for key, value in input_mapping.items():
             if key in final_mapping and final_mapping[key] != value:
                 LOGGER.info(
-                    f"Conflict on attribute '{key}': prioritizing '{value}' (from input attributes) "
-                    f"over '{final_mapping[key]}' (from default attributes)"
+                    f"Conflict on attribute '{key}': prioritizing '{value}' (from input attributes)"
+                    f" over '{final_mapping[key]}' (from default attributes)"
                 )
             final_mapping[key] = value
     final_attributes = {
