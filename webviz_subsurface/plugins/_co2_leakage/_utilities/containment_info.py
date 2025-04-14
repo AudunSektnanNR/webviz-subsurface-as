@@ -19,7 +19,7 @@ class ContainmentInfo:
     containment: str | None
     plume_group: str | None
     color_choice: str
-    mark_choice: str | None
+    mark_choice: str
     sorting: str
     phases: List[str]
     containments: List[str]

@@ -542,11 +542,11 @@ def generate_co2_time_containment_one_realization_figure(
     containment_info: ContainmentInfo,
 ) -> go.Figure:
     df = _read_co2_volumes(table_provider, [time_series_realization], scale)
-    color_choice = containment_info["color_choice"]
-    mark_choice = containment_info["mark_choice"]
+    color_choice = containment_info.color_choice
+    mark_choice = containment_info.mark_choice
     _filter_columns(df, color_choice, mark_choice, containment_info)
     _filter_rows(df, color_choice, mark_choice)
-    if containment_info["sorting"] == "marking" and mark_choice != "none":
+    if containment_info.sorting == "marking" and mark_choice != "none":
         sort_order = ["date", mark_choice]
     else:
         sort_order = ["date", color_choice]
