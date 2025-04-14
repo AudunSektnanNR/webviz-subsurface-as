@@ -983,7 +983,7 @@ def generate_co2_box_plot_figure(
     fig.update_layout(
         xaxis=dict(
             tickmode="array",
-            tickvals=[i for i in range(len(cat_ord["type"]))],
+            tickvals=list(range(len(cat_ord["type"]))),
             ticktext=cat_ord["type"],
         )
     )
@@ -1002,6 +1002,7 @@ def generate_co2_box_plot_figure(
     return fig
 
 
+# pylint: disable=too-many-branches
 def _make_title(c_info: ContainmentInfo, include_date: bool = True) -> str:
     components = []
     if include_date:
@@ -1056,8 +1057,7 @@ def _calculate_plotly_quantiles(values: np.ndarray, percentile: float) -> float:
     a = n_val * percentile - 0.5
     if a.is_integer():
         return float(values_sorted[int(a)])
-    else:
-        return float(np.interp(a, [x for x in range(0, n_val)], values_sorted))
+    return float(np.interp(a, list(range(0, n_val)), values_sorted))
 
 
 def _calculate_plotly_whiskers(

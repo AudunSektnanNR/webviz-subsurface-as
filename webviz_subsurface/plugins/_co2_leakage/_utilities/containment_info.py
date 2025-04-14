@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 from webviz_subsurface._utils.enum_shim import StrEnum
 
@@ -12,13 +12,13 @@ class StatisticsTabOption(StrEnum):
 # pylint: disable=too-many-instance-attributes
 @dataclass(slots=True, frozen=True)
 class ContainmentInfo:
-    zone: str | None
-    region: str | None
+    zone: Optional[str]
+    region: Optional[str]
     zones: List[str]
-    regions: List[str]
-    phase: str | None
-    containment: str | None
-    plume_group: str | None
+    regions: Optional[List[str]]
+    phase: Optional[str]
+    containment: Optional[str]
+    plume_group: Optional[str]
     color_choice: str
     mark_choice: str
     sorting: str
