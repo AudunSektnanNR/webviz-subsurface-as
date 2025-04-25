@@ -14,8 +14,8 @@ from webviz_subsurface._providers import (
     SimulatedSurfaceAddress,
     StatisticalSurfaceAddress,
     SurfaceAddress,
-    SurfaceImageMeta,
-    SurfaceImageServer,
+    SurfaceArrayMeta,
+    SurfaceArrayServer,
 )
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
@@ -81,12 +81,12 @@ class SurfaceData:
     color_map_range: Tuple[Optional[float], Optional[float]]
     color_map_name: str
     value_range: Tuple[float, float]
-    meta_data: SurfaceImageMeta
+    meta_data: SurfaceArrayMeta
     img_url: str
 
     @staticmethod
     def from_server(
-        server: SurfaceImageServer,
+        server: SurfaceArrayServer,
         provider: EnsembleSurfaceProvider,
         address: Union[SurfaceAddress, TruncatedSurfaceAddress],
         color_map_range: Tuple[Optional[float], Optional[float]],
@@ -312,17 +312,22 @@ def create_map_layers(
     layers = []
     if surface_data is not None:
         # Update ColormapLayer
+        meta = surface_data.meta_data
         layers.append(
             {
-                "@@type": "ColormapLayer",
-                "name": surface_data.readable_name,
+                "@@type": "MapLayer",
                 "id": "colormap-layer",
-                "image": surface_data.img_url,
-                "bounds": surface_data.meta_data.deckgl_bounds,
-                "valueRange": surface_data.value_range,
-                "colorMapRange": surface_data.color_map_range,
+                "name": surface_data.readable_name,
+                "meshUrl": surface_data.img_url,
+                "frame": {
+                    "origin": [meta.x_ori, meta.y_ori],
+                    "count": [meta.x_count, meta.y_count],
+                    "increment": [meta.x_inc, meta.y_inc],
+                    "rotDeg": meta.rot_deg,
+                },
                 "colorMapName": surface_data.color_map_name,
-                "rotDeg": surface_data.meta_data.deckgl_rot_deg,
+                "colorMapRange": surface_data.color_map_range,
+                "material": False,
             }
         )
 

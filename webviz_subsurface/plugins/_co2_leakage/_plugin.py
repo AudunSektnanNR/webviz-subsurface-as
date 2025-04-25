@@ -7,7 +7,7 @@ from dash.exceptions import PreventUpdate
 from webviz_config import WebvizPluginABC, WebvizSettings
 from webviz_config.utils import StrEnum, callback_typecheck
 
-from webviz_subsurface._providers import FaultPolygonsServer, SurfaceImageServer
+from webviz_subsurface._providers import FaultPolygonsServer, SurfaceArrayServer
 from webviz_subsurface._providers.ensemble_polygon_provider import PolygonServer
 from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import (
     SurfaceData,
@@ -184,7 +184,7 @@ class CO2Leakage(WebvizPluginABC):
                 for ensemble_name in ensembles
             }
             self._realizations_per_ensemble = init_realizations(ensemble_paths)
-            self._surface_server = SurfaceImageServer.instance(app)
+            self._surface_server = SurfaceArrayServer.instance(app)
             self._polygons_server = FaultPolygonsServer.instance(app)
             self._map_attribute_names = init_map_attribute_names(
                 webviz_settings, ensembles, map_attribute_names
@@ -515,7 +515,7 @@ class CO2Leakage(WebvizPluginABC):
                 current_thresholds,
                 mass_unit,
                 self._visualization_info,
-                self._surface_server._image_cache,
+                self._surface_server._array_cache,
             )
             if self._visualization_info["change"]:
                 return [], None, no_update
@@ -524,7 +524,7 @@ class CO2Leakage(WebvizPluginABC):
                 raise PreventUpdate
             if isinstance(date, int):
                 datestr = self._ensemble_dates(ensemble)[date]
-            elif date is None:
+            else:
                 datestr = None
             # Contour data
             contour_data = None
@@ -763,7 +763,10 @@ class CO2Leakage(WebvizPluginABC):
             date_option: str,
             statistics_tab_option: StatisticsTabOption,
             box_show_points: str,
-        ) -> Tuple[Dict, go.Figure, go.Figure, go.Figure]:
+        ) -> Tuple[go.Figure, go.Figure, go.Figure]:
+            if len(realizations) == 0:
+                return go.Figure(), go.Figure(), go.Figure()
+
             # pylint: disable=too-many-locals
             figs = [no_update] * 3
             cont_info = process_containment_info(
