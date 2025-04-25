@@ -11,8 +11,8 @@ from webviz_subsurface._providers import (
     SimulatedSurfaceAddress,
     StatisticalSurfaceAddress,
     SurfaceAddress,
-    SurfaceImageMeta,
-    SurfaceImageServer,
+    SurfaceArrayServer,
+    SurfaceArrayMeta,
 )
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
@@ -43,17 +43,15 @@ class TruncatedSurfaceAddress:
 
 
 def publish_and_get_surface_metadata(
-    server: SurfaceImageServer,
+    server: SurfaceArrayServer,
     provider: EnsembleSurfaceProvider,
     address: Union[SurfaceAddress, TruncatedSurfaceAddress],
     visualization_info: Dict[str, Any],
     map_attribute_names: FilteredMapAttribute,
-) -> Tuple[Optional[SurfaceImageMeta], Optional[str], Optional[Any]]:
+) -> Tuple[Optional[SurfaceArrayMeta], Optional[str], Optional[Any]]:
     if isinstance(address, TruncatedSurfaceAddress):
-        return (
-            *_publish_and_get_truncated_surface_metadata(server, provider, address),
-            None,
-        )
+        meta, partial_url = _publish_and_get_truncated_surface_metadata(server, provider, address)
+        return meta, partial_url, None
     address_map_attribute = next(
         (
             key
@@ -66,14 +64,12 @@ def publish_and_get_surface_metadata(
     if MapType[address_map_attribute.name].value == "MIGRATION_TIME" and isinstance(
         address, StatisticalSurfaceAddress
     ):
-        return (
-            *_publish_and_get_statistical_time_surface_metadata(
-                server,
-                provider,
-                address,
-            ),
-            None,
+        meta, partial_url = _publish_and_get_statistical_time_surface_metadata(
+            server,
+            provider,
+            address,
         )
+        return meta, partial_url, None
     provider_id: str = provider.provider_id()
     qualified_address = QualifiedSurfaceAddress(provider_id, address)
     surf_meta = server.get_surface_metadata(qualified_address)
@@ -105,10 +101,10 @@ def publish_and_get_surface_metadata(
 
 
 def _publish_and_get_truncated_surface_metadata(
-    server: SurfaceImageServer,
+    server: SurfaceArrayServer,
     provider: EnsembleSurfaceProvider,
     address: TruncatedSurfaceAddress,
-) -> Tuple[Optional[SurfaceImageMeta], str]:
+) -> Tuple[Optional[SurfaceArrayMeta], str]:
     qualified_address = QualifiedSurfaceAddress(
         provider.provider_id(),
         # TODO: Should probably use a dedicated address type for this. Statistical surface
@@ -159,10 +155,10 @@ def _generate_surface(
 
 
 def _publish_and_get_statistical_time_surface_metadata(
-    server: SurfaceImageServer,
+    server: SurfaceArrayServer,
     provider: EnsembleSurfaceProvider,
     address: StatisticalSurfaceAddress,
-) -> Tuple[Optional[SurfaceImageMeta], str]:
+) -> Tuple[Optional[SurfaceArrayMeta], str]:
     qualified_address = QualifiedSurfaceAddress(
         provider.provider_id(),
         StatisticalSurfaceAddress(
