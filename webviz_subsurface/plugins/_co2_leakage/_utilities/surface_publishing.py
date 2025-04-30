@@ -11,8 +11,8 @@ from webviz_subsurface._providers import (
     SimulatedSurfaceAddress,
     StatisticalSurfaceAddress,
     SurfaceAddress,
-    SurfaceArrayServer,
     SurfaceArrayMeta,
+    SurfaceArrayServer,
 )
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
