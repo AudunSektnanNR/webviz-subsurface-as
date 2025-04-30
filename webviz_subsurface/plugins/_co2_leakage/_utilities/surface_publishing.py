@@ -50,7 +50,9 @@ def publish_and_get_surface_metadata(
     map_attribute_names: FilteredMapAttribute,
 ) -> Tuple[Optional[SurfaceArrayMeta], Optional[str], Optional[Any]]:
     if isinstance(address, TruncatedSurfaceAddress):
-        meta, partial_url = _publish_and_get_truncated_surface_metadata(server, provider, address)
+        meta, partial_url = _publish_and_get_truncated_surface_metadata(
+            server, provider, address
+        )
         return meta, partial_url, None
     address_map_attribute = next(
         (
