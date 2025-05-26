@@ -10,9 +10,11 @@ from webviz_subsurface._utils.enum_shim import StrEnum
 class MapAttribute(StrEnum):
     MIGRATION_TIME_SGAS = "Migration time (SGAS)"
     MIGRATION_TIME_AMFG = "Migration time (AMFG)"
+    MIGRATION_TIME_AMFS = "Migration time (AMFS)"
     MIGRATION_TIME_XMF2 = "Migration time (XMF2)"
     MAX_SGAS = "Maximum SGAS"
     MAX_AMFG = "Maximum AMFG"
+    MAX_AMFS = "Maximum AMFS"
     MAX_XMF2 = "Maximum XMF2"
     MAX_SGSTRAND = "Maximum SGSTRAND"
     MAX_SGTRH = "Maximum SGTRH"
@@ -22,7 +24,8 @@ class MapAttribute(StrEnum):
     SGSTRAND_PLUME = "Plume (SGSTRAND)"
     SGTRH_PLUME = "Plume (SGTRH)"
     MASS = "Mass"
-    DISSOLVED = "Dissolved mass"
+    DISSOLVED_WATER = "Dissolved mass in water phase"
+    DISSOLVED_OIL = "Dissolved mass in oil phase"
     FREE = "Free gas mass"
     FREE_GAS = "Free gas phase mass"
     TRAPPED_GAS = "Trapped gas phase mass"
@@ -31,9 +34,11 @@ class MapAttribute(StrEnum):
 class MapGroup(StrEnum):
     MIGRATION_TIME_SGAS = "SGAS"
     MIGRATION_TIME_AMFG = "AMFG"
+    MIGRATION_TIME_AMFS = "AMFS"
     MIGRATION_TIME_XMF2 = "XMF2"
     MAX_SGAS = "SGAS"
     MAX_AMFG = "AMFG"
+    MAX_AMFS = "AMFS"
     MAX_XMF2 = "XMF2"
     MAX_SGSTRAND = "SGSTRAND"
     MAX_SGTRH = "SGTRH"
@@ -43,7 +48,8 @@ class MapGroup(StrEnum):
     SGSTRAND_PLUME = "SGSTRAND"
     SGTRH_PLUME = "SGTRH"
     MASS = "CO2 MASS"
-    DISSOLVED = "CO2 MASS"
+    DISSOLVED_WATER = "CO2 MASS"
+    DISSOLVED_OIL = "CO2 MASS"
     FREE = "CO2 MASS"
     FREE_GAS = "CO2 MASS"
     TRAPPED_GAS = "CO2 MASS"
@@ -51,8 +57,9 @@ class MapGroup(StrEnum):
 
 map_group_labels = {
     "SGAS": "Gas phase",
-    "AMFG": "Dissolved phase",
-    "XMF2": "Dissolved phase",
+    "AMFG": "Dissolved in water phase",
+    "AMFS": "Dissolved in water phase",
+    "XMF2": "Dissolved in water phase",
     "SGSTRAND": "Trapped gas phase",
     "SGTRH": "Trapped gas phase",
     "CO2 MASS": "CO2 mass",
@@ -62,9 +69,11 @@ map_group_labels = {
 class MapType(StrEnum):
     MIGRATION_TIME_SGAS = "MIGRATION_TIME"
     MIGRATION_TIME_AMFG = "MIGRATION_TIME"
+    MIGRATION_TIME_AMFS = "MIGRATION_TIME"
     MIGRATION_TIME_XMF2 = "MIGRATION_TIME"
     MAX_SGAS = "MAX"
     MAX_AMFG = "MAX"
+    MAX_AMFS = "MAX"
     MAX_XMF2 = "MAX"
     MAX_SGSTRAND = "MAX"
     MAX_SGTRH = "MAX"
@@ -74,7 +83,8 @@ class MapType(StrEnum):
     SGSTRAND_PLUME = "PLUME"
     SGTRH_PLUME = "PLUME"
     MASS = "MASS"
-    DISSOLVED = "MASS"
+    DISSOLVED_WATER = "MASS"
+    DISSOLVED_OIL = "MASS"
     FREE = "MASS"
     FREE_GAS = "MASS"
     TRAPPED_GAS = "MASS"
@@ -83,14 +93,17 @@ class MapType(StrEnum):
 class MapNamingConvention(StrEnum):
     MIGRATION_TIME_SGAS = "migrationtime_sgas"
     MIGRATION_TIME_AMFG = "migrationtime_amfg"
+    MIGRATION_TIME_AMFS = "migrationtime_amfs"
     MIGRATION_TIME_XMF2 = "migrationtime_xmf2"
     MAX_SGAS = "max_sgas"
     MAX_AMFG = "max_amfg"
+    MAX_AMFS = "max_amfs"
     MAX_XMF2 = "max_xmf2"
     MAX_SGSTRAND = "max_sgstrand"
     MAX_SGTRH = "max_sgtrh"
     MASS = "co2_mass_total"
-    DISSOLVED = "co2_mass_dissolved_phase"
+    DISSOLVED_WATER = "co2_mass_dissolved_water_phase"
+    DISSOLVED_OIL = "co2_mass_dissolved_oil_phase"
     FREE = "co2_mass_gas_phase"
     FREE_GAS = "co2_mass_free_gas_phase"
     TRAPPED_GAS = "co2_mass_trapped_gas_phase"

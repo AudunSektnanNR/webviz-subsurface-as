@@ -33,8 +33,11 @@ def generate_summary_figure(
     unsmry_last_mobile = df_unsmry[df_unsmry.REAL == r_min][
         unsmry_provider.colname_mobile
     ].iloc[-1]
-    unsmry_last_dissolved = df_unsmry[df_unsmry.REAL == r_min][
-        unsmry_provider.colname_dissolved
+    unsmry_last_dissolved_water = df_unsmry[df_unsmry.REAL == r_min][
+        unsmry_provider.colname_dissolved_water
+    ].iloc[-1]
+    unsmry_last_dissolved_oil = df_unsmry[df_unsmry.REAL == r_min][
+        unsmry_provider.colname_dissolved_oil
     ].iloc[-1]
 
     containment_reference = df_containment[df_containment.REAL == r_min]
@@ -44,8 +47,11 @@ def generate_summary_figure(
     containment_last_mobile = containment_reference[
         containment_reference["phase"] == "free_gas"
     ]["amount"].iloc[-1]
-    containment_last_dissolved = containment_reference[
-        containment_reference["phase"] == "dissolved"
+    containment_last_dissolved_water = containment_reference[
+        containment_reference["phase"] == "dissolved_water"
+    ]["amount"].iloc[-1]
+    containment_last_dissolved_oil = containment_reference[
+        containment_reference["phase"] == "dissolved_oil"
     ]["amount"].iloc[-1]
     # ---
     last_total_err_percentage = (
@@ -54,19 +60,26 @@ def generate_summary_figure(
     last_mobile_err_percentage = (
         100.0 * abs(containment_last_mobile - unsmry_last_mobile) / unsmry_last_mobile
     )
-    last_dissolved_err_percentage = (
+    last_dissolved_water_err_percentage = (
         100.0
-        * abs(containment_last_dissolved - unsmry_last_dissolved)
-        / unsmry_last_dissolved
+        * abs(containment_last_dissolved_water - unsmry_last_dissolved_water)
+        / unsmry_last_dissolved_water
+    )
+    last_dissolved_oil_err_percentage = (
+        100.0
+        * abs(containment_last_dissolved_oil - unsmry_last_dissolved_oil)
+        / unsmry_last_dissolved_oil
     )
     last_total_err_percentage = np.round(last_total_err_percentage, 2)
     last_mobile_err_percentage = np.round(last_mobile_err_percentage, 2)
-    last_dissolved_err_percentage = np.round(last_dissolved_err_percentage, 2)
+    last_dissolved_water_err_percentage = np.round(last_dissolved_water_err_percentage, 2)
+    last_dissolved_oil_err_percentage = np.round(last_dissolved_oil_err_percentage, 2)
 
     _colors = {
         "total": plotly.colors.qualitative.Plotly[3],
         "mobile": plotly.colors.qualitative.Plotly[2],
-        "dissolved": plotly.colors.qualitative.Plotly[0],
+        "dissolved_water": plotly.colors.qualitative.Plotly[0],
+        "dissolved_oil": plotly.colors.qualitative.Plotly[4],
         "trapped": plotly.colors.qualitative.Plotly[1],
     }
 
@@ -93,12 +106,21 @@ def generate_summary_figure(
         )
         fig.add_scatter(
             x=sub_df[unsmry_provider.colname_date],
-            y=sub_df[unsmry_provider.colname_dissolved],
-            name=f"UNSMRY ({unsmry_provider.colname_dissolved})",
-            legendgroup="dissolved",
-            legendgrouptitle_text=f"Dissolved ({last_dissolved_err_percentage} %)",
+            y=sub_df[unsmry_provider.colname_dissolved_water],
+            name=f"UNSMRY ({unsmry_provider.colname_dissolved_water})",
+            legendgroup="dissolved_water",
+            legendgrouptitle_text=f"Dissolved in water ({last_dissolved_water_err_percentage} %)",
             showlegend=showlegend,
-            marker_color=_colors["dissolved"],
+            marker_color=_colors["dissolved_water"],
+        )
+        fig.add_scatter(
+            x=sub_df[unsmry_provider.colname_date],
+            y=sub_df[unsmry_provider.colname_dissolved_oil],
+            name=f"UNSMRY ({unsmry_provider.colname_dissolved_oil})",
+            legendgroup="dissolved_oil",
+            legendgrouptitle_text=f"Dissolved in oil ({last_dissolved_oil_err_percentage} %)",
+            showlegend=showlegend,
+            marker_color=_colors["dissolved_oil"],
         )
         fig.add_scatter(
             x=sub_df[unsmry_provider.colname_date],
@@ -114,7 +136,8 @@ def generate_summary_figure(
     _col_names = {
         "total": "total",
         "free_gas": "mobile",
-        "dissolved": "dissolved",
+        "dissolved_water": "dissolved_water",
+        "dissolved_oil": "dissolved_oil",
         "trapped_gas": "trapped",
     }
 

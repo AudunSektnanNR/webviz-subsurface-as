@@ -105,10 +105,13 @@ class ContainmentDataProvider:
 
         plume_groups = sorted(plume_groups, key=plume_sort_key)
 
+        phases = ["total", "gas", "dissolved_water"]
         if "free_gas" in list(df["phase"]):
-            phases = ["total", "free_gas", "trapped_gas", "dissolved"]
-        else:
-            phases = ["total", "gas", "dissolved"]
+            idx = phases.index("gas")
+            phases = phases[:idx] + ["free_gas", "trapped_gas"] + phases[idx+1:]
+        if "dissolved_oil" in list(df["phase"]):
+            phases.append("dissolved_oil")
+
 
         dates = df["date"].unique()
         dates.sort()
