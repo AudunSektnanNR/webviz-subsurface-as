@@ -42,6 +42,22 @@ class Colors(StrEnum):
     trapped = "#880808"
 
 
+class Marks(StrEnum):
+    dissolved_water = "/"
+    dissolved_oil = "x"
+    gas = ""
+    free = ""
+    trapped = "."
+
+
+class Lines(StrEnum):
+    dissolved_water = "dash"
+    dissolved_oil = "longdash"
+    gas = "dot"
+    free = "dot"
+    trapped = "dashdot"
+
+
 _COLOR_ZONES = [
     "#e91451",
     "#daa218",
@@ -93,13 +109,13 @@ def _read_dataframe(
     return df
 
 
-def _get_colors(color_options: List[str], split: str = "zone") -> List[str]:
-    num_cols = len(color_options)
+def _get_colors(color_options: List[str], split: str) -> List[str]:
     if split in {"containment", "phase"}:
         return [Colors[option] for option in color_options]
     options = list(_COLOR_ZONES)
     if split == "region":
         options.reverse()
+    num_cols = len(color_options)
     if len(options) >= num_cols:
         return options[:num_cols]
     num_lengths = int(np.ceil(num_cols / len(options)))
@@ -107,7 +123,8 @@ def _get_colors(color_options: List[str], split: str = "zone") -> List[str]:
     return new_cols[:num_cols]
 
 
-def _get_marks(num_marks: int, mark_choice: str) -> List[str]:
+def _get_marks(mark_options: List[str], mark_choice: str) -> List[str]:
+    num_marks = len(mark_options)
     if mark_choice == "none":
         return [""] * num_marks
     if mark_choice == "containment":
@@ -122,7 +139,7 @@ def _get_marks(num_marks: int, mark_choice: str) -> List[str]:
             )
         return base_pattern[:num_marks]
     # mark_choice == "phase":
-    return ["", "/"] if num_marks == 2 else ["", ".", "/"]
+    return [Marks[option] for option in mark_options]
 
 
 def _get_line_types(mark_options: List[str], mark_choice: str) -> List[str]:
@@ -139,7 +156,7 @@ def _get_line_types(mark_options: List[str], mark_choice: str) -> List[str]:
             )
         return [options[i % 6] for i in range(len(mark_options))]
     # mark_choice == "phase":
-    return ["dot", "dash"] if "gas" in mark_options else ["dot", "dashdot", "dash"]
+    return [Lines[option] for option in mark_options]
 
 
 def _prepare_pattern_and_color_options(
@@ -151,10 +168,10 @@ def _prepare_pattern_and_color_options(
     no_mark = mark_choice == "none"
     mark_options = [] if no_mark else getattr(containment_info, f"{mark_choice}s")
     color_options = getattr(containment_info, f"{color_choice}s")
+    marks = _get_marks(mark_options, mark_choice)
+    colors = _get_colors(color_options, color_choice)
     num_colors = len(color_options)
     num_marks = num_colors if no_mark else len(mark_options)
-    marks = _get_marks(num_marks, mark_choice)
-    colors = _get_colors(color_options, color_choice)
     if no_mark:
         cat_ord = {"type": color_options}
         df["type"] = df[color_choice]
