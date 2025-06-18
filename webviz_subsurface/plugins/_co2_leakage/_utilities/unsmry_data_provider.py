@@ -23,7 +23,8 @@ class UnsmryDataProvider:
         self._provider = provider
         (
             self._colname_date,
-            self._colname_dissolved,
+            self._colname_dissolved_water,
+            self._colname_dissolved_oil,
             self._colname_trapped,
             self._colname_mobile,
         ) = UnsmryDataProvider._column_subset_unsmry(provider)
@@ -34,7 +35,7 @@ class UnsmryDataProvider:
         return {
             "zones": [],
             "regions": [],
-            "phases": ["total", "gas", "dissolved"],
+            "phases": ["total", "gas", "dissolved_water", "dissolved_oil"],
             "plume_groups": [],
             "dates": [],
         }
@@ -44,8 +45,12 @@ class UnsmryDataProvider:
         return self._colname_date
 
     @property
-    def colname_dissolved(self) -> str:
-        return self._colname_dissolved
+    def colname_dissolved_water(self) -> str:
+        return self._colname_dissolved_water
+
+    @property
+    def colname_dissolved_oil(self) -> str:
+        return self._colname_dissolved_oil
 
     @property
     def colname_trapped(self) -> str:
@@ -62,7 +67,8 @@ class UnsmryDataProvider:
     def extract(self, scale: Union[Co2MassScale, Co2VolumeScale]) -> pd.DataFrame:
         columns = [
             self._colname_date,
-            self._colname_dissolved,
+            self._colname_dissolved_water,
+            self._colname_dissolved_oil,
             self._colname_trapped,
             self._colname_mobile,
         ]
@@ -73,7 +79,8 @@ class UnsmryDataProvider:
             ]
         )
         full[self._colname_total] = (
-            full[self._colname_dissolved]
+            full[self._colname_dissolved_water]
+            + full[self.colname_dissolved_oil]
             + full[self._colname_trapped]
             + full[self.colname_mobile]
         )
