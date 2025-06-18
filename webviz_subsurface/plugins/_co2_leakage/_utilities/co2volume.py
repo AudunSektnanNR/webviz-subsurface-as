@@ -30,15 +30,18 @@ class _Columns(StrEnum):
     VOLUME_OUTSIDE = "volume_outside"
 
 
-_COLOR_TOTAL = "#222222"
-_COLOR_CONTAINED = "#00aa00"
-_COLOR_OUTSIDE = "#006ddd"
-_COLOR_HAZARDOUS = "#dd4300"
-_COLOR_DISSOLVED_WATER = "#208eb7"
-_COLOR_DISSOLVED_OIL = "#A0522D"
-_COLOR_GAS = "#C41E3A"
-_COLOR_FREE = "#FF2400"
-_COLOR_TRAPPED = "#880808"
+class Colors(StrEnum):
+    total = "#222222"
+    contained = "#00aa00"
+    outside = "#006ddd"
+    hazardous = "#dd4300"
+    dissolved_water = "#208eb7"
+    dissolved_oil = "#A0522D"
+    gas = "#C41E3A"
+    free = "#FF2400"
+    trapped = "#880808"
+
+
 _COLOR_ZONES = [
     "#e91451",
     "#daa218",
@@ -90,15 +93,10 @@ def _read_dataframe(
     return df
 
 
-def _get_colors(num_cols: int = 3, split: str = "zone") -> List[str]:
-    if split == "containment":
-        return [_COLOR_HAZARDOUS, _COLOR_OUTSIDE, _COLOR_CONTAINED]
-    if split == "phase":
-        if num_cols == 2:
-            return [_COLOR_GAS, _COLOR_DISSOLVED_WATER]
-        if num_cols == 3:
-            return [_COLOR_GAS, _COLOR_DISSOLVED_WATER, _COLOR_DISSOLVED_OIL]
-        return [_COLOR_FREE, _COLOR_TRAPPED, _COLOR_DISSOLVED_WATER]
+def _get_colors(color_options: List[str], split: str = "zone") -> List[str]:
+    num_cols = len(color_options)
+    if split in {"containment", "phase"}:
+        return [Colors[option] for option in color_options]
     options = list(_COLOR_ZONES)
     if split == "region":
         options.reverse()
@@ -156,7 +154,7 @@ def _prepare_pattern_and_color_options(
     num_colors = len(color_options)
     num_marks = num_colors if no_mark else len(mark_options)
     marks = _get_marks(num_marks, mark_choice)
-    colors = _get_colors(num_colors, color_choice)
+    colors = _get_colors(color_options, color_choice)
     if no_mark:
         cat_ord = {"type": color_options}
         df["type"] = df[color_choice]
@@ -189,7 +187,7 @@ def _prepare_pattern_and_color_options_statistics_plot(
     num_colors = len(color_options)
     num_marks = num_colors if no_mark else len(mark_options)
     line_types = _get_line_types(mark_options, mark_choice)
-    colors = _get_colors(num_colors, color_choice)
+    colors = _get_colors(color_options, color_choice)
 
     if mark_choice == "phase":
         mark_options = ["total"] + mark_options
@@ -276,9 +274,8 @@ def _prepare_line_type_and_color_options(
     if mark_choice != "none":
         mark_options = list(getattr(containment_info, f"{mark_choice}s"))
     color_options = list(getattr(containment_info, f"{color_choice}s"))
-    num_colors = len(color_options)
     line_types = _get_line_types(mark_options, mark_choice)
-    colors = _get_colors(num_colors, color_choice)
+    colors = _get_colors(color_options, color_choice)
 
     filter_mark = True
     if mark_choice in ["containment", "phase"]:
