@@ -11,6 +11,8 @@ class MapAttribute(StrEnum):
     MIGRATION_TIME_SGAS = "Migration time (SGAS)"
     MIGRATION_TIME_AMFG = "Migration time (AMFG)"
     MIGRATION_TIME_AMFS = "Migration time (AMFS)"
+    MIGRATION_TIME_XMFS = "Migration time (XMFS)"
+    MIGRATION_TIME_YMFS = "Migration time (YMFS)"
     MIGRATION_TIME_XMF2 = "Migration time (XMF2)"
     MAX_SGAS = "Maximum SGAS"
     MAX_AMFG = "Maximum AMFG"
@@ -35,6 +37,8 @@ class MapGroup(StrEnum):
     MIGRATION_TIME_SGAS = "SGAS"
     MIGRATION_TIME_AMFG = "AMFG"
     MIGRATION_TIME_AMFS = "AMFS"
+    MIGRATION_TIME_XMFS = "XMFS"
+    MIGRATION_TIME_YMFS = "YMFS"
     MIGRATION_TIME_XMF2 = "XMF2"
     MAX_SGAS = "SGAS"
     MAX_AMFG = "AMFG"
@@ -59,6 +63,8 @@ map_group_labels = {
     "SGAS": "Gas phase",
     "AMFG": "Dissolved in water phase",
     "AMFS": "Dissolved in water phase",
+    "XMFS": "Dissolved in oil phase",
+    "YMFS": "Dissolved in gas phase",
     "XMF2": "Dissolved in water phase",
     "SGSTRAND": "Trapped gas phase",
     "SGTRH": "Trapped gas phase",
@@ -70,6 +76,8 @@ class MapType(StrEnum):
     MIGRATION_TIME_SGAS = "MIGRATION_TIME"
     MIGRATION_TIME_AMFG = "MIGRATION_TIME"
     MIGRATION_TIME_AMFS = "MIGRATION_TIME"
+    MIGRATION_TIME_YMFS = "MIGRATION_TIME"
+    MIGRATION_TIME_XMFS = "MIGRATION_TIME"
     MIGRATION_TIME_XMF2 = "MIGRATION_TIME"
     MAX_SGAS = "MAX"
     MAX_AMFG = "MAX"
@@ -94,6 +102,8 @@ class MapNamingConvention(StrEnum):
     MIGRATION_TIME_SGAS = "migrationtime_sgas"
     MIGRATION_TIME_AMFG = "migrationtime_amfg"
     MIGRATION_TIME_AMFS = "migrationtime_amfs"
+    MIGRATION_TIME_XMFS = "migrationtime_xmfs"
+    MIGRATION_TIME_YMFS = "migrationtime_ymfs"
     MIGRATION_TIME_XMF2 = "migrationtime_xmf2"
     MAX_SGAS = "max_sgas"
     MAX_AMFG = "max_amfg"
