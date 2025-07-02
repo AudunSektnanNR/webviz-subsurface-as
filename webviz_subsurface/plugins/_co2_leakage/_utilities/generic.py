@@ -2,6 +2,7 @@ from __future__ import (  # Change to import Self from typing if we update to Py
     annotations,
 )
 
+from enum import Enum
 from typing import Dict, List, TypedDict
 
 from webviz_subsurface._utils.enum_shim import StrEnum
@@ -17,6 +18,8 @@ class MapAttribute(StrEnum):
     MAX_SGAS = "Maximum SGAS"
     MAX_AMFG = "Maximum AMFG"
     MAX_AMFS = "Maximum AMFS"
+    MAX_XMFS = "Maximum XMFS"
+    MAX_YMFS = "Maximum YMFS"
     MAX_XMF2 = "Maximum XMF2"
     MAX_SGSTRAND = "Maximum SGSTRAND"
     MAX_SGTRH = "Maximum SGTRH"
@@ -43,6 +46,8 @@ class MapGroup(StrEnum):
     MAX_SGAS = "SGAS"
     MAX_AMFG = "AMFG"
     MAX_AMFS = "AMFS"
+    MAX_XMFS = "XMFS"
+    MAX_YMFS = "YMFS"
     MAX_XMF2 = "XMF2"
     MAX_SGSTRAND = "SGSTRAND"
     MAX_SGTRH = "SGTRH"
@@ -82,6 +87,8 @@ class MapType(StrEnum):
     MAX_SGAS = "MAX"
     MAX_AMFG = "MAX"
     MAX_AMFS = "MAX"
+    MAX_XMFS = "MAX"
+    MAX_YMFS = "MAX"
     MAX_XMF2 = "MAX"
     MAX_SGSTRAND = "MAX"
     MAX_SGTRH = "MAX"
@@ -108,6 +115,8 @@ class MapNamingConvention(StrEnum):
     MAX_SGAS = "max_sgas"
     MAX_AMFG = "max_amfg"
     MAX_AMFS = "max_amfs"
+    MAX_XMFS = "max_amfs"
+    MAX_YMFS = "max_amfs"
     MAX_XMF2 = "max_xmf2"
     MAX_SGSTRAND = "max_sgstrand"
     MAX_SGTRH = "max_sgtrh"
@@ -117,6 +126,14 @@ class MapNamingConvention(StrEnum):
     FREE = "co2_mass_gas_phase"
     FREE_GAS = "co2_mass_free_gas_phase"
     TRAPPED_GAS = "co2_mass_trapped_gas_phase"
+
+class PhasesScenario(Enum):
+    """
+    Which scenario is CO2 amounts calculated in
+    """
+
+    TWO_PHASES = 0
+    THREE_PHASES = 1
 
 
 class FilteredMapAttribute:
