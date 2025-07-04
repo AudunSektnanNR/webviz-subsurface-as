@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 import pandas as pd
 
 from webviz_subsurface._providers import EnsembleTableProvider
-from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
+from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
     MenuOptions,

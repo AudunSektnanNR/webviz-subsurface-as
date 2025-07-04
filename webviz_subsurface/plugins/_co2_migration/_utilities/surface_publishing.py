@@ -17,11 +17,11 @@ from webviz_subsurface._providers import (
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
+from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     FilteredMapAttribute,
     MapType,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.plume_extent import (
+from webviz_subsurface.plugins._co2_migration._utilities.plume_extent import (
     truncate_surfaces,
 )
 

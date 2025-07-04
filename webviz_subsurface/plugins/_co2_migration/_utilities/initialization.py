@@ -17,13 +17,13 @@ from webviz_subsurface._providers.ensemble_polygon_provider import PolygonServer
 from webviz_subsurface._providers.ensemble_surface_provider._surface_discovery import (
     discover_per_realization_surface_files,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import (
+from webviz_subsurface.plugins._co2_migration._utilities.containment_data_provider import (
     ContainmentDataProvider,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.ensemble_well_picks import (
+from webviz_subsurface.plugins._co2_migration._utilities.ensemble_well_picks import (
     EnsembleWellPicks,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
+from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     BoundarySettings,
     FilteredMapAttribute,
     GraphSource,
@@ -31,10 +31,10 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     MapNamingConvention,
     MenuOptions,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.polygon_handler import (
+from webviz_subsurface.plugins._co2_migration._utilities.polygon_handler import (
     PolygonHandler,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider import (
+from webviz_subsurface.plugins._co2_migration._utilities.unsmry_data_provider import (
     UnsmryDataProvider,
 )
 

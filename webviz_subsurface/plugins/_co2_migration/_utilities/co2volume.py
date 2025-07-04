@@ -11,13 +11,13 @@ import plotly.graph_objects as go
 
 from webviz_subsurface._providers import EnsembleTableProvider
 from webviz_subsurface._utils.enum_shim import StrEnum
-from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import (
+from webviz_subsurface.plugins._co2_migration._utilities.containment_data_provider import (
     ContainmentDataProvider,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.containment_info import (
+from webviz_subsurface.plugins._co2_migration._utilities.containment_info import (
     ContainmentInfo,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
+from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
 )
