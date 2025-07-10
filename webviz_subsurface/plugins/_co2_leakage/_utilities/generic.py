@@ -34,6 +34,9 @@ class MapAttribute(StrEnum):
     FREE = "Free gas mass"
     FREE_GAS = "Free gas phase mass"
     TRAPPED_GAS = "Trapped gas phase mass"
+    FREE_3PHASES = "Mixed mass in gas phase"
+    FREE_GAS_3PHASES = "Mixed mass in free gas phase"
+    TRAPPED_GAS_3PHASES = "Mixed mass in trapped gas phase"
 
 
 class MapGroup(StrEnum):
@@ -62,6 +65,9 @@ class MapGroup(StrEnum):
     FREE = "CO2 MASS"
     FREE_GAS = "CO2 MASS"
     TRAPPED_GAS = "CO2 MASS"
+    FREE_3PHASES = "CO2 MASS"
+    FREE_GAS_3PHASES = "CO2 MASS"
+    TRAPPED_GAS_3PHASES = "CO2 MASS"
 
 
 map_group_labels = {
@@ -103,6 +109,9 @@ class MapType(StrEnum):
     FREE = "MASS"
     FREE_GAS = "MASS"
     TRAPPED_GAS = "MASS"
+    FREE_3PHASES = "MASS"
+    FREE_GAS_3PHASES = "MASS"
+    TRAPPED_GAS_3PHASES = "MASS"
 
 
 class MapNamingConvention(StrEnum):
@@ -115,8 +124,8 @@ class MapNamingConvention(StrEnum):
     MAX_SGAS = "max_sgas"
     MAX_AMFG = "max_amfg"
     MAX_AMFS = "max_amfs"
-    MAX_XMFS = "max_amfs"
-    MAX_YMFS = "max_amfs"
+    MAX_XMFS = "max_xmfs"
+    MAX_YMFS = "max_ymfs"
     MAX_XMF2 = "max_xmf2"
     MAX_SGSTRAND = "max_sgstrand"
     MAX_SGTRH = "max_sgtrh"
@@ -126,6 +135,10 @@ class MapNamingConvention(StrEnum):
     FREE = "co2_mass_gas_phase"
     FREE_GAS = "co2_mass_free_gas_phase"
     TRAPPED_GAS = "co2_mass_trapped_gas_phase"
+    FREE_3PHASES = "co2_mass_gas_phase"
+    FREE_GAS_3PHASES = "co2_mass_free_gas_phase"
+    TRAPPED_GAS_3PHASES = "co2_mass_trapped_gas_phase"
+
 
 class PhasesScenario(Enum):
     """

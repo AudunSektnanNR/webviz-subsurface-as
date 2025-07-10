@@ -30,7 +30,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     MapAttribute,
     MapNamingConvention,
     MenuOptions,
-    PhasesScenario
+    PhasesScenario,
 )
 from webviz_subsurface.plugins._co2_leakage._utilities.polygon_handler import (
     PolygonHandler,
@@ -47,6 +47,25 @@ LOGGER_TO_SUPPRESS.setLevel(logging.ERROR)  # We replace the given warning with 
 WARNING_THRESHOLD_CSV_FILE_SIZE_MB = 100.0
 
 
+def resolve_mapattribute_name(
+    attr_value: str, scenario: PhasesScenario
+) -> Optional[str]:
+    candidates = [
+        name
+        for name, member in MapNamingConvention.__members__.items()
+        if member.value == attr_value
+    ]
+    if not candidates:
+        return None
+    if len(candidates) == 1:
+        return candidates[0]
+    if scenario == PhasesScenario.THREE_PHASES:
+        for m in candidates:
+            if m.endswith("3PHASES"):
+                return m
+    return candidates[0]
+
+
 def build_mapping(
     webviz_settings: WebvizSettings,
     ensembles: List[str],
@@ -58,43 +77,25 @@ def build_mapping(
         )
         for ens in ensembles
     ]
-    print("These are available_attrs_per_ensemble")
-    print(available_attrs_per_ensemble)
     full_attr_list = [
         [attr.attribute for attr in ens] for ens in available_attrs_per_ensemble
     ]
-    print("This is full_attr_list")
-    print(full_attr_list)
     unique_attributes = set()
     for ens_attr in full_attr_list:
         unique_attributes.update(ens_attr)
     unique_attributes_list = list(unique_attributes)
-    print("These are unique_attributes_list")
-    print(unique_attributes_list)
     mapping = {}
     scenario = PhasesScenario.TWO_PHASES
     # NBNB: Solution for Cirrus realizations, not yet clear for Eclipse
-    if any('mfs' in item for item in unique_attributes_list):
+    if any("mfs" in item for item in unique_attributes_list):
         scenario = PhasesScenario.THREE_PHASES
-    """
     for attr in unique_attributes_list:
-        for name_convention in MapNamingConvention:
-            if attr == name_convention.value:
-                attribute_key = MapAttribute[name_convention.name].name
-                if scenario == PhasesScenario.THREE_PHASES and any(gas_prop in attr for gas_prop in ['sgas','amfg']):
-                    break
-                mapping[attribute_key] = attr
-                break
-    """
-    for attr in unique_attributes_list:
-        name_convention = next(
-            (nc for nc in MapNamingConvention if attr == nc.value),
-            None
-        )
-        if not name_convention:
+        matched_name = resolve_mapattribute_name(attr, scenario)
+        if not matched_name:
             continue
-
-        if scenario == PhasesScenario.THREE_PHASES and any(g in attr for g in ['sgas', 'amfg']):
+        if scenario == PhasesScenario.THREE_PHASES and any(
+            g in attr for g in ["sgas", "amfg"]
+        ):
             LOGGER.info(
                 f"Map '{attr}' is available, but since the scenario is not saline aquifer,"
                 f" neither SGAS nor AMFG are informative about presence of CO2."
@@ -102,8 +103,7 @@ def build_mapping(
                 f" explicitly requested via 'map_attribute_names' in the config file"
             )
             continue
-
-        attribute_key = MapAttribute[name_convention.name].name
+        attribute_key = MapAttribute[matched_name].name
         mapping[attribute_key] = attr
     return mapping
 
