@@ -9,7 +9,7 @@ from webviz_config.utils import StrEnum, callback_typecheck
 
 from webviz_subsurface._providers import FaultPolygonsServer, SurfaceArrayServer
 from webviz_subsurface._providers.ensemble_polygon_provider import PolygonServer
-from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import (
+from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     SurfaceData,
     create_map_annotations,
     create_map_layers,
@@ -27,10 +27,10 @@ from webviz_subsurface.plugins._co2_leakage._utilities.callbacks import (
     readable_name,
     set_plot_ids,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.fault_polygons_handler import (
+from webviz_subsurface.plugins._co2_migration._utilities.fault_polygons_handler import (
     FaultPolygonsHandler,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
+from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     BoundarySettings,
     Co2MassScale,
     Co2VolumeScale,
@@ -39,7 +39,7 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     MapThresholds,
     MapType,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
+from webviz_subsurface.plugins._co2_migration._utilities.initialization import (
     init_containment_data_providers,
     init_dictionary_of_content,
     init_map_attribute_names,
@@ -50,15 +50,15 @@ from webviz_subsurface.plugins._co2_leakage._utilities.initialization import (
     init_unsmry_data_providers,
     init_well_pick_provider,
 )
-from webviz_subsurface.plugins._co2_leakage.views.mainview.mainview import (
+from webviz_subsurface.plugins._co2_migration.views.mainview.mainview import (
     MainView,
     MapViewElement,
 )
-from webviz_subsurface.plugins._co2_leakage.views.mainview.settings import ViewSettings
+from webviz_subsurface.plugins._co2_migration.views.mainview.settings import ViewSettings
 
 from . import _error
 from ._types import LegendData
-from ._utilities.color_tables import co2leakage_color_tables
+from ._utilities.color_tables import co2migration_color_tables
 from ._utilities.containment_info import StatisticsTabOption
 
 LOGGER = logging.getLogger(__name__)
@@ -66,8 +66,8 @@ TABLES_PATH = "share/results/tables"
 
 
 # pylint: disable=too-many-instance-attributes
-class CO2Leakage(WebvizPluginABC):
-    """Plugin for analyzing CO2 leakage potential across multiple realizations in an
+class CO2Migration(WebvizPluginABC):
+    """Plugin for analyzing CO2 migration across multiple realizations in an
     FMU ensemble
 
     ---
@@ -251,7 +251,7 @@ class CO2Leakage(WebvizPluginABC):
             "change": False,
             "unit": "tons",
         }
-        self._color_tables = co2leakage_color_tables()
+        self._color_tables = co2migration_color_tables()
         self._well_pick_names: Dict[str, List[str]] = {
             ens: (
                 self._well_pick_provider[ens].well_names

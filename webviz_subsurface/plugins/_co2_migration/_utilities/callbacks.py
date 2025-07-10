@@ -20,26 +20,26 @@ from webviz_subsurface._providers import (
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
 )
-from webviz_subsurface.plugins._co2_leakage._types import LegendData
-from webviz_subsurface.plugins._co2_leakage._utilities import plume_extent
-from webviz_subsurface.plugins._co2_leakage._utilities.co2volume import (
+from webviz_subsurface.plugins._co2_migration._types import LegendData
+from webviz_subsurface.plugins._co2_migration._utilities import plume_extent
+from webviz_subsurface.plugins._co2_migration._utilities.co2volume import (
     generate_co2_box_plot_figure,
     generate_co2_statistics_figure,
     generate_co2_time_containment_figure,
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.containment_data_provider import (
+from webviz_subsurface.plugins._co2_migration._utilities.containment_data_provider import (
     ContainmentDataProvider,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.containment_info import (
+from webviz_subsurface.plugins._co2_migration._utilities.containment_info import (
     ContainmentInfo,
     StatisticsTabOption,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.ensemble_well_picks import (
+from webviz_subsurface.plugins._co2_migration._utilities.ensemble_well_picks import (
     EnsembleWellPicks,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
+from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
     FilteredMapAttribute,
@@ -50,14 +50,14 @@ from webviz_subsurface.plugins._co2_leakage._utilities.generic import (
     MapType,
     MenuOptions,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.summary_graphs import (
+from webviz_subsurface.plugins._co2_migration._utilities.summary_graphs import (
     generate_summary_figure,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.surface_publishing import (
+from webviz_subsurface.plugins._co2_migration._utilities.surface_publishing import (
     TruncatedSurfaceAddress,
     publish_and_get_surface_metadata,
 )
-from webviz_subsurface.plugins._co2_leakage._utilities.unsmry_data_provider import (
+from webviz_subsurface.plugins._co2_migration._utilities.unsmry_data_provider import (
     UnsmryDataProvider,
 )
 
