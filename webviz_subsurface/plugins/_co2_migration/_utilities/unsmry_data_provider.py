@@ -34,7 +34,7 @@ class UnsmryDataProvider:
         return {
             "zones": [],
             "regions": [],
-            "phases": ["total", "gas", "dissolved_water"], ##NB: Split gas?
+            "phases": ["total", "gas", "dissolved_water"],  ##NB: Split gas?
             "plume_groups": [],
             "dates": [],
         }
