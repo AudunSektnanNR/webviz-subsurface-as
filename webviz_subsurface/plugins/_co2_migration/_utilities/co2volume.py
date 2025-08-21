@@ -1,4 +1,5 @@
 # pylint: disable=too-many-lines
+# pylint: disable=C0103
 # NBNB-AS: We should address this pylint message soon
 import warnings
 from datetime import datetime as dt
@@ -31,6 +32,7 @@ class _Columns(StrEnum):
 
 
 class Colors(StrEnum):
+    # pylint: disable=invalid-name
     total = "#222222"
     contained = "#00aa00"
     outside = "#006ddd"
