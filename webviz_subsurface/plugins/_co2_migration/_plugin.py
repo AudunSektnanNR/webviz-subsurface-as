@@ -54,7 +54,9 @@ from webviz_subsurface.plugins._co2_migration.views.mainview.mainview import (
     MainView,
     MapViewElement,
 )
-from webviz_subsurface.plugins._co2_migration.views.mainview.settings import ViewSettings
+from webviz_subsurface.plugins._co2_migration.views.mainview.settings import (
+    ViewSettings,
+)
 
 from . import _error
 from ._types import LegendData

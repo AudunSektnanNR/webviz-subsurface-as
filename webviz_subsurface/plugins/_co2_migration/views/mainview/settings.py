@@ -12,7 +12,9 @@ from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_pro
     EnsembleSurfaceProvider,
     SurfaceStatistic,
 )
-from webviz_subsurface.plugins._co2_migration._utilities.callbacks import property_origin
+from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
+    property_origin,
+)
 from webviz_subsurface.plugins._co2_migration._utilities.containment_info import (
     StatisticsTabOption,
 )

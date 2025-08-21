@@ -72,7 +72,9 @@ def generate_summary_figure(
     )
     last_total_err_percentage = np.round(last_total_err_percentage, 2)
     last_mobile_err_percentage = np.round(last_mobile_err_percentage, 2)
-    last_dissolved_water_err_percentage = np.round(last_dissolved_water_err_percentage, 2)
+    last_dissolved_water_err_percentage = np.round(
+        last_dissolved_water_err_percentage, 2
+    )
     last_dissolved_oil_err_percentage = np.round(last_dissolved_oil_err_percentage, 2)
 
     _colors = {
