@@ -413,7 +413,7 @@ def generate_containment_figures(
     try:
         fig0 = generate_co2_volume_figure(
             table_provider,
-            table_provider.realizations,
+            realizations,
             co2_scale,
             containment_info,
             legenddata["bar_legendonly"],
