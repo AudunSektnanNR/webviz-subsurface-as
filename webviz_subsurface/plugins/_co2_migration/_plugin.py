@@ -298,24 +298,16 @@ class CO2Migration(WebvizPluginABC):
 
     def _ensemble_dates(self, ens: str) -> List[str]:
         surface_provider = self._ensemble_surface_providers[ens]
-        date_map_attribute = next(
-            (
-                k
-                for k in self._map_attribute_names.filtered_values
-                if MapType[k.name].value != "MIGRATION_TIME"
-            ),
-            None,
-        )
-        att_name = (
-            self._map_attribute_names[date_map_attribute]
-            if date_map_attribute is not None
-            else None
-        )
-        dates = (
-            None
-            if att_name is None
-            else surface_provider.surface_dates_for_attribute(att_name)
-        )
+        dated_attributes = [
+            k
+            for k in self._map_attribute_names.filtered_values
+            if MapType[k.name].value != "MIGRATION_TIME"
+        ]
+        if len(dated_attributes) == 0:
+            return None
+        date_map_attribute = dated_attributes[0]
+        att_name = self._map_attribute_names[date_map_attribute]
+        dates = surface_provider.surface_dates_for_attribute(att_name)
         if dates is None:
             raise ValueError(f"Failed to fetch dates for attribute '{att_name}'")
         return dates
@@ -522,7 +514,9 @@ class CO2Migration(WebvizPluginABC):
             attribute = MapAttribute(attribute)
             if len(realization) == 0 or ensemble is None:
                 raise PreventUpdate
-            if isinstance(date, int):
+            if MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME":
+                datestr = None
+            elif isinstance(date, int):
                 datestr = self._ensemble_dates(ensemble)[date]
             else:
                 datestr = None
@@ -658,6 +652,8 @@ class CO2Migration(WebvizPluginABC):
                 return {}, None
             # Dates
             date_list = self._ensemble_dates(ensemble)
+            if date_list is None:  # The case if the only maps are migration time maps
+                return None, None
             dates = {
                 i: {
                     "label": f"{d[:4]}",
