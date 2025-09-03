@@ -9,7 +9,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     MenuOptions,
 )
 
-_PFLOTRAN_COLNAMES = ("DATE", "FGMDS", "FGMTR", "FGMGP")
+_PFLOTRAN_COLNAMES = ("DATE", "FGMDS", "FGMTR", "FGMMO")
 _ECLIPSE_COLNAMES = ("DATE", "FWCD", "FGCDI", "FGCDM")
 
 
@@ -24,7 +24,6 @@ class UnsmryDataProvider:
         (
             self._colname_date,
             self._colname_dissolved_water,
-            self._colname_dissolved_oil,
             self._colname_trapped,
             self._colname_mobile,
         ) = UnsmryDataProvider._column_subset_unsmry(provider)
@@ -35,7 +34,7 @@ class UnsmryDataProvider:
         return {
             "zones": [],
             "regions": [],
-            "phases": ["total", "gas", "dissolved_water", "dissolved_oil"],
+            "phases": ["total", "gas", "dissolved_water"],  ##NB: Split gas?
             "plume_groups": [],
             "dates": [],
         }
@@ -47,10 +46,6 @@ class UnsmryDataProvider:
     @property
     def colname_dissolved_water(self) -> str:
         return self._colname_dissolved_water
-
-    @property
-    def colname_dissolved_oil(self) -> str:
-        return self._colname_dissolved_oil
 
     @property
     def colname_trapped(self) -> str:
@@ -68,7 +63,6 @@ class UnsmryDataProvider:
         columns = [
             self._colname_date,
             self._colname_dissolved_water,
-            self._colname_dissolved_oil,
             self._colname_trapped,
             self._colname_mobile,
         ]
@@ -80,7 +74,6 @@ class UnsmryDataProvider:
         )
         full[self._colname_total] = (
             full[self._colname_dissolved_water]
-            + full[self.colname_dissolved_oil]
             + full[self._colname_trapped]
             + full[self.colname_mobile]
         )

@@ -54,7 +54,9 @@ from webviz_subsurface.plugins._co2_migration.views.mainview.mainview import (
     MainView,
     MapViewElement,
 )
-from webviz_subsurface.plugins._co2_migration.views.mainview.settings import ViewSettings
+from webviz_subsurface.plugins._co2_migration.views.mainview.settings import (
+    ViewSettings,
+)
 
 from . import _error
 from ._types import LegendData
@@ -741,6 +743,7 @@ class CO2Migration(WebvizPluginABC):
             Input(self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS), "value"),
         )
         @callback_typecheck
+        # pylint: disable=too-many-locals
         def update_graphs(
             legend_data: LegendData,
             ensemble: str,
@@ -767,7 +770,6 @@ class CO2Migration(WebvizPluginABC):
             if len(realizations) == 0:
                 return go.Figure(), go.Figure(), go.Figure()
 
-            # pylint: disable=too-many-locals
             figs = [no_update] * 3
             cont_info = process_containment_info(
                 zone,

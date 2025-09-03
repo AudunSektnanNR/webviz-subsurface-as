@@ -108,10 +108,9 @@ class ContainmentDataProvider:
         phases = ["total", "gas", "dissolved_water"]
         if "free_gas" in list(df["phase"]):
             idx = phases.index("gas")
-            phases = phases[:idx] + ["free_gas", "trapped_gas"] + phases[idx+1:]
+            phases = phases[:idx] + ["free_gas", "trapped_gas"] + phases[idx + 1 :]
         if "dissolved_oil" in list(df["phase"]):
             phases.append("dissolved_oil")
-
 
         dates = df["date"].unique()
         dates.sort()
