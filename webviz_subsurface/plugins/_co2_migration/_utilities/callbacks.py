@@ -187,7 +187,7 @@ def get_plume_polygon(
     surface_provider: EnsembleSurfaceProvider,
     realizations: List[int],
     surface_name: str,
-    datestr: str,
+    datestr: Optional[str],
     contour_data: Dict[str, Any],
 ) -> Optional[geojson.FeatureCollection]:
     surface_attribute = contour_data["property"]
@@ -624,7 +624,7 @@ def set_plot_ids(
 def process_summed_mass(
     formation: str,
     realization: List[int],
-    datestr: str,
+    datestr: Optional[str],
     attribute: MapAttribute,
     summed_mass: Optional[float],
     surf_data: Optional[SurfaceData],
