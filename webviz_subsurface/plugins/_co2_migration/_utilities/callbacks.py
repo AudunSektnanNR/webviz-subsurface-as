@@ -158,11 +158,6 @@ def derive_surface_address(
             threshold=contour_data["threshold"] if contour_data else 0.0,
             smoothing=contour_data["smoothing"] if contour_data else 0.0,
         )
-    date = (
-        None
-        if MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME"
-        else date
-    )
     if len(realization) == 1:
         return SimulatedSurfaceAddress(
             attribute=map_attribute_names[attribute],
@@ -192,7 +187,7 @@ def get_plume_polygon(
     surface_provider: EnsembleSurfaceProvider,
     realizations: List[int],
     surface_name: str,
-    datestr: str,
+    datestr: Optional[str],
     contour_data: Dict[str, Any],
 ) -> Optional[geojson.FeatureCollection]:
     surface_attribute = contour_data["property"]
@@ -413,7 +408,7 @@ def generate_containment_figures(
     try:
         fig0 = generate_co2_volume_figure(
             table_provider,
-            table_provider.realizations,
+            realizations,
             co2_scale,
             containment_info,
             legenddata["bar_legendonly"],
@@ -629,7 +624,7 @@ def set_plot_ids(
 def process_summed_mass(
     formation: str,
     realization: List[int],
-    datestr: str,
+    datestr: Optional[str],
     attribute: MapAttribute,
     summed_mass: Optional[float],
     surf_data: Optional[SurfaceData],

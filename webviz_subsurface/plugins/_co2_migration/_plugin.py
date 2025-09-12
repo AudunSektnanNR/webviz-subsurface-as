@@ -41,6 +41,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.generic import (
 )
 from webviz_subsurface.plugins._co2_migration._utilities.initialization import (
     init_containment_data_providers,
+    init_dates_per_ensemble,
     init_dictionary_of_content,
     init_map_attribute_names,
     init_menu_options,
@@ -197,6 +198,10 @@ class CO2Migration(WebvizPluginABC):
             self._ensemble_surface_providers = init_surface_providers(
                 webviz_settings, ensembles
             )
+            # Dates
+            self._ensemble_dates = init_dates_per_ensemble(
+                ensembles, self._map_attribute_names, self._ensemble_surface_providers
+            )
             # Polygons
             self._fault_polygon_handlers = {
                 ens: FaultPolygonsHandler(
@@ -297,30 +302,6 @@ class CO2Migration(WebvizPluginABC):
             .component_unique_id(component_id)
             .to_string()
         )
-
-    def _ensemble_dates(self, ens: str) -> List[str]:
-        surface_provider = self._ensemble_surface_providers[ens]
-        date_map_attribute = next(
-            (
-                k
-                for k in self._map_attribute_names.filtered_values
-                if MapType[k.name].value != "MIGRATION_TIME"
-            ),
-            None,
-        )
-        att_name = (
-            self._map_attribute_names[date_map_attribute]
-            if date_map_attribute is not None
-            else None
-        )
-        dates = (
-            None
-            if att_name is None
-            else surface_provider.surface_dates_for_attribute(att_name)
-        )
-        if dates is None:
-            raise ValueError(f"Failed to fetch dates for attribute '{att_name}'")
-        return dates
 
     # Might want to do some refactoring if this gets too big
     def _set_callbacks(self) -> None:
@@ -524,10 +505,10 @@ class CO2Migration(WebvizPluginABC):
             attribute = MapAttribute(attribute)
             if len(realization) == 0 or ensemble is None:
                 raise PreventUpdate
-            if isinstance(date, int):
-                datestr = self._ensemble_dates(ensemble)[date]
-            else:
+            if MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME":
                 datestr = None
+            else:
+                datestr = self._ensemble_dates[ensemble][date]
             # Contour data
             contour_data = None
             if MapType[MapAttribute(attribute).name].value == "PLUME":
@@ -659,13 +640,12 @@ class CO2Migration(WebvizPluginABC):
             if ensemble is None:
                 return {}, None
             # Dates
-            date_list = self._ensemble_dates(ensemble)
             dates = {
                 i: {
                     "label": f"{d[:4]}",
                     "style": {"writingMode": "vertical-rl"},
                 }
-                for i, d in enumerate(date_list)
+                for i, d in enumerate(self._ensemble_dates[ensemble])
             }
             if len(dates.keys()) > 0:
                 return dates, max(dates.keys())
