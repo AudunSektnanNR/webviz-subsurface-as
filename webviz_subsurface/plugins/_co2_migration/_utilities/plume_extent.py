@@ -8,6 +8,7 @@ import xtgeo
 MISSING_DEPENDENCIES = False
 try:
     import shapely.geometry
+    from skimage import measure
 except ImportError:
     MISSING_DEPENDENCIES = True
 
@@ -90,118 +91,23 @@ def _find_contours(
     z_values: np.ndarray,
 ) -> Iterable[np.ndarray]:
     """
-    Find contours using boundary detection and connected component analysis.
+    Find contours using scikit-image instead of matplotlib.
+    Returns contours as coordinate arrays similar to matplotlib's format.
     """
-    from scipy import ndimage
+    # Find contours at level 0.5 (equivalent to matplotlib's behavior)
+    contours = measure.find_contours(z_values.T, 0.5)
     
-    # Create binary mask
-    binary_mask = z_values >= 0.5
-    true_count = np.sum(binary_mask)
-    
-    if true_count == 0 or true_count == binary_mask.size:
-        return []
-    
-    # Find boundary using morphological operations
-    # Erode the mask and XOR with original to get the boundary
-    eroded = ndimage.binary_erosion(binary_mask, structure=np.ones((3, 3)))
-    boundary = binary_mask & ~eroded
-    
-    # Label connected components of the boundary
-    labeled_boundary, num_components = ndimage.label(boundary)
-    
+    # Convert pixel coordinates to real world coordinates
     result_contours = []
-    
-    for label_id in range(1, num_components + 1):
-        # Get coordinates for this boundary component
-        boundary_coords = np.where(labeled_boundary == label_id)
-        i_coords = boundary_coords[0]
-        j_coords = boundary_coords[1]
-        
-        if len(i_coords) < 3:  # Skip very small contours
-            continue
-        
-        # Convert to real-world coordinates
-        contour_points = []
-        for i, j in zip(i_coords, j_coords):
-            # Ensure we're within bounds
-            i = max(0, min(i, x_mesh.shape[0] - 1))
-            j = max(0, min(j, x_mesh.shape[1] - 1))
-            
-            x = x_mesh[i, j]
-            y = y_mesh[i, j]
-            contour_points.append([x, y])
-        
-        contour_points = np.array(contour_points)
-        
-        # Order points by angle from centroid
-        center_x = np.mean(contour_points[:, 0])
-        center_y = np.mean(contour_points[:, 1])
-        
-        angles = np.arctan2(contour_points[:, 1] - center_y, contour_points[:, 0] - center_x)
-        sort_indices = np.argsort(angles)
-        
-        ordered_contour = contour_points[sort_indices]
-        
-        # Close the contour
-        if len(ordered_contour) > 0:
-            ordered_contour = np.vstack([ordered_contour, ordered_contour[0]])
-            result_contours.append(ordered_contour)
+    for contour in contours:
+        # contour is in (row, col) format, we need (x, y)
+        # Also need to interpolate to get real world coordinates
+        real_contour = np.zeros_like(contour)
+        real_contour[:, 0] = np.interp(contour[:, 1], np.arange(x_mesh.shape[0]), x_mesh[:, 0])
+        real_contour[:, 1] = np.interp(contour[:, 0], np.arange(x_mesh.shape[1]), y_mesh[0, :])
+        result_contours.append(real_contour)
     
     return result_contours
-
-
-def _trace_contour_boundary(i_coords: np.ndarray, j_coords: np.ndarray, 
-                           x_mesh: np.ndarray, y_mesh: np.ndarray) -> np.ndarray:
-    """
-    Trace a contour boundary from pixel coordinates, creating an ordered path.
-    """
-    if len(i_coords) == 0:
-        return np.array([])
-    
-    # Convert to real-world coordinates
-    points = []
-    for i, j in zip(i_coords, j_coords):
-        # Ensure indices are within bounds
-        i_safe = max(0, min(i, x_mesh.shape[0] - 1))
-        j_safe = max(0, min(j, x_mesh.shape[1] - 1))
-        
-        x = x_mesh[i_safe, j_safe] if x_mesh.shape[1] > j_safe else x_mesh[i_safe, 0]
-        y = y_mesh[i_safe, j_safe] if y_mesh.shape[0] > i_safe else y_mesh[0, j_safe]
-        points.append([x, y])
-    
-    points = np.array(points)
-    
-    if len(points) < 3:
-        return points
-    
-    # Simple ordering: start from leftmost point and trace nearest neighbors
-    ordered_points = []
-    remaining_indices = list(range(len(points)))
-    
-    # Start with leftmost point
-    start_idx = np.argmin(points[:, 0])
-    current_idx = start_idx
-    ordered_points.append(points[current_idx])
-    remaining_indices.remove(current_idx)
-    
-    # Trace the contour by always going to the nearest remaining point
-    while remaining_indices:
-        current_point = ordered_points[-1]
-        distances = [np.linalg.norm(points[idx] - current_point) for idx in remaining_indices]
-        nearest_idx = remaining_indices[np.argmin(distances)]
-        
-        ordered_points.append(points[nearest_idx])
-        remaining_indices.remove(nearest_idx)
-        
-        # Prevent infinite loops
-        if len(ordered_points) > len(points):
-            break
-    
-    # Close the contour
-    if len(ordered_points) > 2:
-        ordered_points.append(ordered_points[0])
-    
-    return np.array(ordered_points)
 
 
 def _simplify(poly: np.ndarray, simplify_dist: float) -> List[List[float]]:
