@@ -878,8 +878,7 @@ def generate_co2_statistics_figure(
         mark_choice,
     )
 
-    # Remove if we want realization as label?
-    df = df.drop(columns=["REAL", "realization"]).reset_index(drop=True)
+    df = df.drop(columns=["REAL"]).reset_index(drop=True)
     fig = px.ecdf(
         df,
         x="amount",
@@ -891,6 +890,7 @@ def generate_co2_statistics_figure(
         line_dash="type" if mark_choice != "none" else None,
         line_dash_sequence=line_types,
         category_orders=cat_ord,
+        hover_data=["realization"],
     )
 
     if legend_only_traces is None:
@@ -901,7 +901,7 @@ def generate_co2_statistics_figure(
 
     fig.update_traces(
         hovertemplate="Type: %{data.name}<br>Amount: %{x:.3f}<br>"
-        "Probability: %{y:.3f}<extra></extra>",
+        "Probability: %{y:.3f}<br>Realization: %{customdata[0]}<extra></extra>",
     )
     fig.layout.yaxis.range = [-0.02, 1.02]
     fig.layout.legend.tracegroupgap = 0
