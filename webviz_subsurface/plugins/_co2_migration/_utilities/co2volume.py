@@ -542,8 +542,14 @@ def generate_co2_volume_figure(
         custom_data=["type", "prop"],
     )
     fig.update_traces(
-        hovertemplate="Type: %{customdata[0]}<br>Amount: %{x:.3f}<br>"
-        "Realization: %{y}<br>Proportion: %{customdata[1]}<extra></extra>",
+        hovertemplate=(
+            "<span style='font-family:Courier New;'>"
+            "Type       : %{customdata[0]}<br>"
+            "Amount     : %{x:.3f}<br>"
+            "Realization: %{y}<br>"
+            "Proportion : %{customdata[1]}"
+            "</span><extra></extra>"
+        ),
     )
     if legendonly_traces is not None:
         _toggle_trace_visibility(fig.data, legendonly_traces)
@@ -596,8 +602,14 @@ def generate_co2_time_containment_one_realization_figure(
         custom_data=["type", "prop"],
     )
     fig.update_traces(
-        hovertemplate="Type: %{customdata[0]}<br>Date: %{x}<br>"
-        "Amount: %{y:.3f}<br>Proportion: %{customdata[1]}<extra></extra>",
+        hovertemplate=(
+            "<span style='font-family:Courier New;'>"
+            "Type      : %{customdata[0]}<br>"
+            "Date      : %{x}<br>"
+            "Amount    : %{y:.3f}<br>"
+            "Proportion: %{customdata[1]}"
+            "</span><extra></extra>"
+        ),
     )
     _add_hover_info_in_field(fig, df, cat_ord, colors)
     fig.layout.yaxis.range = y_limits
@@ -659,8 +671,13 @@ def _add_hover_info_in_field(
                     y=y_vals,
                     mode="lines",
                     line=go.scatter.Line(color=color),
-                    text=f"Type: {name}<br>Date: {date_strings[date]}<br>"
-                    f"Amount: {amount:.3f}<br>Proportion: {prop}",
+                    text=(
+                        "<span style='font-family:Courier New;'>"
+                        f"Type      : {name}<br>"
+                        f"Date      : {date_strings[date]}<br>"
+                        f"Amount    : {amount:.3f}<br>"
+                        f"Proportion: {prop}"
+                    ),
                     opacity=0,
                     hoverinfo="text",
                     hoveron="points",
@@ -787,8 +804,13 @@ def generate_co2_time_containment_figure(
         fig.add_scatter(y=[0.0], **dummy_args, **args)
 
     hover_template = (
-        "Type: %{meta[1]}<br>Date: %{x}<br>Amount: %{y:.3f}<br>"
-        "Realization: %{meta[0]}<br>Proportion: %{customdata}"
+        "<span style='font-family:Courier New;'>"
+        "Type       : %{meta[1]}<br>"
+        "Date       : %{x}<br>"
+        "Amount     : %{y:.3f}<br>"
+        "Realization: %{meta[0]}<br>"
+        "Proportion : %{customdata}"
+        "</span><extra></extra>"
     )
 
     if containment_info.use_stats:
@@ -814,8 +836,12 @@ def generate_co2_time_containment_figure(
         )
         realizations = ["p10", "mean", "p90"]  # type: ignore
         hover_template = (
-            "Type: %{meta[1]}<br>Date: %{x}<br>Amount: %{y:.3f}<br>"
+            "<span style='font-family:Courier New;'>"
+            "Type     : %{meta[1]}<br>"
+            "Date     : %{x}<br>"
+            "Amount   : %{y:.3f}<br>"
             "Statistic: %{meta[0]}"
+            "</span><extra></extra>"
         )
     for rlz in realizations:
         lwd = 1.5 if rlz in ["p10", "p90"] else 2.5
@@ -900,8 +926,14 @@ def generate_co2_statistics_figure(
         _toggle_trace_visibility(fig.data, legend_only_traces)
 
     fig.update_traces(
-        hovertemplate="Type: %{data.name}<br>Amount: %{x:.3f}<br>"
-        "Probability: %{y:.3f}<br>Realization: %{customdata[0]}<extra></extra>",
+        hovertemplate=(
+            "<span style='font-family:Courier New;'>"
+            "Type       : %{data.name}<br>"
+            "Amount     : %{x:.3f}<br>"
+            "Probability: %{y:.3f}<br>"
+            "Realization: %{customdata[0]}"
+            "</span><extra></extra>"
+        ),
     )
     fig.layout.yaxis.range = [-0.02, 1.02]
     fig.layout.legend.tracegroupgap = 0
