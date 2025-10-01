@@ -27,6 +27,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     readable_name,
     set_plot_ids,
 )
+from webviz_subsurface.plugins._co2_migration._utilities.co2volume import export_figure_data_to_csv
 from webviz_subsurface.plugins._co2_migration._utilities.fault_polygons_handler import (
     FaultPolygonsHandler,
 )
@@ -899,19 +900,6 @@ class CO2Migration(WebvizPluginABC):
             print(f"\nCALLBACK export_data()")
             print(f"    n_clicks  : {n_clicks}")
             print(f"    active_tab: {active_tab}")
-            # print(bar_figure)
-            # print(time_figure)
-            # print(len(stats_figure["data"]))
-            # print(stats_figure["data"][0])
-            # for k, v in stats_figure["data"][0].items():
-            #     # if k != "customdata":
-            #     print(f"   {k}: {v}")
-            # print("")
-            # print(stats_figure["data"][1])
-            # for k, v in stats_figure["data"][1].items():
-            #     # if k != "customdata":
-            #     print(f"   {k}: {v}")
-            from ._utilities.co2volume import export_figure_data_to_csv  # NBNB-AS: Move
 
             # NBNB-AS: Can remove?:
             if n_clicks is None or n_clicks == 0:
@@ -920,27 +908,27 @@ class CO2Migration(WebvizPluginABC):
                 raise PreventUpdate
 
             print(f"Active tab: {active_tab}")
-            if active_tab == "tab-1":
-                raise PreventUpdate  # NBNB-AS: Not implemented yet
-                current_figure = bar_figure
-            elif active_tab == "tab-2":
-                raise PreventUpdate  # NBNB-AS: Not implemented yet
-                current_figure = time_figure
+            if active_tab == "tab-1" or active_tab == "tab-2":
+                LOGGER.warning(
+                    f"Download to CSV file not yet implemented for the current plot."
+                )
+                raise PreventUpdate
             elif active_tab == "tab-3":
                 current_figure = stats_figure
             else:
                 # Something went wrong, do not update
                 raise PreventUpdate
 
-            # print("\nBBBBBBBBBBBBBBBBBBBBBBBBBB")
-            # print(current_figure.data)
-            # print("CCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
-            # NBNB-AS: Can remove?
             if current_figure is None:
                 # print(f"No figure found for tab: {active_tab}")
                 print(f"\n\n\n---------------No figure found for tab: {active_tab}----------------")
                 raise PreventUpdate
 
             result = export_figure_data_to_csv(current_figure, f"co2_data_{active_tab}")
+            if result is None:
+                LOGGER.warning(
+                    f"Download to CSV file not yet implemented for the current plot."
+                )
+                raise PreventUpdate
             print(f"Export function returned: {type(result)}")
             return result

@@ -1206,7 +1206,7 @@ def get_statistics_dataframe_from_figure(fig_data, only_visible: bool = False) -
     return pd.DataFrame(data_records)
 
 
-def export_figure_data_to_csv(figure: Dict, filename_prefix: str = "co2_data") -> Dict[str, Any]:
+def export_figure_data_to_csv(figure: Dict, filename_prefix: str = "co2_data") -> Optional[Dict[str, Any]]:
     """Export visible figure data as CSV download."""
     print(f"Figure type      : {type(figure)}")
     print(f"Filename prefix  : {filename_prefix}")
@@ -1215,10 +1215,13 @@ def export_figure_data_to_csv(figure: Dict, filename_prefix: str = "co2_data") -
         # Convert dictionary to go.Figure (Dash State always returns dict)
         figure = go.Figure(figure)
         fig_data = figure.data
-        print("\n\n")
+        print("\n\nCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+        print(type(figure))
         print(type(fig_data))
         print(type(fig_data[0]))
-        print(fig_data)
+        if isinstance(fig_data[0], go.Box):
+            return None
+        # print(fig_data)
         print(f"Number of traces : {len(fig_data)}")
 
         only_visible = True
