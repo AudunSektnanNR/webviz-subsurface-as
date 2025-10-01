@@ -158,6 +158,7 @@ def _summary_graph_layout(
     time_plot_id: str,
     statistics_plot_id: str,
 ) -> List:
+    from dash import html, dcc
     return [
         wcc.Tabs(
             id="TAB",
@@ -175,6 +176,7 @@ def _summary_graph_layout(
                                     "displayModeBar": False,
                                 },
                             ),
+                            style={"backgroundColor": "#ffcccc", "border": "1px solid red"}  # Light red background
                         ),
                     ],
                 ),
@@ -190,6 +192,7 @@ def _summary_graph_layout(
                                     "displayModeBar": False,
                                 },
                             ),
+                            style={"backgroundColor": "#ccffcc", "border": "1px solid green"}  # Light green background
                         ),
                     ],
                 ),
@@ -198,16 +201,52 @@ def _summary_graph_layout(
                     value="tab-3",
                     children=[
                         html.Div(
-                            wcc.Graph(
-                                id=statistics_plot_id,
-                                figure=go.Figure(),
-                                config={
-                                    "displayModeBar": False,
-                                },
-                            ),
+                            [
+                                # Graph as the main content
+                                wcc.Graph(
+                                    id=statistics_plot_id,
+                                    figure=go.Figure(),
+                                    config={
+                                        "displayModeBar": False,
+                                    },
+                                ),
+                                # Button floating on top in upper right corner
+                                html.Button(
+                                    "⬇", 
+                                    id="btn-download-csv",
+                                    style={
+                                        "position": "absolute",
+                                        "top": "10px",
+                                        "right": "10px",
+                                        "backgroundColor": "#e0e0e0",  # Light grey background
+                                        "border": "1px solid #888888",  # Grey border
+                                        "padding": "6px 8px",  # Smaller padding
+                                        "borderRadius": "4px",
+                                        "cursor": "pointer",
+                                        "zIndex": "1000",  # Make sure it appears on top
+                                        "fontSize": "16px",  # Smaller font size
+                                        "fontWeight": "bold",
+                                        "display": "flex",
+                                        "alignItems": "center",  # Vertical centering
+                                        "justifyContent": "center",  # Horizontal centering
+                                        "lineHeight": "1",  # Prevents extra line spacing
+                                        "textAlign": "center",
+                                        "width": "32px",  # Fixed smaller width
+                                        "height": "32px"  # Fixed smaller height
+                                    }
+                                ),
+                            ],
+                            style={
+                                "backgroundColor": "#ccccff", 
+                                "border": "1px solid blue",
+                                "position": "relative",  # Important: makes absolute positioning relative to this container
+                                "height": "100%",
+                                "width": "100%"
+                            }
                         ),
                     ],
                 ),
             ],
         ),
+        # dcc.Download(id="download-dataframe-csv"),
     ]
