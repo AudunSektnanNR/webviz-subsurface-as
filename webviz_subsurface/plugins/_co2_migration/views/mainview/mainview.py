@@ -174,20 +174,21 @@ def _summary_graph_layout(
             [
                 # Download button floating in lower right - outside tabs
                 html.Button(
-                    "⬇",
+                    "⭳",  # Alternative symbols: "↓" "⭳" "🔽" "▼" "⬇" "💾" "📥"
                     id=csv_export_button_id,
-                    title="Download CSV data for current plot",
+                    title="Export data in current plot to a CSV file",
                     style={
                         "position": "absolute",
                         "bottom": "10px",
                         "right": "10px",
-                        "backgroundColor": "#e0e0e0",  # Light grey background
-                        "border": "1px solid #888888",  # Grey border
-                        "padding": "6px 8px",  # Smaller padding
+                        "backgroundColor": "#F4F4F4",
+                        "border": "1px solid #B0B0B0",
+                        "color": "#808080",
+                        "padding": "1px 2px",  # Smaller padding
                         "borderRadius": "4px",
-                        "cursor": "pointer",
+                        # "cursor": "pointer",
                         "zIndex": "1000",  # Make sure it appears on top
-                        "fontSize": "16px",  # Smaller font size
+                        "fontSize": "25px",  # Smaller font size
                         "fontWeight": "bold",
                         "display": "flex",
                         "alignItems": "center",  # Vertical centering
