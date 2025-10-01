@@ -1173,10 +1173,10 @@ def get_statistics_dataframe_from_figure(fig_data, only_visible: bool = False) -
             # Handle different trace types
             for j, (x_val, y_val) in xy_data.items():
                 record = {
-                    'trace_name': trace_name,
-                    'x_value': x_val,
-                    'y_value': y_val,
-                    'point_index': j
+                    'type': trace_name,
+                    'index': j,
+                    'x': x_val,
+                    'y': y_val,
                 }
                 print(record)
 
