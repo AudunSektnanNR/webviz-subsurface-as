@@ -172,13 +172,13 @@ def _summary_graph_layout(
         # Container for button and tabs
         html.Div(
             [
-                # Download button floating in upper right - outside tabs
+                # Download button floating in lower right - outside tabs
                 html.Button(
                     "⬇", 
                     id=csv_export_button_id,
                     style={
                         "position": "absolute",
-                        "top": "10px",
+                        "bottom": "10px",
                         "right": "10px",
                         "backgroundColor": "#e0e0e0",  # Light grey background
                         "border": "1px solid #888888",  # Grey border
@@ -214,7 +214,7 @@ def _summary_graph_layout(
                                             "displayModeBar": False,
                                         },
                                     ),
-                                    style={"backgroundColor": "#ffcccc", "border": "1px solid red"}  # Light red background
+                                    # style={"backgroundColor": "#ffcccc", "border": "1px solid red"}  # Light red background
                                 ),
                             ],
                         ),
@@ -230,7 +230,7 @@ def _summary_graph_layout(
                                             "displayModeBar": False,
                                         },
                                     ),
-                                    style={"backgroundColor": "#ccffcc", "border": "1px solid green"}  # Light green background
+                                    # style={"backgroundColor": "#ccffcc", "border": "1px solid green"}  # Light green background
                                 ),
                             ],
                         ),
@@ -246,7 +246,7 @@ def _summary_graph_layout(
                                             "displayModeBar": False,
                                         },
                                     ),
-                                    style={"backgroundColor": "#ccccff", "border": "1px solid blue"}  # Light blue background
+                                    # style={"backgroundColor": "#ccccff", "border": "1px solid blue"}  # Light blue background
                                 ),
                             ],
                         ),
