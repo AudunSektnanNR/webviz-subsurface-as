@@ -310,7 +310,7 @@ class CO2Migration(WebvizPluginABC):
             self._add_legend_change_callback()
             self._add_set_unit_list_callback()
             self._add_time_plot_visibility_callback()
-            self._add_statistics_export_callback()
+            self._add_csv_export_callback()
 
         if self._content["maps"]:
             self._add_set_dates_callback()
@@ -879,7 +879,7 @@ class CO2Migration(WebvizPluginABC):
             return False
         return any("visible" in e for e in event if isinstance(e, dict))
 
-    def _add_statistics_export_callback(self) -> None:
+    def _add_csv_export_callback(self) -> None:
         @callback(
             Output(self._view_component(MapViewElement.Ids.DOWNLOAD_CSV), "data"),
             Input(self._view_component(MapViewElement.Ids.CSV_EXPORT_BUTTON), "n_clicks"),
@@ -890,33 +890,33 @@ class CO2Migration(WebvizPluginABC):
             prevent_initial_call=True,
         )
         def export_data(
-            n_clicks: int, 
-            active_tab: str, 
+            n_clicks: int,
+            active_tab: str,
             bar_figure: go.Figure,
             time_figure: go.Figure,
             stats_figure: go.Figure
         ) -> Dict[str, Any]:
             print(f"\nCALLBACK export_data() called with n_clicks={n_clicks}, active_tab={active_tab}")
             from ._utilities.co2volume import export_figure_data_to_csv
-            
+
             if n_clicks is None or n_clicks == 0:
                 print("n_clicks is None or 0, raising PreventUpdate")
                 raise PreventUpdate
-                
+
             print(f"Processing export for tab: {active_tab}")
-            
+
             # Determine which figure to export based on active tab
             figure_map = {
                 "tab-1": bar_figure,          # Containment state
-                "tab-2": time_figure,         # Containment over time  
+                "tab-2": time_figure,         # Containment over time
                 "tab-3": stats_figure         # Statistics
             }
-            
+
             current_figure = figure_map.get(active_tab)
             if current_figure is None:
                 print(f"No figure found for tab: {active_tab}")
                 raise PreventUpdate
-                
+
             print(f"Found figure for tab: {active_tab}, calling export function")
             # Export the data
             result = export_figure_data_to_csv(current_figure, f"co2_data_{active_tab}")

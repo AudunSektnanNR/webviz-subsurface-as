@@ -174,7 +174,7 @@ def _summary_graph_layout(
             [
                 # Download button floating in lower right - outside tabs
                 html.Button(
-                    "⬇", 
+                    "⬇",
                     id=csv_export_button_id,
                     style={
                         "position": "absolute",
