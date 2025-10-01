@@ -1135,9 +1135,13 @@ def _toggle_trace_visibility(traces: List, legendonly_names: List[str]) -> None:
             t.visible = True
 
 
-def get_statistics_dataframe_from_figure(figure: go.Figure) -> pd.DataFrame:
-    """Extract data from a plotly figure and return as DataFrame."""
-    print(f"\nget_statistics_dataframe_from_figure called")
+def get_statistics_dataframe_from_figure(figure: go.Figure, only_visible: bool = False) -> pd.DataFrame:
+    """Extract data from a plotly figure and return as DataFrame.
+    
+    Args:
+        figure: The plotly figure to extract data from
+        only_visible: If True, only extract data from visible traces. If False, extract all traces.
+    """
     if not figure or not figure.data:
         print("Figure is None or has no data")
         return pd.DataFrame()
@@ -1145,6 +1149,11 @@ def get_statistics_dataframe_from_figure(figure: go.Figure) -> pd.DataFrame:
     print(f"Figure has {len(figure.data)} traces")
     data_records = []
     for i, trace in enumerate(figure.data):
+        # Skip hidden traces if only_visible is True
+        if only_visible and hasattr(trace, 'visible') and trace.visible == 'legendonly':
+            print(f"  Skipping hidden trace {i}: {getattr(trace, 'name', 'Unknown')}")
+            continue
+            
         print(f"Processing trace {i}: {getattr(trace, 'name', 'Unknown')}")
         if hasattr(trace, 'x') and hasattr(trace, 'y'):
             trace_name = getattr(trace, 'name', 'Unknown')
@@ -1160,6 +1169,7 @@ def get_statistics_dataframe_from_figure(figure: go.Figure) -> pd.DataFrame:
                     'y_value': y_val,
                     'point_index': j
                 }
+                print(record)
 
                 # Add custom data if available
                 if hasattr(trace, 'customdata') and trace.customdata is not None:
@@ -1172,91 +1182,43 @@ def get_statistics_dataframe_from_figure(figure: go.Figure) -> pd.DataFrame:
                             else:
                                 record['custom_data'] = custom
                     except (IndexError, TypeError):
+                        print("Nope")
                         pass
 
                 data_records.append(record)
+                print("BBB")
         else:
             print(f"  Trace {i} has no x or y data")
+            pass
 
     print(f"Extracted {len(data_records)} data records")
     return pd.DataFrame(data_records)
 
 
-def get_visible_statistics_dataframe_from_figure(figure: go.Figure) -> pd.DataFrame:
-    """Extract data only from visible traces in a plotly figure."""
-    if not figure or not figure.data:
-        return pd.DataFrame()
-
-    data_records = []
-    for trace in figure.data:
-        # Skip hidden traces
-        if hasattr(trace, 'visible') and trace.visible == 'legendonly':
-            continue
-
-        if hasattr(trace, 'x') and hasattr(trace, 'y'):
-            trace_name = getattr(trace, 'name', 'Unknown')
-            x_data = trace.x if trace.x is not None else []
-            y_data = trace.y if trace.y is not None else []
-
-            for i, (x_val, y_val) in enumerate(zip(x_data, y_data)):
-                record = {
-                    'trace_name': trace_name,
-                    'x_value': x_val,
-                    'y_value': y_val,
-                    'point_index': i
-                }
-
-                # Add custom data if available
-                if hasattr(trace, 'customdata') and trace.customdata is not None:
-                    try:
-                        if i < len(trace.customdata):
-                            custom = trace.customdata[i]
-                            if isinstance(custom, (list, tuple)) and len(custom) > 0:
-                                record['realization'] = custom[0] if len(custom) > 0 else None
-                                record['proportion'] = custom[1] if len(custom) > 1 else None
-                            else:
-                                record['custom_data'] = custom
-                    except (IndexError, TypeError):
-                        pass
-
-                data_records.append(record)
-
-    return pd.DataFrame(data_records)
-
-
 def export_figure_data_to_csv(figure: Dict, filename_prefix: str = "co2_data") -> Dict[str, Any]:
     """Export visible figure data as CSV download."""
-    print(f"\nexport_figure_data_to_csv called with filename_prefix: {filename_prefix}")
-    print(f"Figure type: {type(figure)}")
-
+    print(f"Figure type      : {type(figure)}")
+    print(f"Filename prefix  : {filename_prefix}")
     try:
         # Convert dictionary to go.Figure (Dash State always returns dict)
-        print("Converting dict to go.Figure")
         figure = go.Figure(figure)
+        print(f"Number of traces : {len(figure.data)}")
 
-        print(f"Figure converted, has {len(figure.data)} traces")
-
-        df = get_visible_statistics_dataframe_from_figure(figure)
-        print(f"Visible data DataFrame shape: {df.shape}")
-
-        if df.empty:
-            print("Visible data is empty, trying all data")
-            # Fallback to all data if no visible data
-            df = get_statistics_dataframe_from_figure(figure)
-            print(f"All data DataFrame shape: {df.shape}")
+        only_visible = True
+        print(f"Data to extract  : {'only visible' if only_visible else 'all'}")
+        df = get_statistics_dataframe_from_figure(figure, only_visible)
+        print(f"DataFrame shape  : {df.shape}")
+        print(df)
 
         if df.empty:
+            # NBNB-AS: How to handle this
             print("DataFrame is empty, returning empty CSV")
             return {"content": "", "filename": f"{filename_prefix}_empty.csv"}
 
-        print(f"DataFrame columns: {list(df.columns)}")
-        print(f"DataFrame head:\n{df.head()}")
-
-        # Create CSV content
+        print(f"DataFrame columns: {','.join(list(df.columns))}")
         csv_content = df.to_csv(index=False)
-        print(f"CSV content length: {len(csv_content)}")
 
-        print("Absolute path of file to be created:")
+        print(f"Absolute path  : {os.path.abspath(f'{filename_prefix}.csv')}")
         import os
         print(os.path.abspath(f"{filename_prefix}.csv"))
         result = dcc.send_data_frame(
@@ -1264,15 +1226,14 @@ def export_figure_data_to_csv(figure: Dict, filename_prefix: str = "co2_data") -
             filename=f"{filename_prefix}.csv",
             index=False
         )
-        print(f"dcc.send_data_frame returned: {type(result)}")
         return result
 
     except Exception as e:
         print(f"Exception in export_figure_data_to_csv: {e}")
         # Return empty file if export fails
-        error_df = pd.DataFrame({"error": [f"Export failed: {str(e)}"]})
-        return dcc.send_data_frame(
-            error_df.to_csv,
-            filename=f"{filename_prefix}_error.csv",
-            index=False
-        )
+        # error_df = pd.DataFrame({"error": [f"Export failed: {str(e)}"]})
+        # return dcc.send_data_frame(
+        #     error_df.to_csv,
+        #     filename=f"{filename_prefix}_error.csv",
+        #     index=False
+        # )

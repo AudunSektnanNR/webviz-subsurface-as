@@ -176,6 +176,7 @@ def _summary_graph_layout(
                 html.Button(
                     "⬇",
                     id=csv_export_button_id,
+                    title="Download CSV data for current plot",
                     style={
                         "position": "absolute",
                         "bottom": "10px",
@@ -194,7 +195,8 @@ def _summary_graph_layout(
                         "lineHeight": "1",  # Prevents extra line spacing
                         "textAlign": "center",
                         "width": "32px",  # Fixed smaller width
-                        "height": "32px"  # Fixed smaller height
+                        "height": "32px",  # Fixed smaller height
+                        # "transition": "all 2.2s ease"  # Smooth transitions
                     }
                 ),
                 # Tabs container

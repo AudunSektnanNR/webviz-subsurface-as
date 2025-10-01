@@ -896,16 +896,19 @@ class CO2Migration(WebvizPluginABC):
             time_figure: go.Figure,
             stats_figure: go.Figure
         ) -> Dict[str, Any]:
-            print(f"\nCALLBACK export_data() called with n_clicks={n_clicks}, active_tab={active_tab}")
-            from ._utilities.co2volume import export_figure_data_to_csv
+            print(f"\nCALLBACK export_data()")
+            print(f"    n_clicks  : {n_clicks}")
+            print(f"    active_tab: {active_tab}")
+            from ._utilities.co2volume import export_figure_data_to_csv  # NBNB-AS: Move
 
+            # NBNB-AS: Can remove?:
             if n_clicks is None or n_clicks == 0:
                 print("n_clicks is None or 0, raising PreventUpdate")
+                # print("\n\n--------------n_clicks is None or 0, raising PreventUpdate---------------")
                 raise PreventUpdate
 
-            print(f"Processing export for tab: {active_tab}")
+            print(f"Active tab: {active_tab}")
 
-            # Determine which figure to export based on active tab
             figure_map = {
                 "tab-1": bar_figure,          # Containment state
                 "tab-2": time_figure,         # Containment over time
@@ -913,12 +916,12 @@ class CO2Migration(WebvizPluginABC):
             }
 
             current_figure = figure_map.get(active_tab)
+            # NBNB-AS: Can remove?
             if current_figure is None:
-                print(f"No figure found for tab: {active_tab}")
+                # print(f"No figure found for tab: {active_tab}")
+                print(f"\n\n\n---------------No figure found for tab: {active_tab}----------------")
                 raise PreventUpdate
 
-            print(f"Found figure for tab: {active_tab}, calling export function")
-            # Export the data
             result = export_figure_data_to_csv(current_figure, f"co2_data_{active_tab}")
             print(f"Export function returned: {type(result)}")
             return result
