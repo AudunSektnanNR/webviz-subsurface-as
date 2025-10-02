@@ -1,6 +1,7 @@
 # pylint: disable=too-many-lines
 # pylint: disable=C0103
 # NBNB-AS: We should address this pylint message soon
+import logging
 import os
 import warnings
 from datetime import datetime as dt
@@ -24,6 +25,8 @@ from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 class _Columns(StrEnum):
@@ -1206,11 +1209,10 @@ def get_statistics_dataframe_from_figure(fig_data, only_visible: bool = False) -
     return pd.DataFrame(data_records)
 
 
-def export_figure_data_to_csv(figure: Dict, filename_prefix: str = "co2_data") -> Optional[Dict[str, Any]]:
+def export_figure_data_to_csv(figure: Dict, file_name: str) -> Optional[Dict[str, Any]]:
     """Export visible figure data as CSV download."""
     print(f"Figure type      : {type(figure)}")
-    print(f"Filename prefix  : {filename_prefix}")
-    # print(figure["data"])
+    print(f"Filename         : {file_name}")
     try:
         # Convert dictionary to go.Figure (Dash State always returns dict)
         figure = go.Figure(figure)
@@ -1220,6 +1222,9 @@ def export_figure_data_to_csv(figure: Dict, filename_prefix: str = "co2_data") -
         print(type(fig_data))
         print(type(fig_data[0]))
         if isinstance(fig_data[0], go.Box):
+            LOGGER.warning(
+                f"Download to CSV file not yet implemented for box plot."
+            )
             return None
         # print(fig_data)
         print(f"Number of traces : {len(fig_data)}")
@@ -1231,28 +1236,24 @@ def export_figure_data_to_csv(figure: Dict, filename_prefix: str = "co2_data") -
         print(df)
 
         if df.empty:
-            # NBNB-AS: How to handle this
-            print("DataFrame is empty, returning empty CSV")
-            return {"content": "", "filename": f"{filename_prefix}_empty.csv"}
+            LOGGER.warning(
+                f"No plot data to export to CSV file."
+            )
+            return None
 
         print(f"DataFrame columns: {','.join(list(df.columns))}")
         csv_content = df.to_csv(index=False)
 
-        print(f"Absolute path  : {os.path.abspath(f'{filename_prefix}.csv')}")
-        print(os.path.abspath(f"{filename_prefix}.csv"))
+        print(f"Absolute path  : {os.path.abspath(file_name)}")
         result = dcc.send_data_frame(
             df.to_csv,
-            filename=f"{filename_prefix}.csv",
+            filename=file_name,
             index=False
         )
         return result
 
     except Exception as e:
-        print(f"Exception in export_figure_data_to_csv: {e}")
-        # Return empty file if export fails
-        # error_df = pd.DataFrame({"error": [f"Export failed: {str(e)}"]})
-        # return dcc.send_data_frame(
-        #     error_df.to_csv,
-        #     filename=f"{filename_prefix}_error.csv",
-        #     index=False
-        # )
+        LOGGER.warning(
+            f"Failed to export plot data to CSV file: {e}"
+        )
+        return None

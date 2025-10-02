@@ -180,6 +180,7 @@ class CO2Migration(WebvizPluginABC):
     ):
         super().__init__()
         self._error_message = ""
+        self._csv_export_counter = 1
         try:
             ensemble_paths = {
                 ensemble_name: webviz_settings.shared_settings["scratch_ensembles"][
@@ -908,6 +909,7 @@ class CO2Migration(WebvizPluginABC):
                 raise PreventUpdate
 
             print(f"Active tab: {active_tab}")
+            file_name = "co2_migration"
             if active_tab == "tab-1" or active_tab == "tab-2":
                 LOGGER.warning(
                     f"Download to CSV file not yet implemented for the current plot."
@@ -915,6 +917,7 @@ class CO2Migration(WebvizPluginABC):
                 raise PreventUpdate
             elif active_tab == "tab-3":
                 current_figure = stats_figure
+                file_name += "_prob_plot"
             else:
                 # Something went wrong, do not update
                 raise PreventUpdate
@@ -924,11 +927,11 @@ class CO2Migration(WebvizPluginABC):
                 print(f"\n\n\n---------------No figure found for tab: {active_tab}----------------")
                 raise PreventUpdate
 
-            result = export_figure_data_to_csv(current_figure, f"co2_data_{active_tab}")
+            file_name += f"_{self._csv_export_counter}.csv"
+            result = export_figure_data_to_csv(current_figure, file_name)
+
             if result is None:
-                LOGGER.warning(
-                    f"Download to CSV file not yet implemented for the current plot."
-                )
                 raise PreventUpdate
+            self._csv_export_counter += 1
             print(f"Export function returned: {type(result)}")
             return result
