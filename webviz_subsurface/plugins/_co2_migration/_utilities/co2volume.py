@@ -1134,7 +1134,7 @@ def _toggle_trace_visibility(traces: List, legendonly_names: List[str]) -> None:
             t.visible = True
 
 
-def extract_df_from_fig(fig_data, only_visible: bool = False) -> pd.DataFrame:
+def extract_df_from_fig(fig_data) -> pd.DataFrame:
     # if not fig_data:
     #     print("Figure is None or has no data")
     #     return pd.DataFrame()
@@ -1142,9 +1142,8 @@ def extract_df_from_fig(fig_data, only_visible: bool = False) -> pd.DataFrame:
     print(f"Figure has {len(fig_data)} traces")
     data_records = []
     for i, trace in enumerate(fig_data):
-        # Skip hidden traces if only_visible is True
-        if only_visible and hasattr(trace, 'visible') and trace.visible == 'legendonly':
-            print(f"  Skipping hidden trace {i}: {getattr(trace, 'name', 'Unknown')}")
+        if hasattr(trace, 'visible') and trace.visible == 'legendonly':
+            # Skip hidden traces
             continue
             
         print(f"Processing trace {i}: {getattr(trace, 'name', 'Unknown')}")
@@ -1178,7 +1177,7 @@ def extract_df_from_fig(fig_data, only_visible: bool = False) -> pd.DataFrame:
                 }
                 print(record)
 
-                if False:  # NBNB-AS: Test later
+                if False:
                     # Add custom data if available
                     if hasattr(trace, 'customdata') and trace.customdata is not None:
                         try:

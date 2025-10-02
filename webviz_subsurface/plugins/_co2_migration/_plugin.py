@@ -892,23 +892,12 @@ class CO2Migration(WebvizPluginABC):
             prevent_initial_call=True,
         )
         def export_data(
-            n_clicks: int,
+            _n_clicks: int,
             active_tab: str,
             bar_figure: go.Figure,
             time_figure: go.Figure,
             stats_figure: go.Figure,
         ) -> Dict[str, Any]:
-            print(f"\nCALLBACK export_data()")
-            print(f"    n_clicks  : {n_clicks}")
-            print(f"    active_tab: {active_tab}")
-
-            # NBNB-AS: Can remove?:
-            if n_clicks is None or n_clicks == 0:
-                print("n_clicks is None or 0, raising PreventUpdate")
-                # print("\n\n--------------n_clicks is None or 0, raising PreventUpdate---------------")
-                raise PreventUpdate
-
-            print(f"Active tab: {active_tab}")
             file_name = "co2_migration"
             if active_tab in [MainTabOption.CONTAINMENT_STATE, MainTabOption.CONTAINMENT_OVER_TIME]:
                 LOGGER.warning(
@@ -919,13 +908,7 @@ class CO2Migration(WebvizPluginABC):
                 current_figure = stats_figure
                 file_name += "_prob_plot"
             else:
-                # Something went wrong, do not update
-                raise PreventUpdate
-
-            if current_figure is None:
-                # print(f"No figure found for tab: {active_tab}")
-                print(f"\n\n\n---------------No figure found for tab: {active_tab}----------------")
-                raise PreventUpdate
+                raise PreventUpdate  # Should not happen
 
             file_name += f"_{self._csv_export_counter}.csv"
             result = export_figure_data_to_csv(current_figure, file_name)
@@ -933,5 +916,4 @@ class CO2Migration(WebvizPluginABC):
             if result is None:
                 raise PreventUpdate
             self._csv_export_counter += 1
-            print(f"Export function returned: {type(result)}")
             return result

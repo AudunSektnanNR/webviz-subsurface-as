@@ -649,31 +649,17 @@ def process_summed_mass(
 
 
 def export_figure_data_to_csv(figure: Dict, file_name: str) -> Optional[Dict[str, Any]]:
-    """Export visible figure data as CSV download."""
-    print(f"Figure type      : {type(figure)}")
-    print(f"Filename         : {file_name}")
+    """Export visible figure data to CSV file"""
     try:
-        # Convert dictionary to go.Figure (Dash State always returns dict)
-        figure = go.Figure(figure)
+        figure = go.Figure(figure)  # Dash State returns dict
         fig_data = figure.data
-        print("\n\nCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
-        print(type(figure))
-        print(type(fig_data))
-        print(type(fig_data[0]))
         if isinstance(fig_data[0], go.Box):
             LOGGER.warning(
                 f"Download to CSV file not yet implemented for box plot."
             )
             return None
-        # print(fig_data)
-        print(f"Number of traces : {len(fig_data)}")
 
-        only_visible = True
-        print(f"Data to extract  : {'only visible' if only_visible else 'all'}")
-        df = extract_df_from_fig(fig_data, only_visible)
-        print(f"DataFrame shape  : {df.shape}")
-        print(df)
-
+        df = extract_df_from_fig(fig_data)
         if df.empty:
             LOGGER.warning(
                 f"No plot data to export to CSV file."
