@@ -1156,45 +1156,55 @@ def extract_df_from_fig(fig_data, tab_choice: str) -> pd.DataFrame:
         if hasattr(trace, 'visible') and trace.visible == 'legendonly':
             # Skip hidden traces
             continue
+        if not hasattr(trace, 'name') or trace.name is None:
+            continue  # Happens for containment_time_single plots
             
         print(f"\n\n\n\nProcessing trace {i}: {getattr(trace, 'name', 'Unknown')}")
         print(trace)
         if hasattr(trace, 'x') and hasattr(trace, 'y'):
             trace_name = getattr(trace, 'name', 'Unknown')
             print(f"trace name: {trace_name}")
-            if trace.x is not None and "_inputArray" in trace.x:
-                x_data = trace.x["_inputArray"]
-                x_data = {int(k): v for k, v in x_data.items() if str(k).isdigit()}
-            if plot_type == "probability":
+            if plot_type in ["probability", "bar"]:
+                if trace.x is not None and "_inputArray" in trace.x:
+                    x_data = trace.x["_inputArray"]
+                    x_data = {int(k): v for k, v in x_data.items() if str(k).isdigit()}
+            elif plot_type == "containment_time_multiple":
+                pass
+            elif plot_type == "containment_time_single":
+                if trace.x is not None:
+                    x_data = {k: v for k, v in enumerate(trace.x)}
+            if plot_type in ["probability", "containment_time_single"]:
                 if trace.y is not None and "_inputArray" in trace.y:
                     y_data = trace.y["_inputArray"]
                     y_data = {int(k): v for k, v in y_data.items() if str(k).isdigit()}
             elif plot_type == "bar":
                 if trace.y is not None:
+                    # Kan vel fjerne int() for k ? Teste. Og isdigit()
                     y_data = {int(k): int(v) for k, v in enumerate(trace.y) if str(k).isdigit()}
             xy_data = {k: (x_data[k], y_data[k]) for k in x_data if k in y_data}
             print(f"  Trace has {len(x_data)} x points and {len(y_data)} y points")
             print(xy_data)
 
-            # Add custom data if available
-            custom_data = []
-            col_name = "customdata"
-            if hasattr(trace, "customdata") and trace.customdata is not None:
-                # print("\n\nHas custom data")
-                try:
-                    if hasattr(trace, "hovertemplate") and trace.hovertemplate is not None:
-                        # print("\n\nHas hovertemplate")
-                        # print(trace.hovertemplate)
-                        import re
-                        match = re.search(r'(\w+)\s*:\s*%\{customdata\[0\]\}', trace.hovertemplate)
-                        col_name = match.group(1).lower() if match else "customdata"
-                        # print(f"Extracting hover info into column '{col_name}'")
+            if plot_type == "probability":
+                # Add custom data if available
+                custom_data = []
+                col_name = "customdata"
+                if hasattr(trace, "customdata") and trace.customdata is not None:
+                    # print("\n\nHas custom data")
+                    try:
+                        if hasattr(trace, "hovertemplate") and trace.hovertemplate is not None:
+                            # print("\n\nHas hovertemplate")
+                            # print(trace.hovertemplate)
+                            import re
+                            match = re.search(r'(\w+)\s*:\s*%\{customdata\[0\]\}', trace.hovertemplate)
+                            col_name = match.group(1).lower() if match else "customdata"
+                            # print(f"Extracting hover info into column '{col_name}'")
 
-                    # print(trace.customdata["_inputArray"])
-                    custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
-                except (IndexError, TypeError):
-                    # print("Nope")
-                    pass
+                        # print(trace.customdata["_inputArray"])
+                        custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
+                    except (IndexError, TypeError):
+                        # print("Nope")
+                        pass
 
             # print("\n\nCustom data:")
             # print(custom_data)
@@ -1215,11 +1225,19 @@ def extract_df_from_fig(fig_data, tab_choice: str) -> pd.DataFrame:
                         'amount': x_val,
                         'realization': y_val,
                     }
+                elif plot_type == "containment_time_single":
+                    record = {
+                        'type': trace_name,
+                        'date': x_val,
+                        'amount': y_val,
+                        # 'realization': trace.meta[0] if hasattr(trace, 'meta') else 'Unknown',
+                    }
 
                 data_records.append(record)
         else:
             # print(f"  Trace {i} has no x or y data")
             pass
+        print(f"After trace {i}, total records: {len(data_records)}")
 
     print(f"Extracted {len(data_records)} data records")
     return pd.DataFrame(data_records)
