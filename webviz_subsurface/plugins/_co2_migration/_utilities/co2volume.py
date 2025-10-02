@@ -1167,34 +1167,41 @@ def extract_df_from_fig(fig_data) -> pd.DataFrame:
             print(y_data)
             print(xy_data)
 
+            # Add custom data if available
+            custom_data = []
+            col_name = "customdata"
+            if hasattr(trace, "customdata") and trace.customdata is not None:
+                print("\n\nHas custom data")
+                try:
+                    if hasattr(trace, "hovertemplate") and trace.hovertemplate is not None:
+                        print("\n\nHas hovertemplate")
+                        print(trace.hovertemplate)
+                        import re
+                        match = re.search(r'(\w+)\s*:\s*%\{customdata\[0\]\}', trace.hovertemplate)
+                        col_name = match.group(1).lower() if match else "customdata"
+                        print(f"Extracting hover info into column '{col_name}'")
+
+                    print(trace.customdata["_inputArray"])
+                    custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
+                except (IndexError, TypeError):
+                    print("Nope")
+                    pass
+
+            print("\n\nCustom data:")
+            print(custom_data)
+            print(col_name)
+
             # Handle different trace types
             for j, (x_val, y_val) in xy_data.items():
                 record = {
                     'type': trace_name,
-                    'index': j,
+                    # 'index': j,
                     'x': x_val,
                     'y': y_val,
+                    'realization': custom_data[j],
                 }
-                print(record)
 
-                if False:
-                    # Add custom data if available
-                    if hasattr(trace, 'customdata') and trace.customdata is not None:
-                        try:
-                            if j < len(trace.customdata):
-                                custom = trace.customdata[j]
-                                if isinstance(custom, (list, tuple)) and len(custom) > 0:
-                                    record['realization'] = custom[0] if len(custom) > 0 else None
-                                    record['proportion'] = custom[1] if len(custom) > 1 else None
-                                else:
-                                    record['custom_data'] = custom
-                        except (IndexError, TypeError):
-                            print("Nope")
-                            pass
-
-                print("BBB")
                 data_records.append(record)
-                print("CCC")
         else:
             print(f"  Trace {i} has no x or y data")
             pass
