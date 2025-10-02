@@ -15,6 +15,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     create_map_layers,
     create_map_viewports,
     derive_surface_address,
+    export_figure_data_to_csv,
     extract_legendonly,
     generate_containment_figures,
     generate_unsmry_figures,
@@ -27,7 +28,6 @@ from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     readable_name,
     set_plot_ids,
 )
-from webviz_subsurface.plugins._co2_migration._utilities.co2volume import export_figure_data_to_csv
 from webviz_subsurface.plugins._co2_migration._utilities.fault_polygons_handler import (
     FaultPolygonsHandler,
 )

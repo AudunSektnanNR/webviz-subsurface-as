@@ -1,3 +1,5 @@
+import logging
+import os
 import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -6,7 +8,7 @@ import geojson
 import numpy as np
 import plotly.graph_objects as go
 import webviz_subsurface_components as wsc
-from dash import no_update
+from dash import dcc, no_update
 from flask_caching import Cache
 
 from webviz_subsurface._providers import (
@@ -28,6 +30,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.co2volume import (
     generate_co2_time_containment_figure,
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
+    extract_df_from_fig,
 )
 from webviz_subsurface.plugins._co2_migration._utilities.containment_data_provider import (
     ContainmentDataProvider,
@@ -60,6 +63,8 @@ from webviz_subsurface.plugins._co2_migration._utilities.surface_publishing impo
 from webviz_subsurface.plugins._co2_migration._utilities.unsmry_data_provider import (
     UnsmryDataProvider,
 )
+
+LOGGER = logging.getLogger(__name__)
 
 
 def property_origin(
@@ -641,3 +646,53 @@ def process_summed_mass(
                     f" ({unit}) (Total: {summed_co2[summed_co2_key]:.2E}): "
                 )
     return surf_data, summed_co2
+
+
+def export_figure_data_to_csv(figure: Dict, file_name: str) -> Optional[Dict[str, Any]]:
+    """Export visible figure data as CSV download."""
+    print(f"Figure type      : {type(figure)}")
+    print(f"Filename         : {file_name}")
+    try:
+        # Convert dictionary to go.Figure (Dash State always returns dict)
+        figure = go.Figure(figure)
+        fig_data = figure.data
+        print("\n\nCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+        print(type(figure))
+        print(type(fig_data))
+        print(type(fig_data[0]))
+        if isinstance(fig_data[0], go.Box):
+            LOGGER.warning(
+                f"Download to CSV file not yet implemented for box plot."
+            )
+            return None
+        # print(fig_data)
+        print(f"Number of traces : {len(fig_data)}")
+
+        only_visible = True
+        print(f"Data to extract  : {'only visible' if only_visible else 'all'}")
+        df = extract_df_from_fig(fig_data, only_visible)
+        print(f"DataFrame shape  : {df.shape}")
+        print(df)
+
+        if df.empty:
+            LOGGER.warning(
+                f"No plot data to export to CSV file."
+            )
+            return None
+
+        print(f"DataFrame columns: {','.join(list(df.columns))}")
+        csv_content = df.to_csv(index=False)
+
+        print(f"Absolute path  : {os.path.abspath(file_name)}")
+        result = dcc.send_data_frame(
+            df.to_csv,
+            filename=file_name,
+            index=False
+        )
+        return result
+
+    except Exception as e:
+        LOGGER.warning(
+            f"Failed to export plot data to CSV file: {e}"
+        )
+        return None
