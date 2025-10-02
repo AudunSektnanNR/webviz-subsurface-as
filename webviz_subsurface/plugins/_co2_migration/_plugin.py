@@ -899,19 +899,28 @@ class CO2Migration(WebvizPluginABC):
             stats_figure: go.Figure,
         ) -> Dict[str, Any]:
             file_name = "co2_migration"
-            if active_tab in [MainTabOption.CONTAINMENT_STATE, MainTabOption.CONTAINMENT_OVER_TIME]:
-                LOGGER.warning(
-                    f"Download to CSV file not yet implemented for the current plot."
-                )
-                raise PreventUpdate
+            # if active_tab in [MainTabOption.CONTAINMENT_STATE, MainTabOption.CONTAINMENT_OVER_TIME]:
+            #     LOGGER.warning(
+            #         f"Download to CSV file not yet implemented for the current plot."
+            #     )
+            #     raise PreventUpdate
+            if active_tab == MainTabOption.CONTAINMENT_STATE:
+                current_figure = bar_figure
+                file_name += "_containment_state_plot"
+                tab_choice = "containment_state"
+            elif active_tab == MainTabOption.CONTAINMENT_OVER_TIME:
+                current_figure = time_figure
+                file_name += "_containment_time_plot"
+                tab_choice = "containment_time"
             elif active_tab == MainTabOption.STATISTICS:
                 current_figure = stats_figure
                 file_name += "_prob_plot"
+                tab_choice = "statistics"
             else:
                 raise PreventUpdate  # Should not happen
 
             file_name += f"_{self._csv_export_counter}.csv"
-            result = export_figure_data_to_csv(current_figure, file_name)
+            result = export_figure_data_to_csv(current_figure, file_name, tab_choice)
 
             if result is None:
                 raise PreventUpdate

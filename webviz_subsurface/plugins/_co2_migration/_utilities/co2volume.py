@@ -1134,10 +1134,21 @@ def _toggle_trace_visibility(traces: List, legendonly_names: List[str]) -> None:
             t.visible = True
 
 
-def extract_df_from_fig(fig_data) -> pd.DataFrame:
-    # if not fig_data:
-    #     print("Figure is None or has no data")
-    #     return pd.DataFrame()
+def extract_df_from_fig(fig_data, tab_choice: str) -> pd.DataFrame:
+    plot_type = "unknown"
+    if tab_choice == "containment_state":
+        plot_type = "bar"
+    elif tab_choice == "containment_time":
+        if hasattr(fig_data[0], 'stackgroup') and fig_data[0].stackgroup is not None:
+            plot_type = "containment_time_single"
+        else:
+            plot_type = "containment_time_multiple"
+    elif tab_choice == "statistics":
+        if isinstance(fig_data[0], go.Box):
+            plot_type = "box"
+        else:
+            plot_type = "probability"
+    print(f"\n\n\n\nPlot type: {plot_type}")
 
     print(f"Figure has {len(fig_data)} traces")
     data_records = []
@@ -1146,64 +1157,68 @@ def extract_df_from_fig(fig_data) -> pd.DataFrame:
             # Skip hidden traces
             continue
             
-        print(f"Processing trace {i}: {getattr(trace, 'name', 'Unknown')}")
+        print(f"\n\n\n\nProcessing trace {i}: {getattr(trace, 'name', 'Unknown')}")
         print(trace)
-        print(type(trace))
         if hasattr(trace, 'x') and hasattr(trace, 'y'):
             trace_name = getattr(trace, 'name', 'Unknown')
             print(f"trace name: {trace_name}")
-            # x_data = trace.x if trace.x is not None else []
-            # y_data = trace.y if trace.y is not None else []
             if trace.x is not None and "_inputArray" in trace.x:
                 x_data = trace.x["_inputArray"]
-                x_data = {k: v for k, v in x_data.items() if str(k).isdigit()}
-                # x_data = [x for x in x_data if isinstance(x, (int, float, str))]
-            if trace.y is not None and "_inputArray" in trace.y:
-                y_data = trace.y["_inputArray"]
-                y_data = {k: v for k, v in y_data.items() if str(k).isdigit()}
-            xy_data = {int(k): (x_data[k], y_data[k]) for k in x_data if k in y_data}
+                x_data = {int(k): v for k, v in x_data.items() if str(k).isdigit()}
+            if plot_type == "probability":
+                if trace.y is not None and "_inputArray" in trace.y:
+                    y_data = trace.y["_inputArray"]
+                    y_data = {int(k): v for k, v in y_data.items() if str(k).isdigit()}
+            elif plot_type == "bar":
+                if trace.y is not None:
+                    y_data = {int(k): int(v) for k, v in enumerate(trace.y) if str(k).isdigit()}
+            xy_data = {k: (x_data[k], y_data[k]) for k in x_data if k in y_data}
             print(f"  Trace has {len(x_data)} x points and {len(y_data)} y points")
-            print(x_data)
-            print(y_data)
             print(xy_data)
 
             # Add custom data if available
             custom_data = []
             col_name = "customdata"
             if hasattr(trace, "customdata") and trace.customdata is not None:
-                print("\n\nHas custom data")
+                # print("\n\nHas custom data")
                 try:
                     if hasattr(trace, "hovertemplate") and trace.hovertemplate is not None:
-                        print("\n\nHas hovertemplate")
-                        print(trace.hovertemplate)
+                        # print("\n\nHas hovertemplate")
+                        # print(trace.hovertemplate)
                         import re
                         match = re.search(r'(\w+)\s*:\s*%\{customdata\[0\]\}', trace.hovertemplate)
                         col_name = match.group(1).lower() if match else "customdata"
-                        print(f"Extracting hover info into column '{col_name}'")
+                        # print(f"Extracting hover info into column '{col_name}'")
 
-                    print(trace.customdata["_inputArray"])
+                    # print(trace.customdata["_inputArray"])
                     custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
                 except (IndexError, TypeError):
-                    print("Nope")
+                    # print("Nope")
                     pass
 
-            print("\n\nCustom data:")
-            print(custom_data)
-            print(col_name)
+            # print("\n\nCustom data:")
+            # print(custom_data)
+            # print(col_name)
 
             # Handle different trace types
             for j, (x_val, y_val) in xy_data.items():
-                record = {
-                    'type': trace_name,
-                    # 'index': j,
-                    'x': x_val,
-                    'y': y_val,
-                    'realization': custom_data[j],
-                }
+                if plot_type == "probability":
+                    record = {
+                        'type': trace_name,
+                        'x': x_val,
+                        'y': y_val,
+                        'realization': custom_data[j],
+                    }
+                elif plot_type == "bar":
+                    record = {
+                        'type': trace_name,
+                        'amount': x_val,
+                        'realization': y_val,
+                    }
 
                 data_records.append(record)
         else:
-            print(f"  Trace {i} has no x or y data")
+            # print(f"  Trace {i} has no x or y data")
             pass
 
     print(f"Extracted {len(data_records)} data records")
