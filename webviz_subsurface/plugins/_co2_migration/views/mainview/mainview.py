@@ -9,6 +9,7 @@ from webviz_config.webviz_plugin_subclasses import ViewABC, ViewElementABC
 from webviz_subsurface_components import SubsurfaceViewer
 
 from webviz_subsurface.plugins._co2_migration._types import LegendData
+from webviz_subsurface.plugins._co2_migration._utilities.containment_info import MainTabOption
 
 
 class MainView(ViewABC):
@@ -203,11 +204,11 @@ def _summary_graph_layout(
                 # Tabs container
                 wcc.Tabs(
                     id=summary_tabs_id,
-                    value="tab-1",
+                    value=MainTabOption.CONTAINMENT_STATE,
                     children=[
                         wcc.Tab(
                             label="Containment state",
-                            value="tab-1",
+                            value=MainTabOption.CONTAINMENT_STATE,
                             children=[
                                 html.Div(
                                     wcc.Graph(
@@ -223,7 +224,7 @@ def _summary_graph_layout(
                         ),
                         wcc.Tab(
                             label="Containment over time",
-                            value="tab-2",
+                            value=MainTabOption.CONTAINMENT_OVER_TIME,
                             children=[
                                 html.Div(
                                     wcc.Graph(
@@ -239,7 +240,7 @@ def _summary_graph_layout(
                         ),
                         wcc.Tab(
                             label="Statistics",
-                            value="tab-3",
+                            value=MainTabOption.STATISTICS,
                             children=[
                                 html.Div(
                                     wcc.Graph(

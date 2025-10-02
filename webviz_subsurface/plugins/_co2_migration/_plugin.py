@@ -63,7 +63,7 @@ from webviz_subsurface.plugins._co2_migration.views.mainview.settings import (
 from . import _error
 from ._types import LegendData
 from ._utilities.color_tables import co2migration_color_tables
-from ._utilities.containment_info import StatisticsTabOption
+from ._utilities.containment_info import MainTabOption, StatisticsTabOption
 
 LOGGER = logging.getLogger(__name__)
 TABLES_PATH = "share/results/tables"
@@ -910,12 +910,12 @@ class CO2Migration(WebvizPluginABC):
 
             print(f"Active tab: {active_tab}")
             file_name = "co2_migration"
-            if active_tab == "tab-1" or active_tab == "tab-2":
+            if active_tab in [MainTabOption.CONTAINMENT_STATE, MainTabOption.CONTAINMENT_OVER_TIME]:
                 LOGGER.warning(
                     f"Download to CSV file not yet implemented for the current plot."
                 )
                 raise PreventUpdate
-            elif active_tab == "tab-3":
+            elif active_tab == MainTabOption.STATISTICS:
                 current_figure = stats_figure
                 file_name += "_prob_plot"
             else:
