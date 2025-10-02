@@ -1153,27 +1153,35 @@ def extract_df_from_fig(fig_data, tab_choice: str) -> pd.DataFrame:
     print(f"Figure has {len(fig_data)} traces")
     data_records = []
     for i, trace in enumerate(fig_data):
+        print("\n")
         if hasattr(trace, 'visible') and trace.visible == 'legendonly':
             # Skip hidden traces
             continue
-        if not hasattr(trace, 'name') or trace.name is None:
-            continue  # Happens for containment_time_single plots
-            
-        print(f"\n\n\n\nProcessing trace {i}: {getattr(trace, 'name', 'Unknown')}")
+        if plot_type == "containment_time_multiple":
+            if not (hasattr(trace, 'showlegend') and trace.showlegend == False and hasattr(trace, 'name') and trace.name ==""):
+                continue  # Only keep subset of traces that we want (the data points)
+        elif plot_type == "containment_time_single":
+            if not hasattr(trace, 'name') or trace.name is None:
+                continue  # Happens for containment_time_single plots
+
+        print(f"Processing trace {i}: {getattr(trace, 'name', 'Unknown')}")
         print(trace)
-        if hasattr(trace, 'x') and hasattr(trace, 'y'):
+        if plot_type == "containment_time_multiple":
+            meta_data = getattr(trace, 'meta', None)
+            realization = meta_data[0] if meta_data is not None and len(meta_data) > 0 else -1
+            trace_name = meta_data[1] if meta_data is not None and len(meta_data) > 1 else 'Unknown'
+            print(f"  Realization: {realization}, trace name: {trace_name}")
+        else:
             trace_name = getattr(trace, 'name', 'Unknown')
-            print(f"trace name: {trace_name}")
+        if hasattr(trace, 'x') and hasattr(trace, 'y'):
             if plot_type in ["probability", "bar"]:
                 if trace.x is not None and "_inputArray" in trace.x:
                     x_data = trace.x["_inputArray"]
                     x_data = {int(k): v for k, v in x_data.items() if str(k).isdigit()}
-            elif plot_type == "containment_time_multiple":
-                pass
-            elif plot_type == "containment_time_single":
+            elif plot_type in ["containment_time_single", "containment_time_multiple"]:
                 if trace.x is not None:
                     x_data = {k: v for k, v in enumerate(trace.x)}
-            if plot_type in ["probability", "containment_time_single"]:
+            if plot_type in ["probability", "containment_time_single", "containment_time_multiple"]:
                 if trace.y is not None and "_inputArray" in trace.y:
                     y_data = trace.y["_inputArray"]
                     y_data = {int(k): v for k, v in y_data.items() if str(k).isdigit()}
@@ -1231,6 +1239,13 @@ def extract_df_from_fig(fig_data, tab_choice: str) -> pd.DataFrame:
                         'date': x_val,
                         'amount': y_val,
                         # 'realization': trace.meta[0] if hasattr(trace, 'meta') else 'Unknown',
+                    }
+                elif plot_type == "containment_time_multiple":
+                    record = {
+                        'type': trace_name,
+                        'realization': realization,
+                        'date': x_val,
+                        'amount': y_val,
                     }
 
                 data_records.append(record)
