@@ -1235,8 +1235,8 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
                 if plot_choice == "probability":
                     record = {
                         'type': trace_name,
-                        'x': x_val,
-                        'y': y_val,
+                        'amount': x_val,
+                        'probability': y_val,
                     }
                     if custom_data:
                         record['realization'] = custom_data[j]
@@ -1256,9 +1256,9 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
                 elif plot_choice == "containment_time_multiple":
                     record = {
                         'type': trace_name,
-                        'realization': realization,
                         'date': x_val,
                         'amount': y_val,
+                        'realization': realization,
                     }
 
                 data_records.append(record)

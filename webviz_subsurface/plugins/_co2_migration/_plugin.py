@@ -180,7 +180,7 @@ class CO2Migration(WebvizPluginABC):
     ):
         super().__init__()
         self._error_message = ""
-        self._csv_export_counter = 1
+        self._csv_export_counter: Dict[str, int] = {}
         try:
             ensemble_paths = {
                 ensemble_name: webviz_settings.shared_settings["scratch_ensembles"][
@@ -923,10 +923,14 @@ class CO2Migration(WebvizPluginABC):
             else:
                 raise PreventUpdate  # Should not happen
 
-            file_name += f"_{self._csv_export_counter}.csv"
+            if plot_choice not in self._csv_export_counter:
+                self._csv_export_counter[plot_choice] = 1
+            else:
+                self._csv_export_counter[plot_choice] += 1
+            file_name += f"_{self._csv_export_counter[plot_choice]}.csv"
             result = export_figure_data_to_csv(current_figure, file_name, plot_choice)
 
             if result is None:
+                self._csv_export_counter[plot_choice] -= 1
                 raise PreventUpdate
-            self._csv_export_counter += 1
             return result
