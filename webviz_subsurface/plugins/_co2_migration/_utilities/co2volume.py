@@ -1160,7 +1160,7 @@ def parse_hover_template(hover_template: str) -> dict:
     return parsed_hover_dict
 
 
-def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
+def extract_df_from_fig(fig_data: tuple, plot_choice: str) -> pd.DataFrame:
     if plot_choice == "containment_time":
         # Distinguish between single and multiple realizations selected:
         if hasattr(fig_data[0], "stackgroup") and fig_data[0].stackgroup is not None:
