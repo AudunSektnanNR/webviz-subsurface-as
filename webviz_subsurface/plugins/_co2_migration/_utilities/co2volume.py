@@ -1189,8 +1189,10 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
         if plot_choice == "box":
             if hasattr(trace, 'hovertemplate'):
                 hover_dict = parse_hover_template(trace.hovertemplate)
+                trace_name = hover_dict.get("Type", "Unknown")
+                trace_name = trace_name.replace(",", "_").replace(" ", "")
                 record = {
-                    'type': hover_dict.get("Type", "Unknown"),
+                    'type': trace_name,
                     'min': float(hover_dict.get("Min", -1)),
                     'lower_whisker': float(hover_dict.get("Lower whisker", -1)),
                     'p90': float(hover_dict.get("p90 (not shown)", -1)),
@@ -1267,8 +1269,12 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
                         'type': trace_name,
                         'date': x_val,
                         'amount': y_val,
-                        'realization': realization,
                     }
+                    if realization in ["p10", "p90", "mean"]:
+                        col_name = "statistic"
+                    else:
+                        col_name = "realization"
+                    record[col_name] = realization
 
                 data_records.append(record)
 
