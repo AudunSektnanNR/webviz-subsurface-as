@@ -9,7 +9,9 @@ from webviz_config.webviz_plugin_subclasses import ViewABC, ViewElementABC
 from webviz_subsurface_components import SubsurfaceViewer
 
 from webviz_subsurface.plugins._co2_migration._types import LegendData
-from webviz_subsurface.plugins._co2_migration._utilities.containment_info import MainTabOption
+from webviz_subsurface.plugins._co2_migration._utilities.containment_info import (
+    MainTabOption,
+)
 
 
 class MainView(ViewABC):
@@ -109,9 +111,15 @@ class MapViewElement(ViewElementABC):
                                 self.register_component_unique_id(
                                     self.Ids.STATISTICS_PLOT
                                 ),
-                                self.register_component_unique_id(self.Ids.CSV_EXPORT_BUTTON),
-                                self.register_component_unique_id(self.Ids.DOWNLOAD_CSV),
-                                self.register_component_unique_id(self.Ids.SUMMARY_TABS),
+                                self.register_component_unique_id(
+                                    self.Ids.CSV_EXPORT_BUTTON
+                                ),
+                                self.register_component_unique_id(
+                                    self.Ids.DOWNLOAD_CSV
+                                ),
+                                self.register_component_unique_id(
+                                    self.Ids.SUMMARY_TABS
+                                ),
                             )
                         ),
                     ],
@@ -169,6 +177,7 @@ def _summary_graph_layout(
     summary_tabs_id: str,
 ) -> List:
     from dash import html, dcc
+
     return [
         # Container for button and tabs
         html.Div(
@@ -199,7 +208,7 @@ def _summary_graph_layout(
                         "width": "32px",  # Fixed smaller width
                         "height": "32px",  # Fixed smaller height
                         # "transition": "all 2.2s ease"  # Smooth transitions
-                    }
+                    },
                 ),
                 # Tabs container
                 wcc.Tabs(
@@ -260,8 +269,8 @@ def _summary_graph_layout(
             style={
                 "position": "relative",  # Important: makes absolute positioning relative to this container
                 "height": "100%",
-                "width": "100%"
-            }
+                "width": "100%",
+            },
         ),
         dcc.Download(id=download_csv_id),
     ]

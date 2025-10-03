@@ -1149,11 +1149,11 @@ def parse_hover_template(hover_template: str) -> dict:
     parsed_hover_dict = {}
     for item in hover_template.split("<br>"):
         # Remove HTML tags (like <span style='font-family:Courier New;'>)
-        clean_item = re.sub(r'<[^>]*>', '', item)
+        clean_item = re.sub(r"<[^>]*>", "", item)
         clean_item = clean_item.strip()
 
-        if ':' in clean_item:
-            key, value = clean_item.split(':', 1)
+        if ":" in clean_item:
+            key, value = clean_item.split(":", 1)
             key = key.strip()
             value = value.strip()
             parsed_hover_dict[key] = value
@@ -1163,68 +1163,91 @@ def parse_hover_template(hover_template: str) -> dict:
 def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
     if plot_choice == "containment_time":
         # Distinguish between single and multiple realizations selected:
-        if hasattr(fig_data[0], 'stackgroup') and fig_data[0].stackgroup is not None:
+        if hasattr(fig_data[0], "stackgroup") and fig_data[0].stackgroup is not None:
             plot_choice = "containment_time_single"
         else:
             plot_choice = "containment_time_multiple"
 
-    print(f"\n\n\n\nPlot choice: {plot_choice}")
-
     data_records = []
     for i, trace in enumerate(fig_data):
-        if hasattr(trace, 'visible') and trace.visible == 'legendonly':
+        if hasattr(trace, "visible") and trace.visible == "legendonly":
             continue  # Skip hidden traces
         if plot_choice == "containment_time_multiple":
-            if not (hasattr(trace, 'showlegend') and trace.showlegend == False and hasattr(trace, 'name') and trace.name ==""):
-                continue  # Only keep subset of traces that we want (the data points)
+            if not (
+                hasattr(trace, "showlegend")
+                and trace.showlegend == False
+                and hasattr(trace, "name")
+                and trace.name == ""
+            ):
+                # Only keep subset of traces that we want (the data points)
+                continue
         elif plot_choice == "containment_time_single":
-            if not hasattr(trace, 'name') or trace.name is None:
-                continue  # Happens for containment_time_single plots
+            if not hasattr(trace, "name") or trace.name is None:
+                # Happens for containment_time_single plots
+                continue
         elif plot_choice == "box":
-            if not (hasattr(trace, 'showlegend') and trace.showlegend == False and hasattr(trace, 'opacity') and trace.opacity == 0):
-                continue  # Keep only the invisible box traces (they have all the data printed in the hoverbox)
+            if not (
+                hasattr(trace, "showlegend")
+                and trace.showlegend == False
+                and hasattr(trace, "opacity")
+                and trace.opacity == 0
+            ):
+                # Keep only the invisible box traces 
+                # (they have all the data printed in the hoverbox)
+                continue
 
-        print(f"Processing trace {i}: {getattr(trace, 'name', 'Unknown')}")
-        # print(trace)
         if plot_choice == "box":
-            if hasattr(trace, 'hovertemplate'):
+            if hasattr(trace, "hovertemplate"):
                 hover_dict = parse_hover_template(trace.hovertemplate)
                 trace_name = hover_dict.get("Type", "Unknown")
                 trace_name = trace_name.replace(",", "_").replace(" ", "")
                 record = {
-                    'type': trace_name,
-                    'min': float(hover_dict.get("Min", -1)),
-                    'lower_whisker': float(hover_dict.get("Lower whisker", -1)),
-                    'p90': float(hover_dict.get("p90 (not shown)", -1)),
-                    'q1': float(hover_dict.get("Q1", -1)),
-                    'median': float(hover_dict.get("Median", -1)),
-                    'q3': float(hover_dict.get("Q3", -1)),
-                    'p10': float(hover_dict.get("p10 (not shown)", -1)),
-                    'top_whisker': float(hover_dict.get("Top whisker", -1)),
-                    'max': float(hover_dict.get("Max", -1)),
+                    "type": trace_name,
+                    "min": float(hover_dict.get("Min", -1)),
+                    "lower_whisker": float(hover_dict.get("Lower whisker", -1)),
+                    "p90": float(hover_dict.get("p90 (not shown)", -1)),
+                    "q1": float(hover_dict.get("Q1", -1)),
+                    "median": float(hover_dict.get("Median", -1)),
+                    "q3": float(hover_dict.get("Q3", -1)),
+                    "p10": float(hover_dict.get("p10 (not shown)", -1)),
+                    "top_whisker": float(hover_dict.get("Top whisker", -1)),
+                    "max": float(hover_dict.get("Max", -1)),
                 }
                 data_records.append(record)
             else:
                 return pd.DataFrame(data_records)  # Return empty data frame
         else:
-            if not (hasattr(trace, 'x') and hasattr(trace, 'y')):
+            if not (hasattr(trace, "x") and hasattr(trace, "y")):
                 return pd.DataFrame(data_records)  # Return empty data frame
 
             if plot_choice == "containment_time_multiple":
-                meta_data = getattr(trace, 'meta', None)
-                realization = meta_data[0] if meta_data is not None and len(meta_data) > 0 else -1
-                trace_name = meta_data[1] if meta_data is not None and len(meta_data) > 1 else 'Unknown'
+                meta_data = getattr(trace, "meta", None)
+                realization = (
+                    meta_data[0] if meta_data is not None and len(meta_data) > 0 else -1
+                )
+                trace_name = (
+                    meta_data[1]
+                    if meta_data is not None and len(meta_data) > 1
+                    else "Unknown"
+                )
             else:
-                trace_name = getattr(trace, 'name', 'Unknown')
+                trace_name = getattr(trace, "name", "Unknown")
 
             if plot_choice in ["probability", "containment_state"]:
                 if trace.x is not None and "_inputArray" in trace.x:
                     x_data = trace.x["_inputArray"]
                     x_data = {int(k): v for k, v in x_data.items() if str(k).isdigit()}
-            elif plot_choice in ["containment_time_single", "containment_time_multiple"]:
+            elif plot_choice in [
+                "containment_time_single",
+                "containment_time_multiple",
+            ]:
                 if trace.x is not None:
                     x_data = {k: v for k, v in enumerate(trace.x)}
-            if plot_choice in ["probability", "containment_time_single", "containment_time_multiple"]:
+            if plot_choice in [
+                "probability",
+                "containment_time_single",
+                "containment_time_multiple",
+            ]:
                 if trace.y is not None and "_inputArray" in trace.y:
                     y_data = trace.y["_inputArray"]
                     y_data = {int(k): v for k, v in y_data.items() if str(k).isdigit()}
@@ -1235,40 +1258,49 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
 
             if plot_choice == "probability":
                 custom_data = []
-                if hasattr(trace, "customdata") and trace.customdata is not None and hasattr(trace, "hovertemplate") and trace.hovertemplate is not None:
-                    match = re.search(r'(\w+)\s*:\s*%\{customdata\[0\]\}', trace.hovertemplate)
+                if (
+                    hasattr(trace, "customdata")
+                    and trace.customdata is not None
+                    and hasattr(trace, "hovertemplate")
+                    and trace.hovertemplate is not None
+                ):
+                    match = re.search(
+                        r"(\w+)\s*:\s*%\{customdata\[0\]\}", trace.hovertemplate
+                    )
                     col_name = match.group(1).lower() if match else "customdata"
                     if col_name == "realization":
                         if "_inputArray" in trace.customdata:
-                            custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
+                            custom_data = [
+                                x["0"] for x in trace.customdata["_inputArray"]
+                            ]
 
             trace_name = trace_name.replace(",", "_").replace(" ", "")
             for j, (x_val, y_val) in xy_data.items():
                 if plot_choice == "probability":
                     record = {
-                        'type': trace_name,
-                        'amount': x_val,
-                        'probability': y_val,
+                        "type": trace_name,
+                        "amount": x_val,
+                        "probability": y_val,
                     }
                     if custom_data:
-                        record['realization'] = custom_data[j]
+                        record["realization"] = custom_data[j]
                 elif plot_choice == "containment_state":
                     record = {
-                        'type': trace_name,
-                        'amount': x_val,
-                        'realization': y_val,
+                        "type": trace_name,
+                        "amount": x_val,
+                        "realization": y_val,
                     }
                 elif plot_choice == "containment_time_single":
                     record = {
-                        'type': trace_name,
-                        'date': x_val,
-                        'amount': y_val,
+                        "type": trace_name,
+                        "date": x_val,
+                        "amount": y_val,
                     }
                 elif plot_choice == "containment_time_multiple":
                     record = {
-                        'type': trace_name,
-                        'date': x_val,
-                        'amount': y_val,
+                        "type": trace_name,
+                        "date": x_val,
+                        "amount": y_val,
                     }
                     if realization in ["p10", "p90", "mean"]:
                         col_name = "statistic"

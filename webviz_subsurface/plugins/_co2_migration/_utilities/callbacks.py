@@ -648,29 +648,20 @@ def process_summed_mass(
     return surf_data, summed_co2
 
 
-def export_figure_data_to_csv(figure: Dict, file_name: str, plot_choice: str) -> Optional[Dict[str, Any]]:
+def export_figure_data_to_csv(
+    figure: Dict, file_name: str, plot_choice: str
+) -> Optional[Dict[str, Any]]:
     """Export visible figure data to CSV file"""
     try:
         figure = go.Figure(figure)  # Dash State returns dict
-        fig_data = figure.data
-
-        df = extract_df_from_fig(fig_data, plot_choice)
+        df = extract_df_from_fig(figure.data, plot_choice)
         if df.empty:
-            LOGGER.warning(
-                f"No plot data to export to CSV file."
-            )
+            LOGGER.warning(f"No plot data to export to CSV file.")
             return None
 
-        print(f"Absolute path  : {os.path.abspath(file_name)}")
-        result = dcc.send_data_frame(
-            df.to_csv,
-            filename=file_name,
-            index=False
-        )
+        result = dcc.send_data_frame(df.to_csv, filename=file_name, index=False)
         return result
 
     except Exception as e:
-        LOGGER.warning(
-            f"Failed to export plot data to CSV file: {e}"
-        )
+        LOGGER.warning(f"Failed to export plot data to CSV file: {e}")
         return None

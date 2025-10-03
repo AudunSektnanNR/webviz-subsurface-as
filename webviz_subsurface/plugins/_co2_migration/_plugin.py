@@ -884,7 +884,9 @@ class CO2Migration(WebvizPluginABC):
     def _add_csv_export_callback(self) -> None:
         @callback(
             Output(self._view_component(MapViewElement.Ids.DOWNLOAD_CSV), "data"),
-            Input(self._view_component(MapViewElement.Ids.CSV_EXPORT_BUTTON), "n_clicks"),
+            Input(
+                self._view_component(MapViewElement.Ids.CSV_EXPORT_BUTTON), "n_clicks"
+            ),
             State(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
             State(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
             State(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
