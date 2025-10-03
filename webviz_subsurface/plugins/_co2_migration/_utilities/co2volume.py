@@ -1152,37 +1152,18 @@ def parse_hover_template(hover_template: str) -> dict:
 
 def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
     if plot_choice == "containment_time":
+        # Distinguish between single and multiple realizations selected:
         if hasattr(fig_data[0], 'stackgroup') and fig_data[0].stackgroup is not None:
             plot_choice = "containment_time_single"
         else:
             plot_choice = "containment_time_multiple"
 
-    # plot_type = "unknown"
-    # if plot_choice == "containment_state":
-    #     plot_type = "bar"
-    # elif plot_choice == "containment_time":
-    #     if hasattr(fig_data[0], 'stackgroup') and fig_data[0].stackgroup is not None:
-    #         plot_type = "containment_time_single"
-    #     else:
-    #         plot_type = "containment_time_multiple"
-    # elif plot_choice == "box_plot":
-    #     plot_type = "box"
-    # elif plot_choice == "statistics":
-    #     plot_type = "probability"
-    # elif plot_choice == "statistics":
-    #     if isinstance(fig_data[0], go.Box):
-    #         plot_type = "box"
-    #     else:
-    #         plot_type = "probability"
     print(f"\n\n\n\nPlot choice: {plot_choice}")
 
-    print(f"Figure has {len(fig_data)} traces")
     data_records = []
     for i, trace in enumerate(fig_data):
-        print("\n")
         if hasattr(trace, 'visible') and trace.visible == 'legendonly':
-            # Skip hidden traces
-            continue
+            continue  # Skip hidden traces
         if plot_choice == "containment_time_multiple":
             if not (hasattr(trace, 'showlegend') and trace.showlegend == False and hasattr(trace, 'name') and trace.name ==""):
                 continue  # Only keep subset of traces that we want (the data points)
@@ -1195,10 +1176,8 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
 
         print(f"Processing trace {i}: {getattr(trace, 'name', 'Unknown')}")
         # print(trace)
-        # continue
         if plot_choice == "box":
             if hasattr(trace, 'hovertemplate'):
-                print(trace.hovertemplate)
                 hover_dict = parse_hover_template(trace.hovertemplate)
                 record = {
                     'type': hover_dict.get("Type", "Unknown"),
@@ -1214,86 +1193,80 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
                 }
                 data_records.append(record)
             else:
-                # NBNB-AS: Handle
-                pass
+                return pd.DataFrame(data_records)  # Return empty data frame
         else:
+            if not (hasattr(trace, 'x') and hasattr(trace, 'y')):
+                return pd.DataFrame(data_records)  # Return empty data frame
+
             if plot_choice == "containment_time_multiple":
                 meta_data = getattr(trace, 'meta', None)
                 realization = meta_data[0] if meta_data is not None and len(meta_data) > 0 else -1
                 trace_name = meta_data[1] if meta_data is not None and len(meta_data) > 1 else 'Unknown'
-                print(f"  Realization: {realization}, trace name: {trace_name}")
             else:
                 trace_name = getattr(trace, 'name', 'Unknown')
-            if not (hasattr(trace, 'x') and hasattr(trace, 'y')):
-                # NBNB-AS: Handle
-                pass
-            else:
-                if plot_choice in ["probability", "containment_state"]:
-                    if trace.x is not None and "_inputArray" in trace.x:
-                        x_data = trace.x["_inputArray"]
-                        x_data = {int(k): v for k, v in x_data.items() if str(k).isdigit()}
-                elif plot_choice in ["containment_time_single", "containment_time_multiple"]:
-                    if trace.x is not None:
-                        x_data = {k: v for k, v in enumerate(trace.x)}
-                if plot_choice in ["probability", "containment_time_single", "containment_time_multiple"]:
-                    if trace.y is not None and "_inputArray" in trace.y:
-                        y_data = trace.y["_inputArray"]
-                        y_data = {int(k): v for k, v in y_data.items() if str(k).isdigit()}
-                elif plot_choice == "containment_state":
-                    if trace.y is not None:
-                        # Kan vel fjerne int() for k ? Teste. Og isdigit()
-                        y_data = {int(k): int(v) for k, v in enumerate(trace.y) if str(k).isdigit()}
-                xy_data = {k: (x_data[k], y_data[k]) for k in x_data if k in y_data}
-                print(f"  Trace has {len(x_data)} x points and {len(y_data)} y points")
-                print(xy_data)
 
+            if plot_choice in ["probability", "containment_state"]:
+                if trace.x is not None and "_inputArray" in trace.x:
+                    x_data = trace.x["_inputArray"]
+                    x_data = {int(k): v for k, v in x_data.items() if str(k).isdigit()}
+            elif plot_choice in ["containment_time_single", "containment_time_multiple"]:
+                if trace.x is not None:
+                    x_data = {k: v for k, v in enumerate(trace.x)}
+            if plot_choice in ["probability", "containment_time_single", "containment_time_multiple"]:
+                if trace.y is not None and "_inputArray" in trace.y:
+                    y_data = trace.y["_inputArray"]
+                    y_data = {int(k): v for k, v in y_data.items() if str(k).isdigit()}
+            elif plot_choice == "containment_state":
+                if trace.y is not None:
+                    # Kan vel fjerne int() for k ? Teste. Og isdigit()
+                    y_data = {int(k): int(v) for k, v in enumerate(trace.y) if str(k).isdigit()}
+            xy_data = {k: (x_data[k], y_data[k]) for k in x_data if k in y_data}
+
+            if plot_choice == "probability":
+                custom_data = []
+                # col_name = "customdata"
+                if hasattr(trace, "customdata") and trace.customdata is not None:
+                    try:
+                        # if hasattr(trace, "hovertemplate") and trace.hovertemplate is not None:
+                        #     match = re.search(r'(\w+)\s*:\s*%\{customdata\[0\]\}', trace.hovertemplate)
+                        #     # col_name = match.group(1).lower() if match else "customdata"
+
+                        custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
+                    except (IndexError, TypeError):
+                        # print("Nope")
+                        pass
+
+            for j, (x_val, y_val) in xy_data.items():
                 if plot_choice == "probability":
-                    # Add custom data if available
-                    custom_data = []
-                    # col_name = "customdata"
-                    if hasattr(trace, "customdata") and trace.customdata is not None:
-                        try:
-                            if hasattr(trace, "hovertemplate") and trace.hovertemplate is not None:
-                                import re
-                                match = re.search(r'(\w+)\s*:\s*%\{customdata\[0\]\}', trace.hovertemplate)
-                                # col_name = match.group(1).lower() if match else "customdata"
+                    record = {
+                        'type': trace_name,
+                        'x': x_val,
+                        'y': y_val,
+                        'realization': custom_data[j],
+                    }
+                elif plot_choice == "containment_state":
+                    record = {
+                        'type': trace_name,
+                        'amount': x_val,
+                        'realization': y_val,
+                    }
+                elif plot_choice == "containment_time_single":
+                    record = {
+                        'type': trace_name,
+                        'date': x_val,
+                        'amount': y_val,
+                        # 'realization': trace.meta[0] if hasattr(trace, 'meta') else 'Unknown',
+                    }
+                elif plot_choice == "containment_time_multiple":
+                    record = {
+                        'type': trace_name,
+                        'realization': realization,
+                        'date': x_val,
+                        'amount': y_val,
+                    }
 
-                            custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
-                        except (IndexError, TypeError):
-                            # print("Nope")
-                            pass
-
-                for j, (x_val, y_val) in xy_data.items():
-                    if plot_choice == "probability":
-                        record = {
-                            'type': trace_name,
-                            'x': x_val,
-                            'y': y_val,
-                            'realization': custom_data[j],
-                        }
-                    elif plot_choice == "containment_state":
-                        record = {
-                            'type': trace_name,
-                            'amount': x_val,
-                            'realization': y_val,
-                        }
-                    elif plot_choice == "containment_time_single":
-                        record = {
-                            'type': trace_name,
-                            'date': x_val,
-                            'amount': y_val,
-                            # 'realization': trace.meta[0] if hasattr(trace, 'meta') else 'Unknown',
-                        }
-                    elif plot_choice == "containment_time_multiple":
-                        record = {
-                            'type': trace_name,
-                            'realization': realization,
-                            'date': x_val,
-                            'amount': y_val,
-                        }
-
-                    data_records.append(record)
-                    print(f"After trace {i}, total records: {len(data_records)}")
+                data_records.append(record)
+                print(f"After trace {i}, total records: {len(data_records)}")
 
     print(f"Extracted {len(data_records)} data records")
     return pd.DataFrame(data_records)

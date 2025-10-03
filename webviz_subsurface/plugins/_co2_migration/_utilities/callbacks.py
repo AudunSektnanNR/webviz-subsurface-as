@@ -653,11 +653,6 @@ def export_figure_data_to_csv(figure: Dict, file_name: str, plot_choice: str) ->
     try:
         figure = go.Figure(figure)  # Dash State returns dict
         fig_data = figure.data
-        # if tab_choice == "statistics" and isinstance(fig_data[0], go.Box):
-        #     LOGGER.warning(
-        #         f"Download to CSV file not yet implemented for box plot."
-        #     )
-        #     return None
 
         df = extract_df_from_fig(fig_data, plot_choice)
         if df.empty:
@@ -665,9 +660,6 @@ def export_figure_data_to_csv(figure: Dict, file_name: str, plot_choice: str) ->
                 f"No plot data to export to CSV file."
             )
             return None
-
-        print(f"DataFrame columns: {','.join(list(df.columns))}")
-        csv_content = df.to_csv(index=False)
 
         print(f"Absolute path  : {os.path.abspath(file_name)}")
         result = dcc.send_data_frame(
