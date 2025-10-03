@@ -1187,9 +1187,7 @@ def _extract_data_from_general_trace(trace, plot_choice: str) -> dict[str, Any]:
             meta_data[0] if meta_data is not None and len(meta_data) > 0 else -1
         )
         trace_name = (
-            meta_data[1]
-            if meta_data is not None and len(meta_data) > 1
-            else "Unknown"
+            meta_data[1] if meta_data is not None and len(meta_data) > 1 else "Unknown"
         )
     else:
         trace_name = getattr(trace, "name", "Unknown")
@@ -1225,15 +1223,11 @@ def _extract_data_from_general_trace(trace, plot_choice: str) -> dict[str, Any]:
             and hasattr(trace, "hovertemplate")
             and trace.hovertemplate is not None
         ):
-            match = re.search(
-                r"(\w+)\s*:\s*%\{customdata\[0\]\}", trace.hovertemplate
-            )
+            match = re.search(r"(\w+)\s*:\s*%\{customdata\[0\]\}", trace.hovertemplate)
             col_name = match.group(1).lower() if match else "customdata"
             if col_name == "realization":
                 if "_inputArray" in trace.customdata:
-                    custom_data = [
-                        x["0"] for x in trace.customdata["_inputArray"]
-                    ]
+                    custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
 
     trace_name = trace_name.replace(",", "_").replace(" ", "")
     for j, (x_val, y_val) in xy_data.items():

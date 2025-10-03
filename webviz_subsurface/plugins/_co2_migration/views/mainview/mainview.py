@@ -168,7 +168,6 @@ class MapViewElement(ViewElementABC):
         )
 
 
-# pylint: disable=too-many-positional-arguments
 def _summary_graph_layout(
     bar_plot_id: str,
     time_plot_id: str,
