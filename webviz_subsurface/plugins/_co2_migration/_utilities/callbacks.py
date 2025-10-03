@@ -25,12 +25,12 @@ from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_pro
 from webviz_subsurface.plugins._co2_migration._types import LegendData
 from webviz_subsurface.plugins._co2_migration._utilities import plume_extent
 from webviz_subsurface.plugins._co2_migration._utilities.co2volume import (
+    extract_df_from_fig,
     generate_co2_box_plot_figure,
     generate_co2_statistics_figure,
     generate_co2_time_containment_figure,
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
-    extract_df_from_fig,
 )
 from webviz_subsurface.plugins._co2_migration._utilities.containment_data_provider import (
     ContainmentDataProvider,

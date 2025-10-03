@@ -176,7 +176,7 @@ def _summary_graph_layout(
     download_csv_id: str,
     summary_tabs_id: str,
 ) -> List:
-    from dash import html, dcc
+    from dash import dcc, html
 
     return [
         html.Div(

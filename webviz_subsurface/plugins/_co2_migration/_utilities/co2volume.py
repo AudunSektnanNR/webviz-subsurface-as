@@ -1,9 +1,9 @@
 # pylint: disable=too-many-lines
 # pylint: disable=C0103
 # NBNB-AS: We should address this pylint message soon
+import re
 import warnings
 from datetime import datetime as dt
-import re
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np

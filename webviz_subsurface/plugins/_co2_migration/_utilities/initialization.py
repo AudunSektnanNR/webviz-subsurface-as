@@ -28,8 +28,8 @@ from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     FilteredMapAttribute,
     GraphSource,
     MapAttribute,
-    MapType,
     MapNamingConvention,
+    MapType,
     MenuOptions,
     PhasesScenario,
 )
