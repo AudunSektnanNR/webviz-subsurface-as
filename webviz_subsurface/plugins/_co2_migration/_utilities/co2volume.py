@@ -1160,7 +1160,7 @@ def parse_hover_template(hover_template: str) -> dict:
     return parsed_hover_dict
 
 
-def _extract_data_from_box_trace(trace) -> dict[str, Any]:
+def _extract_data_from_box_trace(trace: go.Box) -> dict[str, Any]:
     if hasattr(trace, "hovertemplate"):
         hover_dict = parse_hover_template(trace.hovertemplate)
         trace_name = hover_dict.get("Type", "Unknown")
@@ -1180,7 +1180,9 @@ def _extract_data_from_box_trace(trace) -> dict[str, Any]:
     return {}
 
 
-def _extract_data_from_general_trace(trace, plot_choice: str) -> dict[str, Any]:
+def _extract_data_from_general_trace(
+    trace: Union[go.Box, go.Scatter], plot_choice: str
+) -> dict[str, Any]:
     if plot_choice == "containment_time_multiple":
         meta_data = getattr(trace, "meta", None)
         realization = (
