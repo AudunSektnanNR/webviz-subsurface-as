@@ -869,6 +869,9 @@ def generate_co2_time_containment_figure(
                 "meta": [rlz, name],
                 "hovertemplate": hover_template,
             }
+            # Note: The current implementation of CSV export in extract_df_from_fig()
+            #       uses 'meta' to extract realization number and name.
+            #       Make sure to keep it in sync when modifying.
             if not containment_info.use_stats:
                 args["customdata"] = sub_df[sub_df["name"] == name]["prop"]
             if name in inactive_cols_at_startup:
@@ -926,6 +929,9 @@ def generate_co2_statistics_figure(
     else:
         _toggle_trace_visibility(fig.data, legend_only_traces)
 
+    # Note: The current implementation of CSV export in extract_df_from_fig()
+    #       uses the customdata+hovertemplate to extract realization number.
+    #       Make sure to keep it in sync when modifying.
     fig.update_traces(
         hovertemplate=(
             "<span style='font-family:Courier New;'>"
@@ -1002,6 +1008,10 @@ def generate_co2_box_plot_figure(
                 width=0.55,
             )
         )
+
+        # Note: The current implementation of CSV export in extract_df_from_fig()
+        #       uses the hovertemplate text string to extract the data.
+        #       Changing the hovertemplate text string might break the CSV export.
 
         fig.add_trace(
             go.Bar(
@@ -1251,7 +1261,6 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
                         'type': trace_name,
                         'date': x_val,
                         'amount': y_val,
-                        # 'realization': trace.meta[0] if hasattr(trace, 'meta') else 'Unknown',
                     }
                 elif plot_choice == "containment_time_multiple":
                     record = {
@@ -1263,5 +1272,4 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
 
                 data_records.append(record)
 
-    print(f"Extracted {len(data_records)} data records")
     return pd.DataFrame(data_records)
