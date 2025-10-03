@@ -1182,7 +1182,8 @@ def _extract_data_from_box_trace(trace: go.Box) -> dict[str, Any]:
 
 def _extract_data_from_general_trace(
     trace: Union[go.Box, go.Scatter], plot_choice: str
-) -> dict[str, Any]:
+) -> List[Dict[str, Any]]:
+    records = []
     if plot_choice == "containment_time_multiple":
         meta_data = getattr(trace, "meta", None)
         realization = (
@@ -1264,7 +1265,8 @@ def _extract_data_from_general_trace(
             else:
                 col_name = "realization"
             record[col_name] = realization
-    return record
+        records.append(record)
+    return records
 
 
 def extract_df_from_fig(fig_data: tuple, plot_choice: str) -> pd.DataFrame:
@@ -1305,12 +1307,12 @@ def extract_df_from_fig(fig_data: tuple, plot_choice: str) -> pd.DataFrame:
 
         if plot_choice == "box":
             record = _extract_data_from_box_trace(trace)
+            if record:
+                data_records.append(record)
         else:
-            if not (hasattr(trace, "x") and hasattr(trace, "y")):
-                record = {}
-            else:
-                record = _extract_data_from_general_trace(trace, plot_choice)
-        if record:
-            data_records.append(record)
+            if hasattr(trace, "x") and hasattr(trace, "y"):
+                records = _extract_data_from_general_trace(trace, plot_choice)
+                if records:
+                    data_records += records
 
     return pd.DataFrame(data_records)
