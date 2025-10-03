@@ -1,5 +1,4 @@
 import logging
-import os
 import warnings
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -656,12 +655,12 @@ def export_figure_data_to_csv(
         figure = go.Figure(figure)  # Dash State returns dict
         df = extract_df_from_fig(figure.data, plot_choice)
         if df.empty:
-            LOGGER.warning(f"No plot data to export to CSV file.")
+            LOGGER.warning("No plot data to export to CSV file.")
             return None
 
         result = dcc.send_data_frame(df.to_csv, filename=file_name, index=False)
         return result
 
-    except Exception as e:
+    except (ValueError, KeyError, AttributeError, TypeError) as e:
         LOGGER.warning(f"Failed to export plot data to CSV file: {e}")
         return None

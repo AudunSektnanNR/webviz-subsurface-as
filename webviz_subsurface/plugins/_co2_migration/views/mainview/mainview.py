@@ -168,6 +168,7 @@ class MapViewElement(ViewElementABC):
         )
 
 
+# pylint: disable=too-many-positional-arguments
 def _summary_graph_layout(
     bar_plot_id: str,
     time_plot_id: str,
@@ -176,8 +177,6 @@ def _summary_graph_layout(
     download_csv_id: str,
     summary_tabs_id: str,
 ) -> List:
-    from dash import dcc, html
-
     return [
         html.Div(
             [
