@@ -648,7 +648,7 @@ def process_summed_mass(
     return surf_data, summed_co2
 
 
-def export_figure_data_to_csv(figure: Dict, file_name: str, tab_choice: str) -> Optional[Dict[str, Any]]:
+def export_figure_data_to_csv(figure: Dict, file_name: str, plot_choice: str) -> Optional[Dict[str, Any]]:
     """Export visible figure data to CSV file"""
     try:
         figure = go.Figure(figure)  # Dash State returns dict
@@ -659,7 +659,7 @@ def export_figure_data_to_csv(figure: Dict, file_name: str, tab_choice: str) -> 
         #     )
         #     return None
 
-        df = extract_df_from_fig(fig_data, tab_choice)
+        df = extract_df_from_fig(fig_data, plot_choice)
         if df.empty:
             LOGGER.warning(
                 f"No plot data to export to CSV file."

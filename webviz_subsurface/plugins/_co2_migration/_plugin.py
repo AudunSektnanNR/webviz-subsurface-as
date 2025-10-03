@@ -889,6 +889,10 @@ class CO2Migration(WebvizPluginABC):
             State(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
             State(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
             State(self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "figure"),
+            State(
+                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
+                "value",
+            ),
             prevent_initial_call=True,
         )
         def export_data(
@@ -897,30 +901,30 @@ class CO2Migration(WebvizPluginABC):
             bar_figure: go.Figure,
             time_figure: go.Figure,
             stats_figure: go.Figure,
+            statistics_tab_option: StatisticsTabOption,
         ) -> Dict[str, Any]:
             file_name = "co2_migration"
-            # if active_tab in [MainTabOption.CONTAINMENT_STATE, MainTabOption.CONTAINMENT_OVER_TIME]:
-            #     LOGGER.warning(
-            #         f"Download to CSV file not yet implemented for the current plot."
-            #     )
-            #     raise PreventUpdate
             if active_tab == MainTabOption.CONTAINMENT_STATE:
                 current_figure = bar_figure
                 file_name += "_containment_state_plot"
-                tab_choice = "containment_state"
+                plot_choice = "containment_state"
             elif active_tab == MainTabOption.CONTAINMENT_OVER_TIME:
                 current_figure = time_figure
                 file_name += "_containment_time_plot"
-                tab_choice = "containment_time"
+                plot_choice = "containment_time"
             elif active_tab == MainTabOption.STATISTICS:
                 current_figure = stats_figure
-                file_name += "_prob_plot"
-                tab_choice = "statistics"
+                if statistics_tab_option == StatisticsTabOption.PROBABILITY_PLOT:
+                    file_name += "_prob_plot"
+                    plot_choice = "probability"
+                elif statistics_tab_option == StatisticsTabOption.BOX_PLOT:
+                    file_name += "_box_plot"
+                    plot_choice = "box"
             else:
                 raise PreventUpdate  # Should not happen
 
             file_name += f"_{self._csv_export_counter}.csv"
-            result = export_figure_data_to_csv(current_figure, file_name, tab_choice)
+            result = export_figure_data_to_csv(current_figure, file_name, plot_choice)
 
             if result is None:
                 raise PreventUpdate
