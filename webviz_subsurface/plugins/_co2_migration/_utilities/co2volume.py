@@ -3,6 +3,7 @@
 # NBNB-AS: We should address this pylint message soon
 import warnings
 from datetime import datetime as dt
+import re
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -1134,6 +1135,21 @@ def _toggle_trace_visibility(traces: List, legendonly_names: List[str]) -> None:
             t.visible = True
 
 
+def parse_hover_template(hover_template: str) -> dict:
+    parsed_hover_dict = {}
+    for item in hover_template.split("<br>"):
+        # Remove HTML tags (like <span style='font-family:Courier New;'>)
+        clean_item = re.sub(r'<[^>]*>', '', item)
+        clean_item = clean_item.strip()
+
+        if ':' in clean_item:
+            key, value = clean_item.split(':', 1)
+            key = key.strip()
+            value = value.strip()
+            parsed_hover_dict[key] = value
+    return parsed_hover_dict
+
+
 def extract_df_from_fig(fig_data, tab_choice: str) -> pd.DataFrame:
     plot_type = "unknown"
     if tab_choice == "containment_state":
@@ -1163,96 +1179,126 @@ def extract_df_from_fig(fig_data, tab_choice: str) -> pd.DataFrame:
         elif plot_type == "containment_time_single":
             if not hasattr(trace, 'name') or trace.name is None:
                 continue  # Happens for containment_time_single plots
+        elif plot_type == "box":
+            if not (hasattr(trace, 'showlegend') and trace.showlegend == False and hasattr(trace, 'opacity') and trace.opacity == 0):
+                continue  # Keep only the invisible box traces (they have all the data printed in the hoverbox)
 
         print(f"Processing trace {i}: {getattr(trace, 'name', 'Unknown')}")
-        print(trace)
-        if plot_type == "containment_time_multiple":
-            meta_data = getattr(trace, 'meta', None)
-            realization = meta_data[0] if meta_data is not None and len(meta_data) > 0 else -1
-            trace_name = meta_data[1] if meta_data is not None and len(meta_data) > 1 else 'Unknown'
-            print(f"  Realization: {realization}, trace name: {trace_name}")
-        else:
-            trace_name = getattr(trace, 'name', 'Unknown')
-        if hasattr(trace, 'x') and hasattr(trace, 'y'):
-            if plot_type in ["probability", "bar"]:
-                if trace.x is not None and "_inputArray" in trace.x:
-                    x_data = trace.x["_inputArray"]
-                    x_data = {int(k): v for k, v in x_data.items() if str(k).isdigit()}
-            elif plot_type in ["containment_time_single", "containment_time_multiple"]:
-                if trace.x is not None:
-                    x_data = {k: v for k, v in enumerate(trace.x)}
-            if plot_type in ["probability", "containment_time_single", "containment_time_multiple"]:
-                if trace.y is not None and "_inputArray" in trace.y:
-                    y_data = trace.y["_inputArray"]
-                    y_data = {int(k): v for k, v in y_data.items() if str(k).isdigit()}
-            elif plot_type == "bar":
-                if trace.y is not None:
-                    # Kan vel fjerne int() for k ? Teste. Og isdigit()
-                    y_data = {int(k): int(v) for k, v in enumerate(trace.y) if str(k).isdigit()}
-            xy_data = {k: (x_data[k], y_data[k]) for k in x_data if k in y_data}
-            print(f"  Trace has {len(x_data)} x points and {len(y_data)} y points")
-            print(xy_data)
+        # print(trace)
+        # continue
+        if plot_type == "box":
+            if hasattr(trace, 'hovertemplate'):
+                print(trace.hovertemplate)
+                hoverinfo2 = trace.hovertemplate.split("<br>")
+                print(hoverinfo2)
 
-            if plot_type == "probability":
-                # Add custom data if available
-                custom_data = []
-                col_name = "customdata"
-                if hasattr(trace, "customdata") and trace.customdata is not None:
-                    # print("\n\nHas custom data")
-                    try:
-                        if hasattr(trace, "hovertemplate") and trace.hovertemplate is not None:
-                            # print("\n\nHas hovertemplate")
-                            # print(trace.hovertemplate)
-                            import re
-                            match = re.search(r'(\w+)\s*:\s*%\{customdata\[0\]\}', trace.hovertemplate)
-                            col_name = match.group(1).lower() if match else "customdata"
-                            # print(f"Extracting hover info into column '{col_name}'")
-
-                        # print(trace.customdata["_inputArray"])
-                        custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
-                    except (IndexError, TypeError):
-                        # print("Nope")
-                        pass
-
-            # print("\n\nCustom data:")
-            # print(custom_data)
-            # print(col_name)
-
-            # Handle different trace types
-            for j, (x_val, y_val) in xy_data.items():
-                if plot_type == "probability":
-                    record = {
-                        'type': trace_name,
-                        'x': x_val,
-                        'y': y_val,
-                        'realization': custom_data[j],
-                    }
-                elif plot_type == "bar":
-                    record = {
-                        'type': trace_name,
-                        'amount': x_val,
-                        'realization': y_val,
-                    }
-                elif plot_type == "containment_time_single":
-                    record = {
-                        'type': trace_name,
-                        'date': x_val,
-                        'amount': y_val,
-                        # 'realization': trace.meta[0] if hasattr(trace, 'meta') else 'Unknown',
-                    }
-                elif plot_type == "containment_time_multiple":
-                    record = {
-                        'type': trace_name,
-                        'realization': realization,
-                        'date': x_val,
-                        'amount': y_val,
-                    }
-
+                # Parse the hovertemplate into a dictionary
+                hover_dict = parse_hover_template(trace.hovertemplate)
+                print("Parsed hover dict:", hover_dict)
+                trace_name = hover_dict.get("Type", "Unknown")
+                max_val = float(hover_dict.get("Max", -1))
+                top_whisker = float(hover_dict.get("Top whisker", -1))
+                p10 = float(hover_dict.get("p10 (not shown)", -1))
+                q3 = float(hover_dict.get("Q3", -1))
+                median = float(hover_dict.get("Median", -1))
+                q1 = float(hover_dict.get("Q1", -1))
+                p90 = float(hover_dict.get("p90 (not shown)", -1))
+                bottom_whisker = float(hover_dict.get("Lower whisker", -1))
+                min_val = float(hover_dict.get("Min", -1))
+                record = {
+                    'type': trace_name,
+                    'min': min_val,
+                    'bottom_whisker': bottom_whisker,
+                    'p90': p90,
+                    'q1': q1,
+                    'median': median,
+                    'q3': q3,
+                    'p10': p10,
+                    'top_whisker': top_whisker,
+                    'max': max_val,
+                }
                 data_records.append(record)
+            else:
+                # NBNB-AS: Handle
+                pass
         else:
-            # print(f"  Trace {i} has no x or y data")
-            pass
-        print(f"After trace {i}, total records: {len(data_records)}")
+            if plot_type == "containment_time_multiple":
+                meta_data = getattr(trace, 'meta', None)
+                realization = meta_data[0] if meta_data is not None and len(meta_data) > 0 else -1
+                trace_name = meta_data[1] if meta_data is not None and len(meta_data) > 1 else 'Unknown'
+                print(f"  Realization: {realization}, trace name: {trace_name}")
+            else:
+                trace_name = getattr(trace, 'name', 'Unknown')
+            if not (hasattr(trace, 'x') and hasattr(trace, 'y')):
+                # NBNB-AS: Handle
+                pass
+            else:
+                if plot_type in ["probability", "bar"]:
+                    if trace.x is not None and "_inputArray" in trace.x:
+                        x_data = trace.x["_inputArray"]
+                        x_data = {int(k): v for k, v in x_data.items() if str(k).isdigit()}
+                elif plot_type in ["containment_time_single", "containment_time_multiple"]:
+                    if trace.x is not None:
+                        x_data = {k: v for k, v in enumerate(trace.x)}
+                if plot_type in ["probability", "containment_time_single", "containment_time_multiple"]:
+                    if trace.y is not None and "_inputArray" in trace.y:
+                        y_data = trace.y["_inputArray"]
+                        y_data = {int(k): v for k, v in y_data.items() if str(k).isdigit()}
+                elif plot_type == "bar":
+                    if trace.y is not None:
+                        # Kan vel fjerne int() for k ? Teste. Og isdigit()
+                        y_data = {int(k): int(v) for k, v in enumerate(trace.y) if str(k).isdigit()}
+                xy_data = {k: (x_data[k], y_data[k]) for k in x_data if k in y_data}
+                print(f"  Trace has {len(x_data)} x points and {len(y_data)} y points")
+                print(xy_data)
+
+                if plot_type == "probability":
+                    # Add custom data if available
+                    custom_data = []
+                    # col_name = "customdata"
+                    if hasattr(trace, "customdata") and trace.customdata is not None:
+                        try:
+                            if hasattr(trace, "hovertemplate") and trace.hovertemplate is not None:
+                                import re
+                                match = re.search(r'(\w+)\s*:\s*%\{customdata\[0\]\}', trace.hovertemplate)
+                                # col_name = match.group(1).lower() if match else "customdata"
+
+                            custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
+                        except (IndexError, TypeError):
+                            # print("Nope")
+                            pass
+
+                for j, (x_val, y_val) in xy_data.items():
+                    if plot_type == "probability":
+                        record = {
+                            'type': trace_name,
+                            'x': x_val,
+                            'y': y_val,
+                            'realization': custom_data[j],
+                        }
+                    elif plot_type == "bar":
+                        record = {
+                            'type': trace_name,
+                            'amount': x_val,
+                            'realization': y_val,
+                        }
+                    elif plot_type == "containment_time_single":
+                        record = {
+                            'type': trace_name,
+                            'date': x_val,
+                            'amount': y_val,
+                            # 'realization': trace.meta[0] if hasattr(trace, 'meta') else 'Unknown',
+                        }
+                    elif plot_type == "containment_time_multiple":
+                        record = {
+                            'type': trace_name,
+                            'realization': realization,
+                            'date': x_val,
+                            'amount': y_val,
+                        }
+
+                    data_records.append(record)
+                    print(f"After trace {i}, total records: {len(data_records)}")
 
     print(f"Extracted {len(data_records)} data records")
     return pd.DataFrame(data_records)
