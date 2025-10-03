@@ -1218,32 +1218,28 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
                     y_data = {int(k): v for k, v in y_data.items() if str(k).isdigit()}
             elif plot_choice == "containment_state":
                 if trace.y is not None:
-                    # Kan vel fjerne int() for k ? Teste. Og isdigit()
-                    y_data = {int(k): int(v) for k, v in enumerate(trace.y) if str(k).isdigit()}
+                    y_data = {k: int(v) for k, v in enumerate(trace.y)}
             xy_data = {k: (x_data[k], y_data[k]) for k in x_data if k in y_data}
 
             if plot_choice == "probability":
                 custom_data = []
-                # col_name = "customdata"
-                if hasattr(trace, "customdata") and trace.customdata is not None:
-                    try:
-                        # if hasattr(trace, "hovertemplate") and trace.hovertemplate is not None:
-                        #     match = re.search(r'(\w+)\s*:\s*%\{customdata\[0\]\}', trace.hovertemplate)
-                        #     # col_name = match.group(1).lower() if match else "customdata"
+                if hasattr(trace, "customdata") and trace.customdata is not None and hasattr(trace, "hovertemplate") and trace.hovertemplate is not None:
+                    match = re.search(r'(\w+)\s*:\s*%\{customdata\[0\]\}', trace.hovertemplate)
+                    col_name = match.group(1).lower() if match else "customdata"
+                    if col_name == "realization":
+                        if "_inputArray" in trace.customdata:
+                            custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
 
-                        custom_data = [x["0"] for x in trace.customdata["_inputArray"]]
-                    except (IndexError, TypeError):
-                        # print("Nope")
-                        pass
-
+            trace_name = trace_name.replace(",", "_").replace(" ", "")
             for j, (x_val, y_val) in xy_data.items():
                 if plot_choice == "probability":
                     record = {
                         'type': trace_name,
                         'x': x_val,
                         'y': y_val,
-                        'realization': custom_data[j],
                     }
+                    if custom_data:
+                        record['realization'] = custom_data[j]
                 elif plot_choice == "containment_state":
                     record = {
                         'type': trace_name,
@@ -1266,7 +1262,6 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
                     }
 
                 data_records.append(record)
-                print(f"After trace {i}, total records: {len(data_records)}")
 
     print(f"Extracted {len(data_records)} data records")
     return pd.DataFrame(data_records)
