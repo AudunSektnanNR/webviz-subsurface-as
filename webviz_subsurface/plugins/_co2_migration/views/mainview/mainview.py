@@ -179,38 +179,33 @@ def _summary_graph_layout(
     from dash import html, dcc
 
     return [
-        # Container for button and tabs
         html.Div(
             [
-                # Download button floating in lower right - outside tabs
                 html.Button(
-                    "⭳",  # Alternative symbols: "↓" "⭳" "🔽" "▼" "⬇" "💾" "📥"
+                    "⭳",
                     id=csv_export_button_id,
                     title="Export data in current plot to a CSV file",
                     style={
                         "position": "absolute",
-                        "bottom": "10px",
-                        "right": "10px",
+                        "bottom": "5px",
+                        "right": "5px",
                         "backgroundColor": "#F4F4F4",
                         "border": "1px solid #B0B0B0",
                         "color": "#808080",
-                        "padding": "1px 2px",  # Smaller padding
+                        "padding": "1px 2px",
                         "borderRadius": "4px",
-                        # "cursor": "pointer",
                         "zIndex": "1000",  # Make sure it appears on top
-                        "fontSize": "25px",  # Smaller font size
+                        "fontSize": "25px",
                         "fontWeight": "bold",
                         "display": "flex",
                         "alignItems": "center",  # Vertical centering
                         "justifyContent": "center",  # Horizontal centering
                         "lineHeight": "1",  # Prevents extra line spacing
                         "textAlign": "center",
-                        "width": "32px",  # Fixed smaller width
-                        "height": "32px",  # Fixed smaller height
-                        # "transition": "all 2.2s ease"  # Smooth transitions
+                        "width": "32px",
+                        "height": "32px",
                     },
                 ),
-                # Tabs container
                 wcc.Tabs(
                     id=summary_tabs_id,
                     value=MainTabOption.CONTAINMENT_STATE,
@@ -227,7 +222,6 @@ def _summary_graph_layout(
                                             "displayModeBar": False,
                                         },
                                     ),
-                                    # style={"backgroundColor": "#ffcccc", "border": "1px solid red"}  # Light red background
                                 ),
                             ],
                         ),
@@ -243,7 +237,6 @@ def _summary_graph_layout(
                                             "displayModeBar": False,
                                         },
                                     ),
-                                    # style={"backgroundColor": "#ccffcc", "border": "1px solid green"}  # Light green background
                                 ),
                             ],
                         ),
@@ -259,7 +252,6 @@ def _summary_graph_layout(
                                             "displayModeBar": False,
                                         },
                                     ),
-                                    # style={"backgroundColor": "#ccccff", "border": "1px solid blue"}  # Light blue background
                                 ),
                             ],
                         ),
@@ -267,7 +259,7 @@ def _summary_graph_layout(
                 ),
             ],
             style={
-                "position": "relative",  # Important: makes absolute positioning relative to this container
+                "position": "relative",
                 "height": "100%",
                 "width": "100%",
             },

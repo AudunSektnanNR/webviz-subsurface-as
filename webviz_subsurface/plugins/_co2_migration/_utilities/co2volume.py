@@ -1192,7 +1192,7 @@ def extract_df_from_fig(fig_data, plot_choice: str) -> pd.DataFrame:
                 and hasattr(trace, "opacity")
                 and trace.opacity == 0
             ):
-                # Keep only the invisible box traces 
+                # Keep only the invisible box traces
                 # (they have all the data printed in the hoverbox)
                 continue
 
