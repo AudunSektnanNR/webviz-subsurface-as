@@ -1292,7 +1292,6 @@ def extract_df_from_fig(fig_data: tuple, plot_choice: str) -> pd.DataFrame:
                 continue
         elif plot_choice == "containment_time_single":
             if not hasattr(trace, "name") or trace.name is None:
-                # Happens for containment_time_single plots
                 continue
         elif plot_choice == "box":
             if not (
@@ -1302,7 +1301,7 @@ def extract_df_from_fig(fig_data: tuple, plot_choice: str) -> pd.DataFrame:
                 and trace.opacity == 0
             ):
                 # Keep only the invisible box traces
-                # (they have all the data printed in the hoverbox)
+                # (they have all the data stored in the hover box)
                 continue
 
         if plot_choice == "box":
