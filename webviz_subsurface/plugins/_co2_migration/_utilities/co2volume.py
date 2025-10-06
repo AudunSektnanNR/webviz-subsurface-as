@@ -1292,16 +1292,22 @@ def extract_df_from_fig(fig_data: tuple, plot_choice: str) -> pd.DataFrame:
                 # Only keep subset of traces that we want
                 continue
         elif plot_choice == "containment_time_single":
-            if not hasattr(trace, "name") or trace.name is None:
+            is_line_trace = (
+                hasattr(trace, "showlegend")
+                and trace.showlegend is False
+                and hasattr(trace, "mode")
+                and trace.mode == "lines"
+            )
+            if is_line_trace:
                 continue
         elif plot_choice == "box":
-            is_invisable_trace = (
+            is_invisible_trace = (
                 hasattr(trace, "showlegend")
                 and trace.showlegend is False
                 and hasattr(trace, "opacity")
                 and trace.opacity == 0
             )
-            if not is_invisable_trace:
+            if not is_invisible_trace:
                 # Keep only the invisible box traces
                 # They have all the data stored in the hover box,
                 # while the visible traces only got lower/upper whisker and median
