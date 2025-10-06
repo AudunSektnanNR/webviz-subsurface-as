@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import plotly.graph_objects as go
@@ -180,7 +181,6 @@ class CO2Migration(WebvizPluginABC):
     ):
         super().__init__()
         self._error_message = ""
-        self._csv_export_counter: Dict[str, int] = {}
         try:
             ensemble_paths = {
                 ensemble_name: webviz_settings.shared_settings["scratch_ensembles"][
@@ -908,11 +908,11 @@ class CO2Migration(WebvizPluginABC):
             file_name = "co2_migration"
             if active_tab == MainTabOption.CONTAINMENT_STATE:
                 current_figure = bar_figure
-                file_name += "_containment_state_plot"
+                file_name += "_state_plot"
                 plot_choice = "containment_state"
             elif active_tab == MainTabOption.CONTAINMENT_OVER_TIME:
                 current_figure = time_figure
-                file_name += "_containment_time_plot"
+                file_name += "_time_plot"
                 plot_choice = "containment_time"
             elif active_tab == MainTabOption.STATISTICS:
                 current_figure = stats_figure
@@ -925,14 +925,10 @@ class CO2Migration(WebvizPluginABC):
             else:
                 raise PreventUpdate  # Should not happen
 
-            if plot_choice not in self._csv_export_counter:
-                self._csv_export_counter[plot_choice] = 1
-            else:
-                self._csv_export_counter[plot_choice] += 1
-            file_name += f"_{self._csv_export_counter[plot_choice]}.csv"
+            date_and_time = datetime.now().strftime("%y%m%d_%H%M%S")
+            file_name += f"_{date_and_time}.csv"
             result = export_figure_data_to_csv(current_figure, file_name, plot_choice)
 
             if result is None:
-                self._csv_export_counter[plot_choice] -= 1
                 raise PreventUpdate
             return result
