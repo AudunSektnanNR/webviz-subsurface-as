@@ -1282,26 +1282,29 @@ def extract_df_from_fig(fig_data: tuple, plot_choice: str) -> pd.DataFrame:
         if hasattr(trace, "visible") and trace.visible == "legendonly":
             continue  # Skip hidden traces
         if plot_choice == "containment_time_multiple":
-            if not (
+            is_data_point_trace = (
                 hasattr(trace, "showlegend")
                 and trace.showlegend is False
                 and hasattr(trace, "name")
                 and trace.name == ""
-            ):
-                # Only keep subset of traces that we want (the data points)
+            )
+            if not is_data_point_trace:
+                # Only keep subset of traces that we want
                 continue
         elif plot_choice == "containment_time_single":
             if not hasattr(trace, "name") or trace.name is None:
                 continue
         elif plot_choice == "box":
-            if not (
+            is_invisable_trace = (
                 hasattr(trace, "showlegend")
                 and trace.showlegend is False
                 and hasattr(trace, "opacity")
                 and trace.opacity == 0
-            ):
+            )
+            if not is_invisable_trace:
                 # Keep only the invisible box traces
-                # (they have all the data stored in the hover box)
+                # They have all the data stored in the hover box,
+                # while the visible traces only got lower/upper whisker and median
                 continue
 
         if plot_choice == "box":
