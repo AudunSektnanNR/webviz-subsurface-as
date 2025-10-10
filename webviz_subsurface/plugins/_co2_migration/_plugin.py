@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import plotly.graph_objects as go
@@ -15,6 +16,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     create_map_layers,
     create_map_viewports,
     derive_surface_address,
+    export_figure_data_to_csv,
     extract_legendonly,
     generate_containment_figures,
     generate_unsmry_figures,
@@ -62,7 +64,7 @@ from webviz_subsurface.plugins._co2_migration.views.mainview.settings import (
 from . import _error
 from ._types import LegendData
 from ._utilities.color_tables import co2migration_color_tables
-from ._utilities.containment_info import StatisticsTabOption
+from ._utilities.containment_info import MainTabOption, StatisticsTabOption
 
 LOGGER = logging.getLogger(__name__)
 TABLES_PATH = "share/results/tables"
@@ -310,6 +312,7 @@ class CO2Migration(WebvizPluginABC):
             self._add_legend_change_callback()
             self._add_set_unit_list_callback()
             self._add_time_plot_visibility_callback()
+            self._add_csv_export_callback()
 
         if self._content["maps"]:
             self._add_set_dates_callback()
@@ -877,3 +880,55 @@ class CO2Migration(WebvizPluginABC):
         if event is None or not isinstance(event, list):
             return False
         return any("visible" in e for e in event if isinstance(e, dict))
+
+    def _add_csv_export_callback(self) -> None:
+        @callback(
+            Output(self._view_component(MapViewElement.Ids.DOWNLOAD_CSV), "data"),
+            Input(
+                self._view_component(MapViewElement.Ids.CSV_EXPORT_BUTTON), "n_clicks"
+            ),
+            State(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
+            State(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
+            State(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
+            State(self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "figure"),
+            State(
+                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
+                "value",
+            ),
+            prevent_initial_call=True,
+        )
+        def export_data(
+            _n_clicks: int,
+            active_tab: str,
+            bar_figure: go.Figure,
+            time_figure: go.Figure,
+            stats_figure: go.Figure,
+            statistics_tab_option: StatisticsTabOption,
+        ) -> Dict[str, Any]:
+            file_name = "co2_migration"
+            if active_tab == MainTabOption.CONTAINMENT_STATE:
+                current_figure = bar_figure
+                file_name += "_state_plot"
+                plot_choice = "containment_state"
+            elif active_tab == MainTabOption.CONTAINMENT_OVER_TIME:
+                current_figure = time_figure
+                file_name += "_time_plot"
+                plot_choice = "containment_time"
+            elif active_tab == MainTabOption.STATISTICS:
+                current_figure = stats_figure
+                if statistics_tab_option == StatisticsTabOption.PROBABILITY_PLOT:
+                    file_name += "_prob_plot"
+                    plot_choice = "probability"
+                else:  # => StatisticsTabOption.BOX_PLOT:
+                    file_name += "_box_plot"
+                    plot_choice = "box"
+            else:
+                raise PreventUpdate  # Should not happen
+
+            date_and_time = datetime.now().strftime("%y%m%d_%H%M%S")
+            file_name += f"_{date_and_time}.csv"
+            result = export_figure_data_to_csv(current_figure, file_name, plot_choice)
+
+            if result is None:
+                raise PreventUpdate
+            return result
