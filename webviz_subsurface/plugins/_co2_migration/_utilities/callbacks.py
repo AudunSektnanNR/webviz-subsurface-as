@@ -275,6 +275,7 @@ def create_map_annotations(
 
 
 def create_map_viewports() -> Dict:
+    # TODO: do not reference hard-coded layer Ids
     return {
         "layout": [1, 1],
         "viewports": [
@@ -289,6 +290,8 @@ def create_map_viewports() -> Dict:
                     "hazardous-boundary-layer",
                     "well-picks-layer",
                     "plume-polygon-layer",
+                    "triangle-data-layer",
+                    "edges-data-layer",
                 ],
             }
         ],
@@ -398,6 +401,190 @@ def create_map_layers(
                 "getLineColor": [150, 150, 150, 255],
             }
         )
+
+    # Read dummy-data and add geojson layer
+    import json
+    from pathlib import Path
+    
+    import pandas as pd
+    from matplotlib.colors import BoundaryNorm, ListedColormap
+    import traceback
+    
+    try:
+        # Get the path to the dummy-data directory
+        current_file = Path(__file__)
+        project_root = current_file.parents[4]  # Go up 4 levels from current file
+        dummy_data_dir = project_root / 'dummy-data'
+        
+        # Read triangle data
+        triangle_csv_path = dummy_data_dir / 'triangle_data.csv'
+        triangle_df = pd.read_csv(triangle_csv_path)
+        
+        # Read color scale data
+        color_json_path = dummy_data_dir / 'color.json'
+        with open(color_json_path, 'r') as f:
+            color_data = json.load(f)
+        
+        # Extract color information
+        boundaries = color_data['norm']['init_args']['boundaries']
+        colors = color_data['cmap']['init_args']['colors']
+        
+        # Create matplotlib colormap and normalizer
+        cmap = ListedColormap(colors)
+        norm = BoundaryNorm(boundaries, len(colors))
+        
+        # Extract coordinates and attribute values
+        x_coords = triangle_df['x'].values
+        y_coords = triangle_df['y'].values
+        z_coords = triangle_df['z'].values
+        attr_values = triangle_df['AttributeJuxtaposition'].values
+        
+        # Create GeoJSON features for triangles
+        edges_features = []
+
+        # Extract coords into a 3D array: [triangle][vertex][x,y]
+        # triangle_coords = triangle_df[['x', 'y']].values.reshape(-1, 3, 2)
+        # triangle_coords = np.hstack([triangle_coords, triangle_coords[:, 0, :]])  # Close the polygon
+        triangle_values = triangle_df['AttributeJuxtaposition'].values[::3]
+        point_identifier = triangle_df[["Fault","Horizon","Segment","PointId"]]
+        point_identifier = triangle_df[["x", "y", "z"]]
+        # Extract unique point identifiers from point_identifier
+        unique_point_id = {}
+        point_indices = []
+        for row in point_identifier.values:
+            if tuple(row) not in unique_point_id:
+                unique_point_id[tuple(row)] = len(unique_point_id)
+            point_indices.append(unique_point_id[tuple(row)])
+
+        point_indices = np.array(point_indices)
+        df_index = {idx: i for i, idx in enumerate(point_indices)}
+        simplices = point_indices.reshape(-1, 3)  # Ordering correct?
+        edges = np.vstack([simplices[:, [0, 1]], simplices[:, [1, 2]], simplices[:, [2, 0]]])
+        # Keep references from edges to their original triangle
+        back_ref = {tuple(sorted(e)): i % len(simplices) for i, e in enumerate(edges)}
+        u_edges, u_count = np.unique(np.sort(edges, axis=1), axis=0, return_counts=True)
+        open_edges = u_edges[u_count == 1]  # Keep only edges that are open
+        
+        # For each open edge, find the corresponding triangle, and create a thin LineString
+        # for deck.gl to render. This results in thick lines around the polygons. The color
+        # should be fetched from the triangle.
+        for edge in open_edges:
+            tri_idx = back_ref[tuple(sorted(edge))]
+            ip1 = df_index[edge[0]]
+            ip2 = df_index[edge[1]]
+            p1 = triangle_df[['x', 'y']].iloc[ip1].tolist()
+            p2 = triangle_df[['x', 'y']].iloc[ip2].tolist()
+            attr_value = triangle_values[tri_idx]
+            normalized_value = norm(attr_value)
+            if np.isnan(normalized_value):
+                # Use bad color for NaN values
+                rgba = color_data['cmap']['extremes']['bad']
+            else:
+                color_idx = int(np.clip(normalized_value, 0, len(colors) - 1))
+                rgba = colors[color_idx] + [1.0]  # Add alpha
+            # Convert to 0-255 range for deck.gl
+            rgba_255 = [int(c * 255) for c in rgba]
+            feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [p1, p2]
+                },
+                "properties": {
+                    "lineColor": rgba_255,
+                    "attributeValue": float(attr_value) if not np.isnan(attr_value) else None,
+                    "triangleId": tri_idx
+                }
+            }
+            edges_features.append(feature)
+
+        # Process triangles in triplets (every 3 rows = 1 triangle)
+        features = []
+        for i in range(0, len(triangle_df), 3):
+            if i + 2 < len(triangle_df):  # Ensure we have 3 points
+                # Get the three vertices of the triangle
+                triangle_coords = [
+                    [x_coords[i], y_coords[i]],      # Point 1
+                    [x_coords[i+1], y_coords[i+1]], # Point 2
+                    [x_coords[i+2], y_coords[i+2]], # Point 3
+                    [x_coords[i], y_coords[i]]      # Close the polygon
+                ]
+                
+                # Get the attribute value (same for all 3 points in a triangle)
+                attr_value = attr_values[i]
+                
+                # Normalize the attribute value and get color
+                normalized_value = norm(attr_value)
+                if np.isnan(normalized_value):
+                    # Use bad color for NaN values
+                    rgba = color_data['cmap']['extremes']['bad']
+                else:
+                    color_idx = int(np.clip(normalized_value, 0, len(colors) - 1))
+                    rgba = colors[color_idx] + [1.0]  # Add alpha
+                
+                # Convert to 0-255 range for deck.gl
+                rgba_255 = [int(c * 255) for c in rgba]
+                
+                # Create GeoJSON feature for this triangle
+                feature = {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [triangle_coords]
+                    },
+                    "properties": {
+                        "fillColor": rgba_255,
+                        "lineColor": rgba_255,  # Same color for line
+                        "attributeValue": float(attr_value) if not np.isnan(attr_value) else None,
+                        "triangleId": i // 3
+                    }
+                }
+                features.append(feature)
+        
+        # Create GeoJSON FeatureCollection
+        geojson_data = {
+            "type": "FeatureCollection",
+            "features": features
+        }
+
+        # Add GeoJsonLayer for triangle data visualization
+        layers.append(
+            {
+                "@@type": "GeoJsonLayer",
+                "name": "Triangle Data",
+                "id": "triangle-data-layer",
+                "data": geojson_data,
+                # "pickable": True,
+                "stroked": False,
+                "lineWidthMinPixels": 3,
+                "getFillColor": "@@=properties.fillColor",
+                # "getLineColor": "@@=properties.lineColor",
+                # "getLineWidth": 1,
+                # "visible": True,
+            }
+        )
+        layers.append(
+            {
+                "@@type": "GeoJsonLayer",
+                "name": "Edges Data",
+                "id": "edges-data-layer",
+                "data": {
+                    "type": "FeatureCollection",
+                    "features": edges_features,
+                },
+                # "pickable": True,
+                "stroked": True,
+                "lineWidthMinPixels": 5,
+                "getLineColor": "@@=properties.lineColor",
+                # "getLineWidth": 1,
+                # "visible": True,
+            }
+        )
+                
+    except Exception as e:
+        # Log error but don't break the function
+        warnings.warn(f"Failed to load dummy data: {str(e)}\n{traceback.format_exc()}")
+
     return layers
 
 

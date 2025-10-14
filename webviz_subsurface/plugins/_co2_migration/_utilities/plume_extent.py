@@ -8,12 +8,7 @@ import xtgeo
 MISSING_DEPENDENCIES = False
 try:
     import shapely.geometry
-
-    # Use _contour from MPL. Under the hood, this is the same functionality pyplot is
-    # using. Direct use is implemented (instead of pyplot.contour directly) to avoid the
-    # overhead related to figure/axis creation in MPL.
-    from matplotlib import __version__ as mpl_ver
-    from matplotlib import _contour  # type: ignore[attr-defined]
+    from skimage import measure
 except ImportError:
     MISSING_DEPENDENCIES = True
 
@@ -95,12 +90,24 @@ def _find_contours(
     y_mesh: np.ndarray,
     z_values: np.ndarray,
 ) -> Iterable[np.ndarray]:
-    contour_output = _contour.QuadContourGenerator(
-        x_mesh, y_mesh, z_values, np.zeros_like(z_values, dtype=bool), False, 0
-    ).create_contour(0.5)
-    if int(mpl_ver[0]) >= 3 and int(mpl_ver[2]) >= 5:
-        contour_output = contour_output[0]
-    return contour_output
+    """
+    Find contours using scikit-image instead of matplotlib.
+    Returns contours as coordinate arrays similar to matplotlib's format.
+    """
+    # Find contours at level 0.5 (equivalent to matplotlib's behavior)
+    contours = measure.find_contours(z_values.T, 0.5)
+    
+    # Convert pixel coordinates to real world coordinates
+    result_contours = []
+    for contour in contours:
+        # contour is in (row, col) format, we need (x, y)
+        # Also need to interpolate to get real world coordinates
+        real_contour = np.zeros_like(contour)
+        real_contour[:, 0] = np.interp(contour[:, 1], np.arange(x_mesh.shape[0]), x_mesh[:, 0])
+        real_contour[:, 1] = np.interp(contour[:, 0], np.arange(x_mesh.shape[1]), y_mesh[0, :])
+        result_contours.append(real_contour)
+    
+    return result_contours
 
 
 def _simplify(poly: np.ndarray, simplify_dist: float) -> List[List[float]]:
