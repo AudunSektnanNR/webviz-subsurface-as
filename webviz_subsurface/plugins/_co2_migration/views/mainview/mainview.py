@@ -180,7 +180,7 @@ def _summary_graph_layout(
         html.Div(
             [
                 html.Button(
-                    "⭳",
+                    "↓",
                     id=csv_export_button_id,
                     title="Export data in current plot to a CSV file",
                     style={
@@ -189,11 +189,11 @@ def _summary_graph_layout(
                         "right": "5px",
                         "backgroundColor": "#F4F4F4",
                         "border": "1px solid #B0B0B0",
-                        "color": "#808080",
-                        "padding": "1px 2px",
+                        "color": "#606060",
+                        "padding": "0",
                         "borderRadius": "4px",
                         "zIndex": "1000",  # Make sure it appears on top
-                        "fontSize": "25px",
+                        "fontSize": "18px",
                         "fontWeight": "bold",
                         "display": "flex",
                         "alignItems": "center",  # Vertical centering
@@ -202,6 +202,7 @@ def _summary_graph_layout(
                         "textAlign": "center",
                         "width": "32px",
                         "height": "32px",
+                        "fontFamily": "Arial, sans-serif",
                     },
                 ),
                 wcc.Tabs(
