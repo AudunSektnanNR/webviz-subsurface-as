@@ -652,8 +652,8 @@ def export_figure_data_to_csv(
 ) -> Optional[Dict[str, Any]]:
     """Export visible figure data to CSV file"""
     try:
-        figure = go.Figure(figure)  # Dash State returns dict
-        df = extract_df_from_fig(figure.data, plot_choice)
+        figure_go = go.Figure(figure)  # Dash State returns dict
+        df = extract_df_from_fig(figure_go.data, plot_choice)
         if df.empty:
             LOGGER.warning("No plot data to export to CSV file.")
             return None
