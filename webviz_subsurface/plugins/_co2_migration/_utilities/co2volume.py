@@ -1072,16 +1072,18 @@ def generate_co2_statistics_table_figure(
     legendonly_traces: Optional[List[str]],
 ) -> go.Figure:
 
+    n_leakage = 1
     stats = {
         "Number of selected realizations": len(realizations),
-        "Number of realizations with leakage (into hazardous area)": (str(9999) + " (x %)"),
+        "Number of realizations with leakage (into hazardous area)": (str(n_leakage) + " (33.3 %)"),
         # "Date of first leakage (into hazardous area)": 9999,
-        "Mean date of first leakage (for the "+ str(9999) + " realizations with leakage)": 9999,
-        "Min date of first leakage (for the "+ str(9999) + " realizations with leakage)": 9999,
-        "Max date of first leakage (for the "+ str(9999) + " realizations with leakage)": 9999,
-        "Mean total mass": 2.45,
-        "Min total mass": 2.45,
-        "Max total mass": 2.45,
+        # "Mean date of first leakage (for the "+ str(n_leakage) + " realizations with leakage)": "2345-01-01",
+        "Mean date of first leakage": "2345-01-01",
+        "Min date of first leakage": "2345-01-01",
+        "Max date of first leakage": "- (some realizations with no leakage)",
+        "Mean total mass": "1 792 012 tonns",
+        "Min total mass": "1 698 215 tonns",
+        "Max total mass": "1 886 320 tonns",
         # "Median Volume": 2.31,
         # "Standard Deviation": 0.67,
         # "Min Volume": 1.22,
@@ -1104,7 +1106,8 @@ def generate_co2_statistics_table_figure(
             values=[list(stats.keys()), list(stats.values())],
             fill_color=[["#E8E8E8", "#dff8ff"] * (len(stats) // 2 + 1)],  # Alternating colors
             align='left',
-            font=dict(size=11)
+            height=27,  # Set row height in pixels
+            font=dict(size=13)
         ))
     ])
 

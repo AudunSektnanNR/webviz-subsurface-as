@@ -123,11 +123,45 @@ class ViewSettings(SettingsGroupABC):
 
     def layout(self) -> List[Component]:
         menu_layout = []
-        if self._content["maps"]:
-            menu_layout += [
-                DialogLayout(self._well_names_dict, list(self._ensemble_paths.keys())),
-                OpenDialogButton(),
-            ]
+        def button(
+            uuid: str,
+            title: str,
+            page_id: str,
+        ) -> html.Button:
+            return html.Button(
+                title,
+                className="webviz-inplace-vol-btn",
+                id={"id": uuid, "button": page_id},
+                style={
+                    "width": "100%",
+                    "height": "30px",
+                    "display": "flex",
+                    "alignItems": "center",
+                    "justifyContent": "center",
+                    # "padding": "0px 0px",
+                    # "margin": "0px 0px",
+                    # "border": "1px solid #ccc",
+                    # "borderRadius": "4px",
+                    "backgroundColor": "#d3d3d3",
+                    # "cursor": "pointer",
+                    # "fontSize": "14px",
+                },
+            )
+        menu_layout += [
+            html.Div(
+                style={"margin-bottom": "20px"},
+                children=[
+                    button(uuid=111, title="Containment state", page_id="custom"),
+                    button(uuid=222, title=f"Containment over time", page_id="per_zr"),
+                    button(
+                        uuid=333, title="Probability plot", page_id="conv"
+                    ),
+                    button(
+                        uuid=444, title="Box plot", page_id="conv"
+                    ),
+                ],
+            ),
+        ]
         menu_layout.append(
             EnsembleSelectorLayout(
                 self.register_component_unique_id(self.Ids.ENSEMBLE),
@@ -136,6 +170,11 @@ class ViewSettings(SettingsGroupABC):
                 list(self._ensemble_paths.keys()),
             )
         )
+        if self._content["maps"]:
+            menu_layout += [
+                DialogLayout(self._well_names_dict, list(self._ensemble_paths.keys())),
+                OpenDialogButton(),
+            ]
         if self._content["maps"]:
             menu_layout += [
                 FilterSelectorLayout(
