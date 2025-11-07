@@ -1064,6 +1064,57 @@ def generate_co2_box_plot_figure(
     return fig
 
 
+def generate_co2_statistics_table_figure(
+    table_provider: ContainmentDataProvider,
+    realizations: List[int],
+    scale: Union[Co2MassScale, Co2VolumeScale],
+    containment_info: ContainmentInfo,
+    legendonly_traces: Optional[List[str]],
+) -> go.Figure:
+
+    stats = {
+        "Number of selected realizations": len(realizations),
+        "Number of realizations with leakage (into hazardous area)": (str(9999) + " (x %)"),
+        # "Date of first leakage (into hazardous area)": 9999,
+        "Mean date of first leakage (for the "+ str(9999) + " realizations with leakage)": 9999,
+        "Min date of first leakage (for the "+ str(9999) + " realizations with leakage)": 9999,
+        "Max date of first leakage (for the "+ str(9999) + " realizations with leakage)": 9999,
+        "Mean total mass": 2.45,
+        "Min total mass": 2.45,
+        "Max total mass": 2.45,
+        # "Median Volume": 2.31,
+        # "Standard Deviation": 0.67,
+        # "Min Volume": 1.22,
+        # "Max Volume": 4.89,
+        # "P10": 1.78,
+        # "P90": 3.21,
+        # "Contained Percentage": 78.5,
+        # "Hazardous Percentage": 21.5,
+    }
+
+    fig = go.Figure(data=[go.Table(
+        # header=dict(
+        #     values=['Statistic', 'Value'],
+        #     fill_color='lightgrey',
+        #     align='left',
+        #     font=dict(size=12, color='black')
+        # ),
+        header=None,
+        cells=dict(
+            values=[list(stats.keys()), list(stats.values())],
+            fill_color=[["#E8E8E8", "#dff8ff"] * (len(stats) // 2 + 1)],  # Alternating colors
+            align='left',
+            font=dict(size=11)
+        ))
+    ])
+
+    fig.update_layout(
+        margin=dict(l=10, r=10, t=10, b=10),  # Removed title margin
+        height=300
+    )
+    return fig
+
+
 # pylint: disable=too-many-branches
 def _make_title(c_info: ContainmentInfo, include_date: bool = True) -> str:
     components = []

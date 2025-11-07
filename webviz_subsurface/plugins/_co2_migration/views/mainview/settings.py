@@ -1192,6 +1192,10 @@ class GraphSelectorsLayout(wcc.Selectors):
                                     "label": "Box plot",
                                     "value": StatisticsTabOption.BOX_PLOT,
                                 },
+                                {
+                                    "label": "Statistics table",
+                                    "value": StatisticsTabOption.STATISTICS_TABLE,
+                                },
                             ],
                             value=StatisticsTabOption.PROBABILITY_PLOT,
                             id=containment_ids[ids.STATISTICS_TAB_OPTION],

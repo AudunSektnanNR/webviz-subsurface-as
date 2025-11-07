@@ -7,6 +7,7 @@ from webviz_subsurface._utils.enum_shim import StrEnum
 class StatisticsTabOption(StrEnum):
     PROBABILITY_PLOT = "probability-plot"
     BOX_PLOT = "box-plot"
+    STATISTICS_TABLE = "statistics-table"
 
 
 class MainTabOption(StrEnum):

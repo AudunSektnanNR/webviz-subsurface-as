@@ -922,9 +922,11 @@ class CO2Migration(WebvizPluginABC):
                 if statistics_tab_option == StatisticsTabOption.PROBABILITY_PLOT:
                     file_name += "_prob_plot"
                     plot_choice = "probability"
-                else:  # => StatisticsTabOption.BOX_PLOT:
+                elif statistics_tab_option == StatisticsTabOption.BOX_PLOT:
                     file_name += "_box_plot"
                     plot_choice = "box"
+                else:
+                    raise PreventUpdate  # NBNB-AS: Temp?
             else:
                 raise PreventUpdate  # Should not happen
 

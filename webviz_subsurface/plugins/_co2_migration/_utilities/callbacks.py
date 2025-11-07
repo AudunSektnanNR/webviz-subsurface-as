@@ -26,6 +26,7 @@ from webviz_subsurface.plugins._co2_migration._utilities import plume_extent
 from webviz_subsurface.plugins._co2_migration._utilities.co2volume import (
     extract_df_from_fig,
     generate_co2_box_plot_figure,
+    generate_co2_statistics_table_figure,
     generate_co2_statistics_figure,
     generate_co2_time_containment_figure,
     generate_co2_time_containment_one_realization_figure,
@@ -567,9 +568,20 @@ def generate_containment_figures(
                 containment_info,
                 legenddata["stats_legendonly"],
             )
-        else:  # "box_plot"
+        elif (
+            containment_info.statistics_tab_option
+            == StatisticsTabOption.BOX_PLOT
+        ):
             # Deliberately uses same legend as statistics
             fig2 = generate_co2_box_plot_figure(
+                table_provider,
+                realizations,
+                co2_scale,
+                containment_info,
+                legenddata["stats_legendonly"],
+            )
+        else:
+            fig2 = generate_co2_statistics_table_figure(
                 table_provider,
                 realizations,
                 co2_scale,
