@@ -1072,48 +1072,85 @@ def generate_co2_statistics_table_figure(
     legendonly_traces: Optional[List[str]],
 ) -> go.Figure:
 
-    n_leakage = 1
-    stats = {
-        "Number of selected realizations": len(realizations),
-        "Number of realizations with leakage (into hazardous area)": (str(n_leakage) + " (33.3 %)"),
-        # "Date of first leakage (into hazardous area)": 9999,
-        # "Mean date of first leakage (for the "+ str(n_leakage) + " realizations with leakage)": "2345-01-01",
-        "Mean date of first leakage": "2345-01-01",
-        "Min date of first leakage": "2345-01-01",
-        "Max date of first leakage": "- (some realizations with no leakage)",
-        "Mean total mass": "1 792 012 tonns",
-        "Min total mass": "1 698 215 tonns",
-        "Max total mass": "1 886 320 tonns",
-        # "Median Volume": 2.31,
-        # "Standard Deviation": 0.67,
-        # "Min Volume": 1.22,
-        # "Max Volume": 4.89,
-        # "P10": 1.78,
-        # "P90": 3.21,
-        # "Contained Percentage": 78.5,
-        # "Hazardous Percentage": 21.5,
-    }
+    # Data structured for 5-column table: Statistic, Min, Mean, Max, Relevant realizations
+    total_realizations = len(realizations)
+    total_realizations = 10
+
+    if False:
+        statistics = [
+            "First exit out of containment polygon",
+            "First entry into hazardous polygon",
+            "Total mass (tons)",
+        ]
+        min_values = [
+            "2125-05-12",
+            "2225-01-01",
+            "1,698,215",
+        ]
+        mean_values = [
+            "2300-03-15",
+            "2375-05-05",
+            "1,792,012",
+        ]
+        max_values = [
+            "2450-01-01",
+            "After 2500-01-01",
+            "1,886,320",
+        ]
+        relevant_realizations = [
+            f"10/{total_realizations}",
+            f"6/{total_realizations}",
+            f"{total_realizations}/{total_realizations}",
+        ]
+    else:
+        statistics = [
+            "First entry into Region_1",
+            "Total mass (tons)",
+        ]
+        min_values = [
+            "2125-05-12",
+            "1,698,215",
+        ]
+        mean_values = [
+            "2300-03-15",
+            "1,792,012",
+        ]
+        max_values = [
+            "After 2500-01-01",
+            "1,886,320",
+        ]
+        relevant_realizations = [
+            f"4/{total_realizations}",
+            f"{total_realizations}/{total_realizations}",
+        ]
 
     fig = go.Figure(data=[go.Table(
-        # header=dict(
-        #     values=['Statistic', 'Value'],
-        #     fill_color='lightgrey',
-        #     align='left',
-        #     font=dict(size=12, color='black')
-        # ),
-        header=None,
+        header=dict(
+            values=['Statistic', 'Min', 'Mean', 'Max', '#Realizations'],
+            fill_color='#B0B0B0',
+            align=['left', 'right', 'right', 'right', 'right'],
+            font=dict(size=13, color='black'),
+            height=32
+        ),
         cells=dict(
-            values=[list(stats.keys()), list(stats.values())],
-            fill_color=[["#E8E8E8", "#dff8ff"] * (len(stats) // 2 + 1)],  # Alternating colors
-            align='left',
+            values=[statistics, min_values, mean_values, max_values, relevant_realizations],
+            fill_color=[["#E8E8E8", "#dff8ff"] * (len(statistics) // 2 + 1)],  # Alternating colors
+            align=['left', 'right', 'right', 'right', 'right'],
             height=27,  # Set row height in pixels
             font=dict(size=13)
-        ))
-    ])
+        ),
+        columnwidth=[32, 17, 17, 17, 17]
+    )])
 
     fig.update_layout(
-        margin=dict(l=10, r=10, t=10, b=10),  # Removed title margin
-        height=300
+        margin=dict(l=10, r=10, t=40, b=10),  # Added top margin for title
+        height=300,
+        title=dict(
+            text=_make_title(containment_info, include_date=False),
+            font=dict(size=14),
+            y=0.95,
+            x=0.4
+        )
     )
     return fig
 
