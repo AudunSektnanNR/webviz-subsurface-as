@@ -115,6 +115,7 @@ def _translate_labels(df: pd.DataFrame, column: str = "type") -> None:
             translated_parts = [_LABEL_TRANSLATIONS.get(part, part) for part in parts]
             return ", ".join(translated_parts)
         return _LABEL_TRANSLATIONS.get(label, label)
+
     df[column] = df[column].apply(translate_label)
 
 
@@ -809,7 +810,9 @@ def generate_co2_time_containment_figure(
             pass
 
     options["name"] = options["name"].apply(
-        lambda label: ", ".join([_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")])
+        lambda label: ", ".join(
+            [_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")]
+        )
         if ", " in label
         else _LABEL_TRANSLATIONS.get(label, label)
     )
