@@ -99,17 +99,23 @@ _LIGHTER_COLORS = {
     "#880808": "#C84848",
 }
 
+_LABEL_TRANSLATIONS = {
+    "nogo": "no-go",
+    "dissolved_water": "dissolved water",
+    "dissolved_oil": "dissolved oil",
+    "free_gas": "free gas",
+    "trapped_gas": "trapped gas",
+}
 
-def _read_dataframe(
-    table_provider: EnsembleTableProvider,
-    realization: int,
-    scale_factor: float,
-) -> pd.DataFrame:
-    df = table_provider.get_column_data(table_provider.column_names(), [realization])
-    if scale_factor == 1.0:
-        return df
-    df["amount"] /= scale_factor
-    return df
+
+def _translate_labels(df: pd.DataFrame, column: str = "type") -> None:
+    def translate_label(label: str) -> str:
+        if ", " in label:
+            parts = label.split(", ")
+            translated_parts = [_LABEL_TRANSLATIONS.get(part, part) for part in parts]
+            return ", ".join(translated_parts)
+        return _LABEL_TRANSLATIONS.get(label, label)
+    df[column] = df[column].apply(translate_label)
 
 
 def _get_colors(color_options: List[str], split: str) -> List[str]:
@@ -530,6 +536,13 @@ def generate_co2_volume_figure(
         color_choice,
         mark_choice,
     )
+    _translate_labels(df, "type")
+    cat_ord["type"] = [
+        ", ".join([_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")])
+        if ", " in label
+        else _LABEL_TRANSLATIONS.get(label, label)
+        for label in cat_ord["type"]
+    ]
     fig = px.bar(
         df,
         y="real",
@@ -590,6 +603,13 @@ def generate_co2_time_containment_one_realization_figure(
         color_choice,
         mark_choice,
     )
+    _translate_labels(df, "type")
+    cat_ord["type"] = [
+        ", ".join([_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")])
+        if ", " in label
+        else _LABEL_TRANSLATIONS.get(label, label)
+        for label in cat_ord["type"]
+    ]
     fig = px.area(
         df,
         x="date",
@@ -788,6 +808,12 @@ def generate_co2_time_containment_figure(
         except ValueError:
             pass
 
+    options["name"] = options["name"].apply(
+        lambda label: ", ".join([_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")])
+        if ", " in label
+        else _LABEL_TRANSLATIONS.get(label, label)
+    )
+
     fig = go.Figure()
     # Generate dummy scatters for legend entries
     dummy_args = {"x": df["date"], "mode": "lines", "hoverinfo": "none"}
@@ -907,6 +933,13 @@ def generate_co2_statistics_figure(
         color_choice,
         mark_choice,
     )
+    _translate_labels(df, "type")
+    cat_ord["type"] = [
+        ", ".join([_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")])
+        if ", " in label
+        else _LABEL_TRANSLATIONS.get(label, label)
+        for label in cat_ord["type"]
+    ]
 
     df = df.drop(columns=["REAL"]).reset_index(drop=True)
     fig = px.ecdf(
@@ -973,6 +1006,13 @@ def generate_co2_box_plot_figure(
         color_choice,
         mark_choice,
     )
+    _translate_labels(df, "type")
+    cat_ord["type"] = [
+        ", ".join([_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")])
+        if ", " in label
+        else _LABEL_TRANSLATIONS.get(label, label)
+        for label in cat_ord["type"]
+    ]
 
     fig = go.Figure()
     for count, type_val in enumerate(cat_ord["type"], 0):
