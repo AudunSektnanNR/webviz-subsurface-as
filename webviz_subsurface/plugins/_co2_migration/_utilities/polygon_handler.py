@@ -29,9 +29,7 @@ class PolygonHandler:
         server.add_provider(self._provider)
 
     def extract_nogo_poly_url(self, realization: List[int]) -> Optional[str]:
-        return self._extract_polygon_url(
-            self._nogo_name, self._attribute, realization
-        )
+        return self._extract_polygon_url(self._nogo_name, self._attribute, realization)
 
     def extract_containment_poly_url(self, realization: List[int]) -> Optional[str]:
         return self._extract_polygon_url(
