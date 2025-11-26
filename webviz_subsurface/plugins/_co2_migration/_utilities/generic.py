@@ -212,7 +212,7 @@ class LayoutLabels(StrEnum):
 
     SHOW_FAULTPOLYGONS = "Show fault polygons"
     SHOW_CONTAINMENT_POLYGON = "Show containment polygon"
-    SHOW_HAZARDOUS_POLYGON = "Show hazardous polygon"
+    SHOW_NOGO_POLYGON = "Show no-go polygon"
     SHOW_POLYGONS_AS_OUTLINES = "Show polygons as outlines"
     SHOW_WELLS = "Show wells"
     WELL_FILTER = "Well filter"
@@ -290,5 +290,5 @@ class MapThresholds:
 class BoundarySettings(TypedDict):
     polygon_file_pattern: str
     attribute: str
-    hazardous_name: str
+    nogo_name: str
     containment_name: str

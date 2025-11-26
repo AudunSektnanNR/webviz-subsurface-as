@@ -37,7 +37,7 @@ class Colors(StrEnum):
     total = "#222222"
     contained = "#00aa00"
     outside = "#006ddd"
-    hazardous = "#dd4300"
+    nogo = "#dd4300"
     dissolved_water = "#208eb7"
     dissolved_oil = "#A0522D"
     gas = "#C41E3A"
@@ -268,8 +268,8 @@ def _prepare_pattern_and_color_options_statistics_plot(
 
 
 def _find_default_legendonly(df: pd.DataFrame, categories: List[str]) -> List[str]:
-    if "hazardous" in categories:
-        default_option = "hazardous"
+    if "nogo" in categories:
+        default_option = "nogo"
     else:
         max_value = -999.9
         default_option = categories[0]
@@ -416,7 +416,7 @@ def _add_sort_key_and_real(
     sort_value = np.sum(
         df[
             (df["phase"] == "total")
-            & (df["containment"] == "hazardous")
+            & (df["containment"] == "nogo")
             & (df["zone"] == containment_info.zone)
             & (df["region"] == containment_info.region)
             & (df["plume_group"] == containment_info.plume_group)
@@ -657,7 +657,10 @@ def _add_hover_info_in_field(
     prev_vals = {date: 0 for date in dates}
     date_dict = spaced_dates(dates, 4)  # type: ignore[arg-type]
     for name, color in zip(cat_ord["type"], colors):
+        print(f"Name: {name}, Color: {color}")
+        print(df)
         sub_df = df[df["type"] == name]
+        print(sub_df)
         for date in dates:
             amount = sub_df[sub_df["date"] == date]["amount"].item()
             prop = sub_df[sub_df["date"] == date]["prop"].item()

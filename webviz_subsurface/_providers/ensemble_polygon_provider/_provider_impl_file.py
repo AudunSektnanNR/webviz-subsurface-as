@@ -33,7 +33,7 @@ class Col:
 
 class PolygonType(StrEnum):
     SIMULATED = "simulated"
-    HAZARDUOUS_BOUNDARY = "hazarduous_boundary"
+    NOGO_BOUNDARY = "nogo_boundary"
     CONTAINMENT_BOUNDARY = "containment_boundary"
 
 

@@ -196,7 +196,7 @@ def init_polygon_provider_handlers(
     filled_options: BoundarySettings = {
         "polygon_file_pattern": "share/results/polygons/*.csv",
         "attribute": "boundary",
-        "hazardous_name": "hazardous",
+        "nogo_name": "nogo",
         "containment_name": "containment",
     }
     if options is not None:
