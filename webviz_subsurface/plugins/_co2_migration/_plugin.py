@@ -570,6 +570,9 @@ class CO2Migration(WebvizPluginABC):
             nogo_polygon_url = self._polygon_handlers[ensemble].extract_nogo_poly_url(
                 realization
             )
+            hazardous_polygon_url = self._polygon_handlers[ensemble].extract_hazardous_poly_url(
+                realization
+            )
             containment_polygon_url = self._polygon_handlers[
                 ensemble
             ].extract_containment_poly_url(realization)
@@ -580,6 +583,7 @@ class CO2Migration(WebvizPluginABC):
                 fault_polygon_url=fault_polygon_url,
                 containment_bounds_url=containment_polygon_url,
                 nogo_bounds_url=nogo_polygon_url,
+                hazardous_bounds_url=hazardous_polygon_url,
                 well_pick_provider=self._well_pick_provider.get(ensemble, None),
                 plume_extent_data=plume_polygon,
                 options_dialog_options=options_dialog_options,
@@ -594,6 +598,7 @@ class CO2Migration(WebvizPluginABC):
                 current_total=current_summed_mass,
                 options=options_dialog_options,
                 con_url=containment_polygon_url,
+                haz_url=hazardous_polygon_url,
                 nogo_url=nogo_polygon_url,
             )
             viewports = no_update if current_views else create_map_viewports()

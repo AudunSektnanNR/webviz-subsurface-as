@@ -268,11 +268,12 @@ def _create_summed_mass_annotation(
 def _create_polygon_legend(
     options: List[str],
     con_url: Optional[str],
+    haz_url: Optional[str],  # Keep for backward compatibility
     nogo_url: Optional[str],
 ) -> List:
     legend: List = []
     hide_con = con_url is None or LayoutLabels.SHOW_CONTAINMENT_POLYGON not in options
-    hide_nogo = nogo_url is None or LayoutLabels.SHOW_NOGO_POLYGON not in options
+    hide_nogo = (nogo_url is None and haz_url is None) or LayoutLabels.SHOW_NOGO_POLYGON not in options
     outline = LayoutLabels.SHOW_POLYGONS_AS_OUTLINES in options
     if hide_con and hide_nogo:
         return legend
@@ -350,6 +351,7 @@ def create_map_annotations(
     current_total: Optional[float],
     options: List[str],
     con_url: Optional[str],
+    haz_url: Optional[str],
     nogo_url: Optional[str],
 ) -> List[wsc.ViewAnnotation]:
     annotations = []
@@ -381,7 +383,7 @@ def create_map_annotations(
                     wsc.ViewFooter(children=formation),
                     _create_summed_mass_annotation(attribute, current_total, unit),
                 ]
-                + _create_polygon_legend(options, con_url, nogo_url),
+                + _create_polygon_legend(options, con_url, haz_url, nogo_url),
             )
         )
     return annotations
@@ -400,6 +402,7 @@ def create_map_viewports() -> Dict:
                     "fault-polygons-layer",
                     "license-boundary-layer",
                     "nogo-boundary-layer",
+                    "hazardous-boundary-layer",  # Keep for backward compatibility
                     "well-picks-layer",
                     "plume-polygon-layer",
                 ],
@@ -416,6 +419,7 @@ def create_map_layers(
     fault_polygon_url: Optional[str],
     containment_bounds_url: Optional[str],
     nogo_bounds_url: Optional[str],
+    hazardous_bounds_url: Optional[str],  # Keep for backward compatibility
     well_pick_provider: Optional[EnsembleWellPicks],
     plume_extent_data: Optional[geojson.FeatureCollection],
     options_dialog_options: List[str],
@@ -487,6 +491,26 @@ def create_map_layers(
                 "name": "No-go Polygon",
                 "id": "nogo-boundary-layer",
                 "data": nogo_bounds_url,
+                "stroked": outline,
+                "filled": not outline,
+                "getFillColor": [200, 0, 0, 120],
+                "getLineColor": [200, 0, 0, 180],
+                "getLineWidth": 3,
+                "lineWidthUnits": "pixels",
+                "visible": True,
+            }
+        )
+
+    if (
+        hazardous_bounds_url is not None
+        and LayoutLabels.SHOW_NOGO_POLYGON in options_dialog_options
+    ):
+        layers.append(
+            {
+                "@@type": "GeoJsonLayer",
+                "name": "No-go Polygon",
+                "id": "hazardous-boundary-layer",
+                "data": hazardous_bounds_url,
                 "stroked": outline,
                 "filled": not outline,
                 "getFillColor": [200, 0, 0, 120],

@@ -290,5 +290,6 @@ class MapThresholds:
 class BoundarySettings(TypedDict):
     polygon_file_pattern: str
     attribute: str
+    hazardous_name: str  # Keep for backward compatibility
     nogo_name: str
     containment_name: str

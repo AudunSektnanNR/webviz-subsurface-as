@@ -19,6 +19,7 @@ class PolygonHandler:
     ) -> None:
         self._server = server
         self._attribute = boundary_options["attribute"]
+        self._hazardous_name = boundary_options["hazardous_name"]
         self._nogo_name = boundary_options["nogo_name"]
         self._containment_name = boundary_options["containment_name"]
         polygon_provider_factory = EnsemblePolygonProviderFactory.instance()
@@ -30,6 +31,9 @@ class PolygonHandler:
 
     def extract_nogo_poly_url(self, realization: List[int]) -> Optional[str]:
         return self._extract_polygon_url(self._nogo_name, self._attribute, realization)
+
+    def extract_hazardous_poly_url(self, realization: List[int]) -> Optional[str]:
+        return self._extract_polygon_url(self._hazardous_name, self._attribute, realization)
 
     def extract_containment_poly_url(self, realization: List[int]) -> Optional[str]:
         return self._extract_polygon_url(
