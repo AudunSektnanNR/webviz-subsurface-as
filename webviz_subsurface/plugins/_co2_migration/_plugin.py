@@ -570,9 +570,9 @@ class CO2Migration(WebvizPluginABC):
             nogo_polygon_url = self._polygon_handlers[ensemble].extract_nogo_poly_url(
                 realization
             )
-            hazardous_polygon_url = self._polygon_handlers[ensemble].extract_hazardous_poly_url(
-                realization
-            )
+            hazardous_polygon_url = self._polygon_handlers[
+                ensemble
+            ].extract_hazardous_poly_url(realization)
             containment_polygon_url = self._polygon_handlers[
                 ensemble
             ].extract_containment_poly_url(realization)

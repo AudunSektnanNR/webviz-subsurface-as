@@ -273,7 +273,9 @@ def _create_polygon_legend(
 ) -> List:
     legend: List = []
     hide_con = con_url is None or LayoutLabels.SHOW_CONTAINMENT_POLYGON not in options
-    hide_nogo = (nogo_url is None and haz_url is None) or LayoutLabels.SHOW_NOGO_POLYGON not in options
+    hide_nogo = (
+        nogo_url is None and haz_url is None
+    ) or LayoutLabels.SHOW_NOGO_POLYGON not in options
     outline = LayoutLabels.SHOW_POLYGONS_AS_OUTLINES in options
     if hide_con and hide_nogo:
         return legend
