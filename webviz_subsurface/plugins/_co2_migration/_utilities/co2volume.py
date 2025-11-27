@@ -108,7 +108,7 @@ _LABEL_TRANSLATIONS = {
 }
 
 
-def _translate_labels(df: pd.DataFrame, column: str = "type") -> None:
+def _translate_labels(df: Union[pd.DataFrame, Dict], column: str = "type") -> None:
     def translate_label(label: str) -> str:
         if ", " in label:
             parts = label.split(", ")
@@ -116,7 +116,10 @@ def _translate_labels(df: pd.DataFrame, column: str = "type") -> None:
             return ", ".join(translated_parts)
         return _LABEL_TRANSLATIONS.get(label, label)
 
-    df[column] = df[column].apply(translate_label)
+    if type(df) == dict:
+        df[column] = [translate_label(label) for label in df[column]]
+    else:
+        df[column] = df[column].apply(translate_label)
 
 
 def _get_colors(color_options: List[str], split: str) -> List[str]:
@@ -538,12 +541,8 @@ def generate_co2_volume_figure(
         mark_choice,
     )
     _translate_labels(df, "type")
-    cat_ord["type"] = [
-        ", ".join([_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")])
-        if ", " in label
-        else _LABEL_TRANSLATIONS.get(label, label)
-        for label in cat_ord["type"]
-    ]
+    _translate_labels(cat_ord, "type")
+
     fig = px.bar(
         df,
         y="real",
@@ -605,12 +604,8 @@ def generate_co2_time_containment_one_realization_figure(
         mark_choice,
     )
     _translate_labels(df, "type")
-    cat_ord["type"] = [
-        ", ".join([_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")])
-        if ", " in label
-        else _LABEL_TRANSLATIONS.get(label, label)
-        for label in cat_ord["type"]
-    ]
+    _translate_labels(cat_ord, "type")
+
     fig = px.area(
         df,
         x="date",
@@ -797,6 +792,8 @@ def generate_co2_time_containment_figure(
     options = _prepare_line_type_and_color_options(
         df, containment_info, color_choice, mark_choice
     )
+    _translate_labels(df, "name")
+    _translate_labels(options, "name")
     if legendonly_traces is None:
         inactive_cols_at_startup = list(
             options[~(options["line_type"].isin(["solid", "0px"]))]["name"]
@@ -937,12 +934,7 @@ def generate_co2_statistics_figure(
         mark_choice,
     )
     _translate_labels(df, "type")
-    cat_ord["type"] = [
-        ", ".join([_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")])
-        if ", " in label
-        else _LABEL_TRANSLATIONS.get(label, label)
-        for label in cat_ord["type"]
-    ]
+    _translate_labels(cat_ord, "type")
 
     df = df.drop(columns=["REAL"]).reset_index(drop=True)
     fig = px.ecdf(
@@ -1010,12 +1002,7 @@ def generate_co2_box_plot_figure(
         mark_choice,
     )
     _translate_labels(df, "type")
-    cat_ord["type"] = [
-        ", ".join([_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")])
-        if ", " in label
-        else _LABEL_TRANSLATIONS.get(label, label)
-        for label in cat_ord["type"]
-    ]
+    _translate_labels(cat_ord, "type")
 
     fig = go.Figure()
     for count, type_val in enumerate(cat_ord["type"], 0):
