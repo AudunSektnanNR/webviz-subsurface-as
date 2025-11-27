@@ -103,13 +103,10 @@ def _read_dataframe(
 
 
 def _get_colors(color_options: List[str], split: str) -> List[str]:
-    # if split in {"containment", "phase"}:
-    #     return [Colors[option] for option in color_options]
     if split == "containment":
         return [_CONTAINMENT_COLORS[option][0] for option in color_options]
-    elif split == "phase":
+    if split == "phase":
         return [_PHASE_COLORS[option][0] for option in color_options]
-   #  options = list(_COLOR_ZONES)
     options = list([x[0] for x in _GENERAL_COLORS])
     if split == "region":
         options.reverse()
