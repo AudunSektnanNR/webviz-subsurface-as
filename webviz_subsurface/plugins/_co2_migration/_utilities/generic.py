@@ -2,6 +2,7 @@ from __future__ import (  # Change to import Self from typing if we update to Py
     annotations,
 )
 
+import logging
 from enum import Enum
 from typing import Dict, List, TypedDict
 
@@ -293,3 +294,27 @@ class BoundarySettings(TypedDict):
     hazardous_name: str  # Keep for backward compatibility
     nogo_name: str
     containment_name: str
+
+
+class IgnoreFaultPolyWarning(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        fault_poly = "No simulated fault polygons found for SimulatedFaultPolygonsAddress" in record.getMessage()
+        return not fault_poly
+
+
+class IgnoreHazardousPolyWarning(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        haz_poly = "hazardous" in record.getMessage() and "SimulatedPolygonsAddress" in record.getMessage()
+        return not haz_poly
+
+
+def deactivate_polygon_warnings():
+    logger1 = logging.getLogger(
+        "webviz_subsurface._providers.ensemble_fault_polygons_provider._provider_impl_file"
+    )
+    logger1.addFilter(IgnoreFaultPolyWarning())
+
+    logger2 = logging.getLogger(
+        "webviz_subsurface._providers.ensemble_polygon_provider._provider_impl_file"
+    )
+    logger2.addFilter(IgnoreHazardousPolyWarning())
