@@ -298,13 +298,19 @@ class BoundarySettings(TypedDict):
 
 class IgnoreFaultPolyWarning(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        fault_poly = "No simulated fault polygons found for SimulatedFaultPolygonsAddress" in record.getMessage()
+        fault_poly = (
+            "No simulated fault polygons found for SimulatedFaultPolygonsAddress"
+            in record.getMessage()
+        )
         return not fault_poly
 
 
 class IgnoreHazardousPolyWarning(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
-        haz_poly = "hazardous" in record.getMessage() and "SimulatedPolygonsAddress" in record.getMessage()
+        haz_poly = (
+            "hazardous" in record.getMessage()
+            and "SimulatedPolygonsAddress" in record.getMessage()
+        )
         return not haz_poly
 
 
