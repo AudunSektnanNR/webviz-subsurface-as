@@ -270,8 +270,8 @@ def _prepare_pattern_and_color_options_statistics_plot(
 
 
 def _find_default_legendonly(df: pd.DataFrame, categories: List[str]) -> List[str]:
-    if "nogo" in categories:
-        default_option = "nogo"
+    if "no-go" in categories:
+        default_option = "no-go"
     else:
         max_value = -999.9
         default_option = categories[0]
