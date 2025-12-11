@@ -33,11 +33,15 @@ class MapAttribute(StrEnum):
     DISSOLVED_WATER = "Dissolved mass in water phase"
     DISSOLVED_OIL = "Dissolved mass in oil phase"
     FREE = "Free gas mass"
-    FREE_GAS = "Free gas phase mass"
-    TRAPPED_GAS = "Trapped gas phase mass"
     FREE_3PHASES = "Mixed mass in gas phase"
-    FREE_GAS_3PHASES = "Mixed mass in free gas phase"
-    TRAPPED_GAS_3PHASES = "Mixed mass in trapped gas phase"
+    EFF_FREE_GAS = "Free gas phase mass (effective)"
+    EFF_TRAPPED_GAS = "Trapped gas phase mass (effective)"
+    EFF_FREE_GAS_3PHASES = "Mixed mass in free gas phase (effective)"
+    EFF_TRAPPED_GAS_3PHASES = "Mixed mass in trapped gas phase (effective)"
+    MAX_FREE_GAS = "Free gas phase mass (maximum)"
+    MAX_TRAPPED_GAS = "Trapped gas phase mass (maximum)"
+    MAX_FREE_GAS_3PHASES = "Mixed mass in free gas phase (maximum)"
+    MAX_TRAPPED_GAS_3PHASES = "Mixed mass in trapped gas phase (maximum)"
 
 
 class MapGroup(StrEnum):
@@ -64,11 +68,15 @@ class MapGroup(StrEnum):
     DISSOLVED_WATER = "CO2 MASS"
     DISSOLVED_OIL = "CO2 MASS"
     FREE = "CO2 MASS"
-    FREE_GAS = "CO2 MASS"
-    TRAPPED_GAS = "CO2 MASS"
     FREE_3PHASES = "CO2 MASS"
-    FREE_GAS_3PHASES = "CO2 MASS"
-    TRAPPED_GAS_3PHASES = "CO2 MASS"
+    EFF_FREE_GAS = "CO2 MASS"
+    EFF_TRAPPED_GAS = "CO2 MASS"
+    EFF_FREE_GAS_3PHASES = "CO2 MASS"
+    EFF_TRAPPED_GAS_3PHASES = "CO2 MASS"
+    MAX_FREE_GAS = "CO2 MASS"
+    MAX_TRAPPED_GAS = "CO2 MASS"
+    MAX_FREE_GAS_3PHASES = "CO2 MASS"
+    MAX_TRAPPED_GAS_3PHASES = "CO2 MASS"
 
 
 map_group_labels = {
@@ -80,6 +88,7 @@ map_group_labels = {
     "XMF2": "Dissolved in water phase",
     "SGSTRAND": "Trapped gas phase",
     "SGTRH": "Trapped gas phase",
+    # NBNB-AS: SGTRAP
     "CO2 MASS": "CO2 mass",
 }
 
@@ -108,11 +117,15 @@ class MapType(StrEnum):
     DISSOLVED_WATER = "MASS"
     DISSOLVED_OIL = "MASS"
     FREE = "MASS"
-    FREE_GAS = "MASS"
-    TRAPPED_GAS = "MASS"
     FREE_3PHASES = "MASS"
-    FREE_GAS_3PHASES = "MASS"
-    TRAPPED_GAS_3PHASES = "MASS"
+    EFF_FREE_GAS = "MASS"
+    EFF_TRAPPED_GAS = "MASS"
+    EFF_FREE_GAS_3PHASES = "MASS"
+    EFF_TRAPPED_GAS_3PHASES = "MASS"
+    MAX_FREE_GAS = "MASS"
+    MAX_TRAPPED_GAS = "MASS"
+    MAX_FREE_GAS_3PHASES = "MASS"
+    MAX_TRAPPED_GAS_3PHASES = "MASS"
 
 
 class MapNamingConvention(StrEnum):
@@ -134,11 +147,15 @@ class MapNamingConvention(StrEnum):
     DISSOLVED_WATER = "co2_mass_dissolved_water_phase"
     DISSOLVED_OIL = "co2_mass_dissolved_oil_phase"
     FREE = "co2_mass_gas_phase"
-    FREE_GAS = "co2_mass_free_gas_phase"
-    TRAPPED_GAS = "co2_mass_trapped_gas_phase"
     FREE_3PHASES = "co2_mass_gas_phase"
-    FREE_GAS_3PHASES = "co2_mass_free_gas_phase"
-    TRAPPED_GAS_3PHASES = "co2_mass_trapped_gas_phase"
+    EFF_FREE_GAS = "co2_mass_effective_free_gas_phase"
+    EFF_TRAPPED_GAS = "co2_mass_effective_trapped_gas_phase"
+    EFF_FREE_GAS_3PHASES = "co2_mass_effective_free_gas_phase"
+    EFF_TRAPPED_GAS_3PHASES = "co2_mass_effective_trapped_gas_phase"
+    MAX_FREE_GAS = "co2_mass_maximum_free_gas_phase"
+    MAX_TRAPPED_GAS = "co2_mass_co2_mass_maximum_free_gas_phase_trapped_gas_phase"
+    MAX_FREE_GAS_3PHASES = "co2_mass_co2_mass_maximum_free_gas_phase_free_gas_phase"
+    MAX_TRAPPED_GAS_3PHASES = "co2_mass_co2_mass_maximum_free_gas_phase_trapped_gas_phase"
 
 
 class PhasesScenario(Enum):
