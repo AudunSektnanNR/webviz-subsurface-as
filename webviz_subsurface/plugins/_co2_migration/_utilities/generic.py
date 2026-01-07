@@ -311,9 +311,8 @@ class IgnoreFaultPolyWarning(logging.Filter):
 class IgnoreHazardousPolyWarning(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         haz_poly = (
-            ("hazardous" in record.getMessage() or "invalid" in record.getMessage())
-            and "SimulatedPolygonsAddress" in record.getMessage()
-        )
+            "hazardous" in record.getMessage() or "invalid" in record.getMessage()
+        ) and "SimulatedPolygonsAddress" in record.getMessage()
         return not haz_poly
 
 
@@ -328,17 +327,18 @@ def deactivate_polygon_warnings():
     )
     logger2.addFilter(IgnoreHazardousPolyWarning())
 
+
 def check_hazardous_polygon(boundary_settings: Optional[BoundarySettings]):
     if boundary_settings is not None and "hazardous_name" in boundary_settings:
-        warning_txt = "In config file: 'hazardous_name' under 'boundary_settings' is deprecated and will be " \
+        warning_txt = (
+            "In config file: 'hazardous_name' under 'boundary_settings' is deprecated and will be "
             "removed in future versions. Use 'nogo_name' instead."
+        )
         warnings.warn(
             warning_txt,
             DeprecationWarning,
         )
-        LOGGER.warning(
-            warning_txt
-        )
+        LOGGER.warning(warning_txt)
         # Only use nogo polygon if both are specified
         if "nogo_name" in boundary_settings:
             boundary_settings["hazardous_name"] = "invalid"
