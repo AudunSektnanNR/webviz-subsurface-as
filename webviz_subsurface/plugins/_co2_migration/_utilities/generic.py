@@ -311,7 +311,7 @@ class IgnoreFaultPolyWarning(logging.Filter):
 class IgnoreHazardousPolyWarning(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         haz_poly = (
-            "hazardous" in record.getMessage()
+            ("hazardous" in record.getMessage() or "invalid" in record.getMessage())
             and "SimulatedPolygonsAddress" in record.getMessage()
         )
         return not haz_poly
@@ -339,3 +339,6 @@ def check_hazardous_polygon(boundary_settings: Optional[BoundarySettings]):
         LOGGER.warning(
             warning_txt
         )
+        # Only use nogo polygon if both are specified
+        if "nogo_name" in boundary_settings:
+            boundary_settings["hazardous_name"] = "invalid"
