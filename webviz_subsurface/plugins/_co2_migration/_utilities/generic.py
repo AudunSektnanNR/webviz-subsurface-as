@@ -299,15 +299,6 @@ class BoundarySettings(TypedDict):
     containment_name: str
 
 
-class IgnoreFaultPolyWarning(logging.Filter):
-    def filter(self, record: logging.LogRecord) -> bool:
-        fault_poly = (
-            "No simulated fault polygons found for SimulatedFaultPolygonsAddress"
-            in record.getMessage()
-        )
-        return not fault_poly
-
-
 class IgnoreHazardousPolyWarning(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         haz_poly = (
@@ -318,14 +309,9 @@ class IgnoreHazardousPolyWarning(logging.Filter):
 
 def deactivate_polygon_warnings():
     logger1 = logging.getLogger(
-        "webviz_subsurface._providers.ensemble_fault_polygons_provider._provider_impl_file"
-    )
-    logger1.addFilter(IgnoreFaultPolyWarning())
-
-    logger2 = logging.getLogger(
         "webviz_subsurface._providers.ensemble_polygon_provider._provider_impl_file"
     )
-    logger2.addFilter(IgnoreHazardousPolyWarning())
+    logger1.addFilter(IgnoreHazardousPolyWarning())
 
 
 def check_hazardous_polygon(boundary_settings: Optional[BoundarySettings]):
