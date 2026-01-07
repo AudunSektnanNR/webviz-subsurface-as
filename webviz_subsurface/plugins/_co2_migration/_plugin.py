@@ -604,7 +604,6 @@ class CO2Migration(WebvizPluginABC):
                 show_contours=len(contour_switch) > 0,
                 num_contours=contour_quantity,
             )
-
             annotations = create_map_annotations(
                 formation=formation,
                 surface_data=surf_data,
