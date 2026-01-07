@@ -3,10 +3,13 @@ from __future__ import (  # Change to import Self from typing if we update to Py
 )
 
 import logging
+import warnings
 from enum import Enum
-from typing import Dict, List, TypedDict
+from typing import Dict, List, Optional, TypedDict
 
 from webviz_subsurface._utils.enum_shim import StrEnum
+
+LOGGER = logging.getLogger(__name__)
 
 
 class MapAttribute(StrEnum):
@@ -324,3 +327,15 @@ def deactivate_polygon_warnings():
         "webviz_subsurface._providers.ensemble_polygon_provider._provider_impl_file"
     )
     logger2.addFilter(IgnoreHazardousPolyWarning())
+
+def check_hazardous_polygon(boundary_settings: Optional[BoundarySettings]):
+    if boundary_settings is not None and "hazardous_name" in boundary_settings:
+        warning_txt = "In config file: 'hazardous_name' under 'boundary_settings' is deprecated and will be " \
+            "removed in future versions. Use 'nogo_name' instead."
+        warnings.warn(
+            warning_txt,
+            DeprecationWarning,
+        )
+        LOGGER.warning(
+            warning_txt
+        )
