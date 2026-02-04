@@ -9,7 +9,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     MenuOptions,
 )
 
-_PFLOTRAN_COLNAMES = ("DATE", "FGMDS", "FGMTR", "FGMMO")
+_CIRRUS_COLNAMES = ("DATE", "FGMDS", "FGMTR", "FGMMO")
 _ECLIPSE_COLNAMES = ("DATE", "FWCD", "FGCDI", "FGCDM")
 
 
@@ -90,9 +90,9 @@ class UnsmryDataProvider:
         provider: EnsembleTableProvider,
     ) -> Tuple[str, str, str, str]:
         existing = set(provider.column_names())
-        # Try PFLOTRAN names
-        if set(_PFLOTRAN_COLNAMES).issubset(existing):
-            return _PFLOTRAN_COLNAMES
+        # Try CIRRUS names
+        if set(_CIRRUS_COLNAMES).issubset(existing):
+            return _CIRRUS_COLNAMES
         # Try Eclipse names
         if set(_ECLIPSE_COLNAMES).issubset(existing):
             return _ECLIPSE_COLNAMES
