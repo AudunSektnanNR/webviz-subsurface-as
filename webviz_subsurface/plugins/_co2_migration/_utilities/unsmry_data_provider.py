@@ -75,14 +75,16 @@ class UnsmryDataProvider:
         full[self._colname_total] = (
             full[self._colname_dissolved_water]
             + full[self._colname_trapped]
-            + full[self.colname_mobile]
+            + full[self._colname_mobile]
         )
-        total_max = full[self._colname_total].max()
         for col in columns[1:] + [self._colname_total]:
             if scale == Co2MassScale.MTONS:
                 full[col] = full[col] / 1e9
             elif scale == Co2MassScale.NORMALIZE:
-                full[col] = full[col] / total_max
+                for r in self._provider.realizations():
+                    mask = full["realization"] == r
+                    r_max = full.loc[mask, self._colname_total].max()
+                    full.loc[mask, col] = full.loc[mask, col] / r_max
         return full
 
     @staticmethod
