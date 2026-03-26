@@ -28,19 +28,12 @@ class ContainmentDataProvider:
     def realizations(self) -> List[int]:
         return self._provider.realizations()
 
-    def extract_dataframe(
-        self, realization: int, scale: Union[Co2MassScale, Co2VolumeScale]
-    ) -> pd.DataFrame:
+    def extract_dataframe(self, realization: int) -> pd.DataFrame:
         df = self._provider.get_column_data(
             self._provider.column_names(), [realization]
         )
         # Backward compatibility:
         df["containment"] = df["containment"].replace({"hazardous": "nogo"})
-
-        scale_factor = self._find_scale_factor(scale)
-        if scale_factor == 1.0:
-            return df
-        df["amount"] /= scale_factor
         return df
 
     def extract_condensed_dataframe(
@@ -59,25 +52,11 @@ class ContainmentDataProvider:
         if co2_scale == Co2MassScale.MTONS:
             df.loc[:, "amount"] /= 1e9
         elif co2_scale == Co2MassScale.NORMALIZE:
-            df.loc[:, "amount"] /= df["amount"].max()
+            for r in self.realizations:
+                mask = df["realization"] == r
+                r_max = df.loc[mask, "amount"].max()
+                df.loc[mask, "amount"] /= r_max
         return df
-
-    def _find_scale_factor(
-        self,
-        scale: Union[Co2MassScale, Co2VolumeScale],
-    ) -> float:
-        if scale == Co2MassScale.KG:
-            return 0.001
-        if scale in (Co2MassScale.TONS, Co2VolumeScale.CUBIC_METERS):
-            return 1.0
-        if scale == Co2MassScale.MTONS:
-            return 1e6
-        if scale == Co2VolumeScale.BILLION_CUBIC_METERS:
-            return 1e9
-        if scale in (Co2MassScale.NORMALIZE, Co2VolumeScale.NORMALIZE):
-            df = self._provider.get_column_data(["amount"])
-            return df["amount"].max()
-        return 1.0
 
     @staticmethod
     def _get_menu_options(provider: EnsembleTableProvider) -> MenuOptions:
