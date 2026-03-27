@@ -655,7 +655,6 @@ class FilterSelectorLayout(wcc.Selectors):
                 wcc.Dropdown(
                     id=formation_id,
                     clearable=False,
-                    maxHeight=300,
                 ),
             ],
         )
@@ -777,7 +776,6 @@ class MapSelectorLayout(wcc.Selectors):
                             options=_compile_property_options(map_attribute_names),
                             value=next(iter(map_attribute_names.filtered_values)).value,
                             clearable=False,
-                            maxHeight=500,
                         ),
                         "Statistic",
                         wcc.Dropdown(
@@ -1001,7 +999,6 @@ class GraphSelectorsLayout(wcc.Selectors):
                                     value="all",
                                     id=containment_ids[ids.ZONE],
                                     clearable=False,
-                                    maxHeight=300,
                                 ),
                             ],
                             id=containment_ids[ids.ZONE_COL],
@@ -1015,7 +1012,6 @@ class GraphSelectorsLayout(wcc.Selectors):
                                     value="all",
                                     id=containment_ids[ids.REGION],
                                     clearable=False,
-                                    maxHeight=300,
                                 ),
                             ],
                             id=containment_ids[ids.REGION_COL],
@@ -1096,7 +1092,6 @@ class GraphSelectorsLayout(wcc.Selectors):
                         wcc.Dropdown(
                             id=containment_ids[ids.DATE_OPTION],
                             clearable=False,
-                            maxHeight=300,
                         ),
                     ],
                     id=containment_ids[ids.DATE_OPTION_COL],
