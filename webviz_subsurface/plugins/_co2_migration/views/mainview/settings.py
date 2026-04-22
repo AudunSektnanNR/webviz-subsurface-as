@@ -70,6 +70,7 @@ class ViewSettings(SettingsGroupABC):
         Y_MAX_AUTO_GRAPH = "y-max-auto-graph"
         Y_LIM_OPTIONS = "y_limit_options"
         REAL_OR_STAT = "realization-or-statistics"
+        REAL_OR_STAT_DIV = "realization-or-statistics-div"
         COLOR_BY = "color-by"
         MARK_BY = "mark-by"
         SORT_PLOT = "sort-plot"
@@ -200,6 +201,7 @@ class ViewSettings(SettingsGroupABC):
                             self.Ids.PLUME_GROUP,
                             self.Ids.PLUME_GROUP_MENU,
                             self.Ids.REAL_OR_STAT,
+                            self.Ids.REAL_OR_STAT_DIV,
                             self.Ids.Y_LIM_OPTIONS,
                             self.Ids.DATE_OPTION,
                             self.Ids.DATE_OPTION_COL,
@@ -1066,11 +1068,8 @@ class GraphSelectorsLayout(wcc.Selectors):
                     style=ROW,
                 ),
                 html.Div(
-                    "Time plot options:",
-                    style={"margin-top": "10px"},
-                ),
-                html.Div(
                     [
+                        "Time plot options:",
                         dcc.RadioItems(
                             options=[
                                 {"label": "Realizations", "value": "real"},
@@ -1081,21 +1080,19 @@ class GraphSelectorsLayout(wcc.Selectors):
                             inline=True,
                         ),
                     ],
-                    style=ROW,
-                ),
-                html.Div(
-                    "State at date:",
-                    style={"margin-top": "8px"},
+                    id=containment_ids[ids.REAL_OR_STAT_DIV],
+                    style={**COL, "margin-top": "10px"},
                 ),
                 html.Div(
                     [
+                        "State at date:",
                         wcc.Dropdown(
                             id=containment_ids[ids.DATE_OPTION],
                             clearable=False,
                         ),
                     ],
                     id=containment_ids[ids.DATE_OPTION_COL],
-                    style={**ROW, "width": "100%"},
+                    style={**COL, "width": "100%", "margin-top": "8px"},
                 ),
                 html.Div(
                     [
