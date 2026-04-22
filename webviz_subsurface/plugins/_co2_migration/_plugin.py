@@ -680,20 +680,22 @@ class CO2Migration(WebvizPluginABC):
 
     def _add_time_plot_visibility_callback(self) -> None:
         @callback(
-            Output(self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "style"),
+            Output(self._settings_component(ViewSettings.Ids.REAL_OR_STAT_DIV), "style"),
             Output(self._settings_component(ViewSettings.Ids.Y_LIM_OPTIONS), "style"),
             Input(self._settings_component(ViewSettings.Ids.REALIZATION), "value"),
+            State(self._settings_component(ViewSettings.Ids.REAL_OR_STAT_DIV), "style"),
         )
         def toggle_time_plot_options_visibility(
             realizations: List[int],
+            current_style: Dict[str, str],
         ) -> Tuple[Dict[str, str], Dict[str, str]]:
             if len(realizations) == 1:
                 return (
-                    {"display": "none"},
+                    {**current_style, "display": "none"},
                     {"display": "flex", "flex-direction": "column"},
                 )
             return (
-                {"display": "flex", "flex-direction": "row"},
+                {**current_style, "display": "flex"},
                 {"display": "none"},
             )
 
