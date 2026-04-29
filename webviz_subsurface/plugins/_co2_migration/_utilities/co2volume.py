@@ -599,6 +599,15 @@ def generate_co2_volume_figure(
     )
     color_choice = containment_info.color_choice
     mark_choice = containment_info.mark_choice
+
+    # Filter out parent gas phases if breakdown phases exist to avoid double-counting
+    if color_choice == "phase" or mark_choice == "phase":
+        phases_in_df = df["phase"].unique() if "phase" in df.columns else []
+        if "moving_gas" in phases_in_df and "stationary_gas" in phases_in_df:
+            df = df[df["phase"] != "gas"]
+        if "moving_free_gas" in phases_in_df and "stationary_free_gas" in phases_in_df:
+            df = df[df["phase"] != "free_gas"]
+
     _add_prop_to_df(df, [str(r) for r in realizations], "real")
     cat_ord, colors, marks = _prepare_pattern_and_color_options(
         df,
@@ -652,6 +661,15 @@ def generate_co2_time_containment_one_realization_figure(
     mark_choice = containment_info.mark_choice
     _filter_columns(df, color_choice, mark_choice, containment_info)
     _filter_rows(df, color_choice, mark_choice)
+
+    # Filter out parent gas phases if breakdown phases exist to avoid double-counting
+    if color_choice == "phase" or mark_choice == "phase":
+        phases_in_df = df["phase"].unique() if "phase" in df.columns else []
+        if "moving_gas" in phases_in_df and "stationary_gas" in phases_in_df:
+            df = df[df["phase"] != "gas"]
+        if "moving_free_gas" in phases_in_df and "stationary_free_gas" in phases_in_df:
+            df = df[df["phase"] != "free_gas"]
+
     _scale_df(df, scale, color_choice, mark_choice)
     if containment_info.sorting == "marking" and mark_choice != "none":
         sort_order = ["date", mark_choice]
@@ -742,8 +760,12 @@ def _add_hover_info_in_field(
     for name, color in zip(cat_ord["type"], colors):
         sub_df = df[df["type"] == name]
         for date in dates:
-            amount = sub_df[sub_df["date"] == date]["amount"].item()
-            prop = sub_df[sub_df["date"] == date]["prop"].item()
+            date_df = sub_df[sub_df["date"] == date]
+            # Skip if no data or duplicate data for this type/date combination
+            if len(date_df) != 1:
+                continue
+            amount = date_df["amount"].item()
+            prop = date_df["prop"].item()
             prev_val = prev_vals[date]
             p15 = prev_val + 0.15 * amount
             p85 = prev_val + 0.85 * amount
