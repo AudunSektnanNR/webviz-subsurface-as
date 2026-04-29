@@ -37,6 +37,10 @@ class Marks(StrEnum):
     gas = ""
     free_gas = ""
     trapped_gas = "."
+    moving_gas = "\\"
+    stationary_gas = "+"
+    moving_free_gas = "\\"
+    stationary_free_gas = "+"
 
 
 class Lines(StrEnum):
@@ -45,6 +49,10 @@ class Lines(StrEnum):
     gas = "dot"
     free_gas = "dot"
     trapped_gas = "dashdot"
+    moving_gas = "longdashdot"
+    stationary_gas = "solid"
+    moving_free_gas = "longdashdot"
+    stationary_free_gas = "solid"
 
 
 _CONTAINMENT_COLORS = {
@@ -62,6 +70,10 @@ _PHASE_COLORS = {
     "gas": ("#C41E3A", "#E42E5A"),
     "free_gas": ("#FF2400", "#FF7430"),
     "trapped_gas": ("#880808", "#C84848"),
+    "moving_gas": ("#FF6B00", "#FF9F40"),
+    "stationary_gas": ("#2E8B57", "#66CDAA"),
+    "moving_free_gas": ("#FF8C00", "#FFB347"),
+    "stationary_free_gas": ("#228B22", "#7FCD8F"),
 }
 
 
@@ -94,6 +106,10 @@ _LABEL_TRANSLATIONS = {
     "dissolved_oil": "dissolved oil",
     "free_gas": "free gas",
     "trapped_gas": "trapped gas",
+    "moving_gas": "moving gas",
+    "stationary_gas": "stationary gas",
+    "moving_free_gas": "moving free gas",
+    "stationary_free_gas": "stationary free gas",
 }
 
 
