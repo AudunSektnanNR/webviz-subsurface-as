@@ -574,6 +574,7 @@ def generate_containment_figures(
     y_limits: List[Optional[float]],
     containment_info: ContainmentInfo,
     legenddata: LegendData,
+    split_on_stabilization: bool = False,
 ) -> Tuple[go.Figure, go.Figure, go.Figure]:
     try:
         fig0 = generate_co2_volume_figure(
@@ -582,6 +583,7 @@ def generate_containment_figures(
             co2_scale,
             containment_info,
             legenddata["bar_legendonly"],
+            split_on_stabilization,
         )
         fig1 = (
             generate_co2_time_containment_figure(
@@ -590,6 +592,7 @@ def generate_containment_figures(
                 co2_scale,
                 containment_info,
                 legenddata["time_legendonly"],
+                split_on_stabilization,
             )
             if len(realizations) > 1
             else generate_co2_time_containment_one_realization_figure(
@@ -598,6 +601,7 @@ def generate_containment_figures(
                 realizations[0],
                 y_limits,
                 containment_info,
+                split_on_stabilization,
             )
         )
         if (
@@ -610,6 +614,7 @@ def generate_containment_figures(
                 co2_scale,
                 containment_info,
                 legenddata["stats_legendonly"],
+                split_on_stabilization,
             )
         else:  # "box_plot"
             # Deliberately uses same legend as statistics
@@ -619,6 +624,7 @@ def generate_containment_figures(
                 co2_scale,
                 containment_info,
                 legenddata["stats_legendonly"],
+                split_on_stabilization,
             )
     except KeyError as exc:
         warnings.warn(f"Could not generate CO2 figures: {exc}")

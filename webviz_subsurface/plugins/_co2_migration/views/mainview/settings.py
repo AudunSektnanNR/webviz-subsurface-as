@@ -89,6 +89,7 @@ class ViewSettings(SettingsGroupABC):
         DATE_OPTION_COL = "date-option-column"
         STATISTICS_TAB_OPTION = "statistics-tab-option"
         BOX_SHOW_POINTS = "box-plot-points"
+        SPLIT_STABILIZATION = "split-stabilization"
 
         PLUME_THRESHOLD = "plume-threshold"
         PLUME_SMOOTHING = "plume-smoothing"
@@ -207,6 +208,7 @@ class ViewSettings(SettingsGroupABC):
                             self.Ids.DATE_OPTION_COL,
                             self.Ids.STATISTICS_TAB_OPTION,
                             self.Ids.BOX_SHOW_POINTS,
+                            self.Ids.SPLIT_STABILIZATION,
                         ]
                     },
                     self._content,
@@ -1082,6 +1084,16 @@ class GraphSelectorsLayout(wcc.Selectors):
                     ],
                     id=containment_ids[ids.REAL_OR_STAT_DIV],
                     style={**COL, "margin-top": "10px"},
+                ),
+                html.Div(
+                    [
+                        dcc.Checklist(
+                            options=[{"label": "Split on stabilization", "value": "split"}],
+                            value=[],
+                            id=containment_ids[ids.SPLIT_STABILIZATION],
+                        ),
+                    ],
+                    style={**COL, "margin-top": "5px"},
                 ),
                 html.Div(
                     [
