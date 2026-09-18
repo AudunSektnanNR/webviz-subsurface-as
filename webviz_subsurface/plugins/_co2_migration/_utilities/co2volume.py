@@ -37,9 +37,9 @@ class Marks(StrEnum):
     gas = ""
     free_gas = ""
     trapped_gas = "."
-    moving_gas = "\\"
+    moving_gas = ""
     stationary_gas = "+"
-    moving_free_gas = "\\"
+    moving_free_gas = ""
     stationary_free_gas = "+"
 
 
@@ -48,11 +48,11 @@ class Lines(StrEnum):
     dissolved_oil = "longdash"
     gas = "dot"
     free_gas = "dot"
-    trapped_gas = "dashdot"
-    moving_gas = "longdashdot"
-    stationary_gas = "solid"
-    moving_free_gas = "longdashdot"
-    stationary_free_gas = "solid"
+    trapped_gas = "longdashdot"
+    moving_gas = "dot"
+    stationary_gas = "dashdot"
+    moving_free_gas = "dot"
+    stationary_free_gas = "dashdot"
 
 
 _CONTAINMENT_COLORS = {
@@ -68,12 +68,12 @@ _PHASE_COLORS = {
     "dissolved_water": ("#208eb7", "#81cde9"),
     "dissolved_oil": ("#A0522D", "#C28163"),
     "gas": ("#C41E3A", "#E42E5A"),
-    "free_gas": ("#FF2400", "#FF7430"),
-    "trapped_gas": ("#880808", "#C84848"),
-    "moving_gas": ("#FF6B00", "#FF9F40"),
-    "stationary_gas": ("#2E8B57", "#66CDAA"),
-    "moving_free_gas": ("#FF8C00", "#FFB347"),
-    "stationary_free_gas": ("#228B22", "#7FCD8F"),
+    "free_gas": ("#C41E3A", "#E42E5A"),
+    "trapped_gas": ("#2E8B57", "#66CDAA"),
+    "moving_gas": ("#C41E3A", "#E42E5A"),
+    "stationary_gas": ("#FF6B00", "#FF9F40"),
+    "moving_free_gas": ("#C41E3A", "#E42E5A"),
+    "stationary_free_gas": ("#FF6B00", "#FF9F40"),
 }
 
 
@@ -562,45 +562,6 @@ def _adjust_figure(fig: go.Figure, plot_title: str) -> None:
     )
 
 
-def _filter_stabilization_phases(
-    df: pd.DataFrame,
-    split_on_stabilization: bool,
-    phase_column: str = "phase",
-) -> pd.DataFrame:
-    """Filter phases based on split_on_stabilization setting.
-
-    When split_on_stabilization is True, shows moving/stationary breakdown and hides parent phases.
-    When False, shows parent phases (gas/free_gas) and hides moving/stationary breakdown.
-
-    Args:
-        df: DataFrame with a phase column
-        split_on_stabilization: Whether to show moving/stationary breakdown or parent phases
-        phase_column: Name of the column containing phase information (default: "phase")
-
-    Returns:
-        Filtered DataFrame
-    """
-    if phase_column not in df.columns:
-        return df
-
-    phases_in_df = df[phase_column].unique()
-
-    if split_on_stabilization:
-        # Show moving/stationary, hide parent phases
-        if "moving_gas" in phases_in_df and "stationary_gas" in phases_in_df:
-            df = df[df[phase_column] != "gas"]
-        if "moving_free_gas" in phases_in_df and "stationary_free_gas" in phases_in_df:
-            df = df[df[phase_column] != "free_gas"]
-    else:
-        # Show parent phases, hide moving/stationary
-        if "moving_gas" in phases_in_df:
-            df = df[~df[phase_column].isin(["moving_gas", "stationary_gas"])]
-        if "moving_free_gas" in phases_in_df:
-            df = df[~df[phase_column].isin(["moving_free_gas", "stationary_free_gas"])]
-
-    return df
-
-
 def _add_prop_to_df(
     df: pd.DataFrame,
     list_to_iterate: Union[List, np.ndarray],
@@ -632,17 +593,12 @@ def generate_co2_volume_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: ContainmentInfo,
     legendonly_traces: Optional[List[str]],
-    split_on_stabilization: bool = False,
 ) -> go.Figure:
     df = _read_terminal_co2_volumes(
         table_provider, realizations, scale, containment_info
     )
     color_choice = containment_info.color_choice
     mark_choice = containment_info.mark_choice
-
-    # Filter phases based on split_on_stabilization setting (only if phase is being displayed)
-    if color_choice == "phase" or mark_choice == "phase":
-        df = _filter_stabilization_phases(df, split_on_stabilization)
 
     _add_prop_to_df(df, [str(r) for r in realizations], "real")
     cat_ord, colors, marks = _prepare_pattern_and_color_options(
@@ -691,17 +647,12 @@ def generate_co2_time_containment_one_realization_figure(
     time_series_realization: int,
     y_limits: List[Optional[float]],
     containment_info: ContainmentInfo,
-    split_on_stabilization: bool = False,
 ) -> go.Figure:
     df = _read_co2_volumes(table_provider, [time_series_realization])
     color_choice = containment_info.color_choice
     mark_choice = containment_info.mark_choice
     _filter_columns(df, color_choice, mark_choice, containment_info)
     _filter_rows(df, color_choice, mark_choice)
-
-    # Filter phases based on split_on_stabilization setting (only if phase is being displayed)
-    if color_choice == "phase" or mark_choice == "phase":
-        df = _filter_stabilization_phases(df, split_on_stabilization)
 
     _scale_df(df, scale, color_choice, mark_choice)
     if containment_info.sorting == "marking" and mark_choice != "none":
@@ -906,12 +857,8 @@ def generate_co2_time_containment_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: ContainmentInfo,
     legendonly_traces: Optional[List[str]],
-    split_on_stabilization: bool = False,
 ) -> go.Figure:
     df = _read_co2_volumes(table_provider, realizations)
-
-    # Filter phases based on split_on_stabilization parameter
-    df = _filter_stabilization_phases(df, split_on_stabilization)
 
     color_choice = containment_info.color_choice
     mark_choice = containment_info.mark_choice
@@ -935,11 +882,13 @@ def generate_co2_time_containment_figure(
             pass
 
     options["name"] = options["name"].apply(
-        lambda label: ", ".join(
-            [_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")]
+        lambda label: (
+            ", ".join(
+                [_LABEL_TRANSLATIONS.get(part, part) for part in label.split(", ")]
+            )
+            if ", " in label
+            else _LABEL_TRANSLATIONS.get(label, label)
         )
-        if ", " in label
-        else _LABEL_TRANSLATIONS.get(label, label)
     )
 
     fig = go.Figure()
@@ -1047,15 +996,11 @@ def generate_co2_statistics_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: ContainmentInfo,
     legend_only_traces: Optional[List[str]],
-    split_on_stabilization: bool = False,
 ) -> go.Figure:
     date_option = containment_info.date_option
     df = _read_co2_volumes(table_provider, realizations)
     df = df[df["date"] == date_option]
     df = df.drop(columns=["date"]).reset_index(drop=True)
-
-    # Filter phases based on split_on_stabilization parameter
-    df = _filter_stabilization_phases(df, split_on_stabilization)
 
     color_choice = containment_info.color_choice
     mark_choice = containment_info.mark_choice
@@ -1119,16 +1064,12 @@ def generate_co2_box_plot_figure(
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: ContainmentInfo,
     legendonly_traces: Optional[List[str]],
-    split_on_stabilization: bool = False,
 ) -> go.Figure:
     eps = 0.00001
     date_option = containment_info.date_option
     df = _read_co2_volumes(table_provider, realizations)
     df = df[df["date"] == date_option]
     df = df.drop(columns=["date"]).reset_index(drop=True)
-
-    # Filter phases based on split_on_stabilization parameter
-    df = _filter_stabilization_phases(df, split_on_stabilization)
 
     color_choice = containment_info.color_choice
     mark_choice = containment_info.mark_choice
@@ -1165,9 +1106,11 @@ def generate_co2_box_plot_figure(
                 y=values,
                 name=type_val,
                 marker_color=colors[count],
-                boxpoints="all"
-                if containment_info.box_show_points == "all_points"
-                else "outliers",
+                boxpoints=(
+                    "all"
+                    if containment_info.box_show_points == "all_points"
+                    else "outliers"
+                ),
                 customdata=real,
                 hovertemplate="<span style='font-family:Courier New;'>"
                 "Type       : %{data.name}<br>Amount     : %{y:.3f}<br>"
