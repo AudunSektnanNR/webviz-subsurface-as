@@ -128,7 +128,7 @@ class MapNamingConvention(StrEnum):
     MIGRATION_TIME_XMFS = "migrationtime_xmfs"
     MIGRATION_TIME_YMFS = "migrationtime_ymfs"
     MIGRATION_TIME_XMF2 = "migrationtime_xmf2"
-    MIGRATION_TIME_MASS = "co2_mass_migration_time_total"
+    MIGRATION_TIME_MASS = "migrationtime_co2_mass_total"
     MAX_SGAS = "max_sgas"
     MAX_AMFG = "max_amfg"
     MAX_AMFS = "max_amfs"

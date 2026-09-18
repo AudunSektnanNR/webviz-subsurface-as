@@ -695,7 +695,9 @@ class CO2Migration(WebvizPluginABC):
 
     def _add_time_plot_visibility_callback(self) -> None:
         @callback(
-            Output(self._settings_component(ViewSettings.Ids.REAL_OR_STAT_DIV), "style"),
+            Output(
+                self._settings_component(ViewSettings.Ids.REAL_OR_STAT_DIV), "style"
+            ),
             Output(self._settings_component(ViewSettings.Ids.Y_LIM_OPTIONS), "style"),
             Input(self._settings_component(ViewSettings.Ids.REALIZATION), "value"),
             State(self._settings_component(ViewSettings.Ids.REAL_OR_STAT_DIV), "style"),
@@ -765,9 +767,6 @@ class CO2Migration(WebvizPluginABC):
                 "value",
             ),
             Input(self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS), "value"),
-            Input(
-                self._settings_component(ViewSettings.Ids.SPLIT_STABILIZATION), "value"
-            ),
         )
         @callback_typecheck
         # pylint: disable=too-many-locals
@@ -793,12 +792,9 @@ class CO2Migration(WebvizPluginABC):
             date_option: str,
             statistics_tab_option: StatisticsTabOption,
             box_show_points: str,
-            split_stabilization: List[str],
         ) -> Tuple[go.Figure, go.Figure, go.Figure]:
             if len(realizations) == 0:
                 return go.Figure(), go.Figure(), go.Figure()
-
-            split_on_stabilization = "split" in split_stabilization
 
             figs = [no_update] * 3
             cont_info = process_containment_info(
@@ -843,7 +839,6 @@ class CO2Migration(WebvizPluginABC):
                         y_limits,
                         cont_info,
                         legend_data,
-                        split_on_stabilization,
                     )
                 elif (
                     source == GraphSource.CONTAINMENT_ACTUAL_VOLUME
@@ -856,7 +851,6 @@ class CO2Migration(WebvizPluginABC):
                         y_limits,
                         cont_info,
                         legend_data,
-                        split_on_stabilization,
                     )
                 set_plot_ids(figs, plot_ids)
             elif source == GraphSource.UNSMRY:

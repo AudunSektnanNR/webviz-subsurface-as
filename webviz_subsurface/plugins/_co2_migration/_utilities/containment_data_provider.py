@@ -9,6 +9,19 @@ from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     MenuOptions,
 )
 
+_PHASE_ORDER = (
+    "total",
+    "gas",
+    "moving_gas",
+    "stationary_gas",
+    "free_gas",
+    "moving_free_gas",
+    "stationary_free_gas",
+    "trapped_gas",
+    "dissolved_water",
+    "dissolved_oil",
+)
+
 
 class ContainmentDataValidationError(Exception):
     pass
@@ -90,27 +103,8 @@ class ContainmentDataProvider:
 
         plume_groups = sorted(plume_groups, key=plume_sort_key)
 
-        phases = ["total", "gas", "dissolved_water"]
-        if "free_gas" in list(df["phase"]):
-            idx = phases.index("gas")
-            phases = phases[:idx] + ["free_gas", "trapped_gas"] + phases[idx + 1 :]
-            # Add moving/stationary free gas phases if they exist
-            if "moving_free_gas" in list(df["phase"]):
-                idx = phases.index("free_gas")
-                phases.insert(idx + 1, "moving_free_gas")
-            if "stationary_free_gas" in list(df["phase"]):
-                idx = phases.index("moving_free_gas") if "moving_free_gas" in phases else phases.index("free_gas")
-                phases.insert(idx + 1, "stationary_free_gas")
-        else:
-            # Add moving/stationary gas phases if they exist (when not using free_gas)
-            if "moving_gas" in list(df["phase"]):
-                idx = phases.index("gas")
-                phases.insert(idx + 1, "moving_gas")
-            if "stationary_gas" in list(df["phase"]):
-                idx = phases.index("moving_gas") if "moving_gas" in phases else phases.index("gas")
-                phases.insert(idx + 1, "stationary_gas")
-        if "dissolved_oil" in list(df["phase"]):
-            phases.append("dissolved_oil")
+        observed_phases = set(df["phase"].dropna().unique())
+        phases = [phase for phase in _PHASE_ORDER if phase in observed_phases]
 
         dates = df["date"].unique()
         dates.sort()
