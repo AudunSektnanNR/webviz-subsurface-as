@@ -718,14 +718,11 @@ def _add_hover_info_in_field(
             prev_val = prev_vals[date]
 
             field_x = date_dict[date] * 8
-            field_y = (
-                np.linspace(
-                    prev_val + 0.15 * amount,
-                    prev_val + 0.85 * amount,
-                    8,
-                ).tolist()
-                * len(date_dict[date])
-            )
+            field_y = np.linspace(
+                prev_val + 0.15 * amount,
+                prev_val + 0.85 * amount,
+                8,
+            ).tolist() * len(date_dict[date])
             field_y.sort()
 
             hover_text = (
