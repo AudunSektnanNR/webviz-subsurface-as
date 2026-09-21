@@ -42,9 +42,7 @@ class ContainmentDataProvider:
         return self._provider.realizations()
 
     def extract_dataframes(self, realizations: Sequence[int]) -> pd.DataFrame:
-        df = self._provider.get_column_data(
-            self._provider.column_names(), realizations
-        )
+        df = self._provider.get_column_data(self._provider.column_names(), realizations)
         # Backward compatibility:
         df["containment"] = df["containment"].replace({"hazardous": "nogo"})
         return df

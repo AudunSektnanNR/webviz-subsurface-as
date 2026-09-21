@@ -1068,10 +1068,10 @@ class GraphSelectorsLayout(wcc.Selectors):
                         "Time plot options:",
                         dcc.RadioItems(
                             options=[  # type: ignore[arg-type]
-                                {"label": "Realizations", "value": "real"},
                                 {"label": "Mean/P10/P90", "value": "stat"},
+                                {"label": "Realizations", "value": "real"},
                             ],
-                            value="real",
+                            value="stat",
                             id=containment_ids[ids.REAL_OR_STAT],
                             inline=True,
                         ),

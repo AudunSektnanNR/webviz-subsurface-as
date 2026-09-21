@@ -594,7 +594,6 @@ def generate_containment_figure(
             if len(realizations) > 1:
                 return generate_co2_time_containment_figure(
                     containment_df,
-                    realizations,
                     co2_scale,
                     containment_info,
                     legenddata["time_legendonly"],
@@ -763,7 +762,9 @@ def make_plot_generation_key(
         realizations=list(realizations),
         color_choice=containment_info.color_choice,
         mark_choice=containment_info.mark_choice,
-        sorting=(containment_info.sorting if containment_info.mark_choice != "none" else None),
+        sorting=(
+            containment_info.sorting if containment_info.mark_choice != "none" else None
+        ),
         filters={
             dimension: getattr(containment_info, dimension)
             for dimension in (
