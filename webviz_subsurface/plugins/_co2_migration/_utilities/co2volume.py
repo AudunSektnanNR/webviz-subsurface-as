@@ -545,7 +545,7 @@ def _add_prop_to_df(
         np.round(df.loc[nonzero, "amount"] / group_sum.loc[nonzero] * 1000) / 10
     )
 
-    df["prop"] = proportion.astype(str) + "%"
+    df["prop"] = proportion
 
 
 def generate_co2_volume_figure(
@@ -579,15 +579,15 @@ def generate_co2_volume_figure(
         pattern_shape_sequence=marks,
         orientation="h",
         category_orders=cat_ord,
-        custom_data=["type", "prop"],
+        custom_data=["prop"],
     )
     fig.update_traces(
         hovertemplate=(
             "<span style='font-family:Courier New;'>"
-            "Type       : %{customdata[0]}<br>"
+            "Type       : %{data.name}<br>"
             "Amount     : %{x:.3f}<br>"
             "Realization: %{y}<br>"
-            "Proportion : %{customdata[1]}"
+            "Proportion : %{customdata[0]:.1f}%"
             "</span><extra></extra>"
         ),
     )
@@ -642,15 +642,15 @@ def generate_co2_time_containment_one_realization_figure(
         pattern_shape_sequence=marks,
         category_orders=cat_ord,
         range_y=y_limits,
-        custom_data=["type", "prop"],
+        custom_data=["prop"],
     )
     fig.update_traces(
         hovertemplate=(
             "<span style='font-family:Courier New;'>"
-            "Type      : %{customdata[0]}<br>"
+            "Type      : %{data.name}<br>"
             "Date      : %{x}<br>"
             "Amount    : %{y:.3f}<br>"
-            "Proportion: %{customdata[1]}"
+            "Proportion: %{customdata[0]:.1f}%"
             "</span><extra></extra>"
         ),
     )
@@ -696,42 +696,81 @@ def _add_hover_info_in_field(
         date: f"{months[int(date.split('-')[1]) - 1]} {date.split('-')[0]}"
         for date in dates
     }
-    prev_vals = {date: 0 for date in dates}
+    prev_vals = {date: 0.0 for date in dates}
     date_dict = spaced_dates(dates, 4)  # type: ignore[arg-type]
+
+    x_values = []
+    y_values = []
+    hover_texts = []
+    hover_colors = []
+
     for name, color in zip(cat_ord["type"], colors):
         sub_df = df[df["type"] == name]
+
         for date in dates:
             date_df = sub_df[sub_df["date"] == date]
             # Skip if no data or duplicate data for this type/date combination
             if len(date_df) != 1:
                 continue
+
             amount = date_df["amount"].item()
             prop = date_df["prop"].item()
             prev_val = prev_vals[date]
-            p15 = prev_val + 0.15 * amount
-            p85 = prev_val + 0.85 * amount
-            y_vals = np.linspace(p15, p85, 8).tolist() * len(date_dict[date])
-            y_vals.sort()  # type: ignore[attr-defined]
-            fig.add_trace(
-                go.Scatter(
-                    x=date_dict[date] * 8,
-                    y=y_vals,
-                    mode="lines",
-                    line=go.scatter.Line(color=color),
-                    text=(
-                        "<span style='font-family:Courier New;'>"
-                        f"Type      : {name}<br>"
-                        f"Date      : {date_strings[date]}<br>"
-                        f"Amount    : {amount:.3f}<br>"
-                        f"Proportion: {prop}"
-                    ),
-                    opacity=0,
-                    hoverinfo="text",
-                    hoveron="points",
-                    showlegend=False,
-                )
+
+            field_x = date_dict[date] * 8
+            field_y = (
+                np.linspace(
+                    prev_val + 0.15 * amount,
+                    prev_val + 0.85 * amount,
+                    8,
+                ).tolist()
+                * len(date_dict[date])
             )
+            field_y.sort()
+
+            hover_text = (
+                "<span style='font-family:Courier New;'>"
+                f"Type      : {name}<br>"
+                f"Date      : {date_strings[date]}<br>"
+                f"Amount    : {amount:.3f}<br>"
+                f"Proportion: {prop:.1f}%"
+                "</span>"
+            )
+
+            x_values.extend(field_x)
+            y_values.extend(field_y)
+            hover_texts.extend([hover_text] * len(field_x))
+            hover_colors.extend([color] * len(field_x))
+
+            # Keep unrelated fields disconnected.
+            x_values.append(None)
+            y_values.append(None)
+            hover_texts.append(None)
+            hover_colors.append(color)
+
             prev_vals[date] = prev_val + amount
+
+    if not x_values:
+        return
+
+    x_values.pop()
+    y_values.pop()
+    hover_texts.pop()
+    hover_colors.pop()
+
+    fig.add_trace(
+        go.Scatter(
+            x=x_values,
+            y=y_values,
+            text=hover_texts,
+            mode="lines",
+            opacity=0,
+            hoverinfo="text",
+            hoveron="points",
+            hoverlabel={"bgcolor": hover_colors},
+            showlegend=False,
+        )
+    )
 
 
 def _connect_plume_groups(
@@ -844,22 +883,32 @@ def _add_merged_realization_trace(
         return
 
     x_values = []
-    y_values = []
-    custom_data = []
+    y_parts = []
+    custom_data_parts = []
 
     for realization, realization_df in category_df.groupby("REAL", sort=False):
-        x_values.extend(realization_df["date"])
-        y_values.extend(realization_df["amount"])
-        custom_data.extend([[realization, prop] for prop in realization_df["prop"]])
+        amounts = realization_df["amount"].to_numpy(dtype=np.float64, copy=False)
+        proportions = realization_df["prop"].to_numpy(dtype=np.float32, copy=False)
 
-        # Prevent Plotly from connecting different realizations.
+        x_values.extend(realization_df["date"].tolist())
         x_values.append(None)
-        y_values.append(None)
-        custom_data.append([None, None])
+
+        y_parts.extend((amounts, np.array([np.nan], dtype=np.float64)))
+        custom_data_parts.extend(
+            (
+                np.column_stack(
+                    (
+                        np.full(amounts.size, realization, dtype=np.float32),
+                        proportions,
+                    )
+                ),
+                np.full((1, 2), np.nan, dtype=np.float32),
+            )
+        )
 
     x_values.pop()
-    y_values.pop()
-    custom_data.pop()
+    y_values = np.concatenate(y_parts)[:-1]
+    custom_data = np.concatenate(custom_data_parts, axis=0)[:-1]
 
     fig.add_scatter(
         x=x_values,
@@ -937,21 +986,26 @@ def generate_co2_time_containment_figure(
 
     if containment_info.use_stats:
         df_no_real = df.drop(columns=["REAL"]).reset_index(drop=True)
-        if mark_choice == "none":
-            df_grouped = df_no_real.groupby(
-                ["date", "name", color_choice], as_index=False
+        group_columns = ["date", "name", color_choice]
+        if mark_choice != "none":
+            group_columns.append(mark_choice)
+
+        statistics_df = df_no_real.groupby(
+            group_columns,
+            as_index=False,
+            sort=False,
+        ).agg(
+            p10=("amount", lambda values: np.quantile(values, 0.9)),
+            mean=("amount", "mean"),
+            p90=("amount", lambda values: np.quantile(values, 0.1)),
+        )
+        for statistic in ["p10", "mean", "p90"]:
+            sub_df = (
+                statistics_df[group_columns + [statistic]]
+                .rename(columns={statistic: "amount"})
+                .sort_values(["name", "date"])
+                .reset_index(drop=True)
             )
-        else:
-            df_grouped = df_no_real.groupby(
-                ["date", "name", color_choice, mark_choice], as_index=False
-            )
-        statistics = [
-            ("p10", df_grouped.agg(lambda x: np.quantile(x, 0.9))),
-            ("mean", df_grouped.agg("mean")),
-            ("p90", df_grouped.agg(lambda x: np.quantile(x, 0.1))),
-        ]
-        for statistic, sub_df in statistics:
-            sub_df = sub_df.sort_values(["name", "date"]).reset_index(drop=True)
             is_percentile = statistic in ["p10", "p90"]
 
             for name, color, line_type in zip(
@@ -971,7 +1025,7 @@ def generate_co2_time_containment_figure(
                 )
     else:
         hover_middle = (
-            "Realization: %{customdata[0]}<br>" "Proportion : %{customdata[1]}"
+            "Realization: %{customdata[0]:.0f}<br>" "Proportion : %{customdata[1]:.1f}%"
         )
         _add_prop_to_df(df, ["REAL", "date"], [color_choice, mark_choice])
 
@@ -1297,6 +1351,20 @@ def _extract_data_from_box_trace(trace: go.Box) -> dict[str, Any]:
     return {}
 
 
+def _get_customdata_value(
+    customdata: Any,
+    row_index: int,
+    column_index: int,
+) -> Any:
+    if isinstance(customdata, dict) and "_inputArray" in customdata:
+        row = customdata["_inputArray"][row_index]
+        if isinstance(row, dict):
+            return row[str(column_index)]
+        return row[column_index]
+
+    return customdata[row_index][column_index]
+
+
 def _extract_data_from_general_trace(
     trace: Union[go.Box, go.Scatter], plot_choice: str
 ) -> List[Dict[str, Any]]:
@@ -1389,7 +1457,9 @@ def _extract_data_from_general_trace(
             else:
                 point_realization = realization
                 if point_realization is None and trace.customdata is not None:
-                    point_realization = trace.customdata[j][0]
+                    point_realization = int(
+                        _get_customdata_value(trace.customdata, j, 0)
+                    )
                 record["realization"] = point_realization
         records.append(record)
     return records
