@@ -7,7 +7,7 @@ import geojson
 import numpy as np
 import plotly.graph_objects as go
 import webviz_subsurface_components as wsc
-from dash import dcc, html, no_update
+from dash import dcc, html
 from flask_caching import Cache
 
 from webviz_subsurface._providers import (
@@ -36,6 +36,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.containment_data_provid
 )
 from webviz_subsurface.plugins._co2_migration._utilities.containment_info import (
     ContainmentInfo,
+    MainTabOption,
     StatisticsTabOption,
 )
 from webviz_subsurface.plugins._co2_migration._utilities.ensemble_well_picks import (
@@ -571,63 +572,60 @@ def create_map_layers(
     return layers
 
 
-def generate_containment_figures(
+def generate_containment_figure(
     table_provider: ContainmentDataProvider,
+    active_tab: MainTabOption,
     co2_scale: Union[Co2MassScale, Co2VolumeScale],
     realizations: List[int],
     y_limits: List[Optional[float]],
     containment_info: ContainmentInfo,
     legenddata: LegendData,
-) -> Tuple[go.Figure, go.Figure, go.Figure]:
+) -> go.Figure:
     try:
-        fig0 = generate_co2_volume_figure(
-            table_provider,
-            realizations,
-            co2_scale,
-            containment_info,
-            legenddata["bar_legendonly"],
-        )
-        fig1 = (
-            generate_co2_time_containment_figure(
-                table_provider,
-                realizations,
+        containment_df = table_provider.extract_dataframes(realizations)
+        if active_tab == MainTabOption.CONTAINMENT_STATE:
+            return generate_co2_volume_figure(
+                containment_df,
                 co2_scale,
                 containment_info,
-                legenddata["time_legendonly"],
+                legenddata["bar_legendonly"],
             )
-            if len(realizations) > 1
-            else generate_co2_time_containment_one_realization_figure(
-                table_provider,
+        if active_tab == MainTabOption.CONTAINMENT_OVER_TIME:
+            if len(realizations) > 1:
+                return generate_co2_time_containment_figure(
+                    containment_df,
+                    realizations,
+                    co2_scale,
+                    containment_info,
+                    legenddata["time_legendonly"],
+                )
+            return generate_co2_time_containment_one_realization_figure(
+                containment_df,
                 co2_scale,
-                realizations[0],
                 y_limits,
                 containment_info,
             )
-        )
-        if (
-            containment_info.statistics_tab_option
-            == StatisticsTabOption.PROBABILITY_PLOT
-        ):
-            fig2 = generate_co2_statistics_figure(
-                table_provider,
-                realizations,
+        if active_tab == MainTabOption.STATISTICS:
+            if (
+                containment_info.statistics_tab_option
+                == StatisticsTabOption.PROBABILITY_PLOT
+            ):
+                return generate_co2_statistics_figure(
+                    containment_df,
+                    co2_scale,
+                    containment_info,
+                    legenddata["stats_legendonly"],
+                )
+            return generate_co2_box_plot_figure(
+                containment_df,
                 co2_scale,
                 containment_info,
                 legenddata["stats_legendonly"],
             )
-        else:  # "box_plot"
-            # Deliberately uses same legend as statistics
-            fig2 = generate_co2_box_plot_figure(
-                table_provider,
-                realizations,
-                co2_scale,
-                containment_info,
-                legenddata["stats_legendonly"],
-            )
-    except KeyError as exc:
-        warnings.warn(f"Could not generate CO2 figures: {exc}")
-        raise exc
-    return fig0, fig1, fig2
+        raise ValueError(f"Unsupported containment tab: {active_tab}")
+    except Exception as exc:
+        warnings.warn(f"Could not generate CO2 figure: {exc}")
+        raise Exception(f"{exc}")
 
 
 def generate_unsmry_figures(
@@ -730,23 +728,85 @@ def process_containment_info(
     )
 
 
-def make_plot_ids(
+def make_plot_generation_key(
+    active_tab: MainTabOption,
+    ensemble: str,
+    source: GraphSource,
+    co2_scale: Union[Co2MassScale, Co2VolumeScale],
+    realizations: List[int],
+    y_limits: List[Optional[float]],
+    containment_info: Optional[ContainmentInfo],
+) -> Dict[str, Any]:
+    key: Dict[str, Any] = {}
+
+    if not realizations:
+        key["empty"] = "no-realizations"
+        return key
+
+    if source == GraphSource.UNSMRY:
+        key["source"] = source.value
+        if active_tab == MainTabOption.CONTAINMENT_OVER_TIME:
+            key.update(ensemble=ensemble, scale=co2_scale.value)
+        return key
+
+    if containment_info is None:
+        raise ValueError("Containment information is required for containment plots")
+
+    split_dimensions = {
+        containment_info.color_choice,
+        containment_info.mark_choice,
+    }
+    key.update(
+        ensemble=ensemble,
+        source=source.value,
+        scale=co2_scale.value,
+        realizations=list(realizations),
+        color_choice=containment_info.color_choice,
+        mark_choice=containment_info.mark_choice,
+        sorting=(containment_info.sorting if containment_info.mark_choice != "none" else None),
+        filters={
+            dimension: getattr(containment_info, dimension)
+            for dimension in (
+                "zone",
+                "region",
+                "phase",
+                "containment",
+                "plume_group",
+            )
+            if dimension not in split_dimensions
+        },
+    )
+
+    if active_tab == MainTabOption.CONTAINMENT_STATE:
+        key["date_option"] = containment_info.date_option
+    elif active_tab == MainTabOption.CONTAINMENT_OVER_TIME:
+        if len(realizations) == 1:
+            key.update(time_mode="single", y_limits=list(y_limits))
+        else:
+            key["time_mode"] = (
+                "statistics" if containment_info.use_stats else "realizations"
+            )
+    elif active_tab == MainTabOption.STATISTICS:
+        key.update(
+            date_option=containment_info.date_option,
+            statistics_plot=containment_info.statistics_tab_option.value,
+        )
+        if containment_info.statistics_tab_option == StatisticsTabOption.BOX_PLOT:
+            key["box_show_points"] = containment_info.box_show_points
+
+    return key
+
+
+def make_plot_id(
     ensemble: str,
     source: GraphSource,
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: ContainmentInfo,
     realizations: List[int],
-    # lines_to_show: str,
-    num_figs: int,
-) -> List[str]:
+    active_tab: MainTabOption,
+) -> str:
     """
-    Removed some keywords from plot id that we don't want to trigger updates for
-    with respect to visible legends and potentially zoom level.
-
-    Note: Currently the legends are reset if you swap to a plot with different plot id
-    and back, so it works temporarily, in a sense. This might be good enough for now.
-    If we want to store it more extensively, we need to do something like what's been
-    outlined in _plugin.py.
+    Make plot id for maintaining visible legends and zoom level.
     """
     zone_str = containment_info.zone if containment_info.zone is not None else "None"
     region_str = (
@@ -765,8 +825,8 @@ def make_plot_ids(
     plot_id = "-".join(
         (
             ensemble,
-            source,
-            scale,
+            source.value,
+            scale.value,
             zone_str,
             region_str,
             plume_group_str,
@@ -778,21 +838,11 @@ def make_plot_ids(
             containment_info.date_option,
         )
     )
-    ids = [plot_id] * num_figs
-    # ids += [plot_id + f"-{realizations}"] * (num_figs - 1)
-    # ids[1] += f"-{lines_to_show}"
-    ids[1] += "-single" if len(realizations) == 1 else "-multiple"
-    ids[2] += f"-{containment_info.statistics_tab_option}"
-    return ids
-
-
-def set_plot_ids(
-    figs: List[go.Figure],
-    plot_ids: List[str],
-) -> None:
-    for fig, plot_id in zip(figs, plot_ids):
-        if fig != no_update:
-            fig["layout"]["uirevision"] = plot_id
+    if active_tab == MainTabOption.CONTAINMENT_OVER_TIME:
+        plot_id += "-single" if len(realizations) == 1 else "-multiple"
+    if active_tab == MainTabOption.STATISTICS:
+        plot_id += f"-{containment_info.statistics_tab_option.value}"
+    return plot_id
 
 
 def process_summed_mass(
