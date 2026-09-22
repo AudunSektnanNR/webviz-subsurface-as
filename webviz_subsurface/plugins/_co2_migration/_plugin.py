@@ -29,16 +29,16 @@ from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     derive_surface_address,
     export_figure_data_to_csv,
     extract_legendonly,
-    generate_containment_figures,
+    generate_containment_figure,
     generate_unsmry_figures,
     get_plume_polygon,
-    make_plot_ids,
+    make_plot_generation_key,
+    make_plot_id,
     process_containment_info,
     process_summed_mass,
     process_visualization_info,
     property_origin,
     readable_name,
-    set_plot_ids,
 )
 from webviz_subsurface.plugins._co2_migration._utilities.fault_polygons_handler import (
     FaultPolygonsHandler,
@@ -740,6 +740,10 @@ class CO2Migration(WebvizPluginABC):
                 self._view_component(MapViewElement.Ids.STATISTICS_PLOT),
                 "figure",
             ),
+            Output(
+                self._view_component(MapViewElement.Ids.PLOT_GENERATION_STORE),
+                "data",
+            ),
             # LEGEND_DATA_STORE is updated whenever the legend is clicked. However,
             # there is not need to update the plots based on this change, since that
             # is done by plotly internally. We therefore use State instead of Input
@@ -767,6 +771,11 @@ class CO2Migration(WebvizPluginABC):
                 "value",
             ),
             Input(self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS), "value"),
+            Input(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
+            State(
+                self._view_component(MapViewElement.Ids.PLOT_GENERATION_STORE),
+                "data",
+            ),
         )
         @callback_typecheck
         # pylint: disable=too-many-locals
@@ -792,83 +801,108 @@ class CO2Migration(WebvizPluginABC):
             date_option: str,
             statistics_tab_option: StatisticsTabOption,
             box_show_points: str,
-        ) -> Tuple[go.Figure, go.Figure, go.Figure]:
-            if len(realizations) == 0:
-                return go.Figure(), go.Figure(), go.Figure()
-
-            figs = [no_update] * 3
-            cont_info = process_containment_info(
-                zone,
-                region,
-                phase,
-                containment,
-                plume_group,
-                color_choice,
-                mark_choice,
-                sorting,
-                lines_to_show,
-                date_option,
-                statistics_tab_option,
-                box_show_points,
-                self._menu_options[ensemble][source],
-            )
-            if source in [
+            active_tab: MainTabOption,
+            generation_keys: Optional[Dict[str, Any]],
+        ) -> Tuple[Any, Any, Any, Dict[str, Any]]:
+            active_tab = MainTabOption(active_tab)
+            active_index = {
+                MainTabOption.CONTAINMENT_STATE: 0,
+                MainTabOption.CONTAINMENT_OVER_TIME: 1,
+                MainTabOption.STATISTICS: 2,
+            }[active_tab]
+            y_limits = [
+                y_min_val if len(y_min_auto) == 0 else None,
+                y_max_val if len(y_max_auto) == 0 else None,
+            ]
+            is_containment_source = source in (
                 GraphSource.CONTAINMENT_MASS,
                 GraphSource.CONTAINMENT_ACTUAL_VOLUME,
-            ]:
-                plot_ids = make_plot_ids(
+            )
+            cont_info = None
+            if realizations and is_containment_source:
+                cont_info = process_containment_info(
+                    zone,
+                    region,
+                    phase,
+                    containment,
+                    plume_group,
+                    color_choice,
+                    mark_choice,
+                    sorting,
+                    lines_to_show,
+                    date_option,
+                    statistics_tab_option,
+                    box_show_points,
+                    self._menu_options[ensemble][source],
+                )
+
+            generation_key = make_plot_generation_key(
+                active_tab,
+                ensemble,
+                source,
+                co2_scale,
+                realizations,
+                y_limits,
+                cont_info,
+            )
+            updated_generation_keys = dict(generation_keys or {})
+            if updated_generation_keys.get(active_tab.value) == generation_key:
+                raise PreventUpdate
+
+            figure = go.Figure()
+            if realizations and is_containment_source:
+                assert cont_info is not None
+                table_provider = (
+                    self._co2_table_providers.get(ensemble)
+                    if source == GraphSource.CONTAINMENT_MASS
+                    else self._co2_actual_volume_table_providers.get(ensemble)
+                )
+                if table_provider is not None:
+                    figure = generate_containment_figure(
+                        table_provider,
+                        active_tab,
+                        co2_scale,
+                        realizations,
+                        y_limits,
+                        cont_info,
+                        legend_data,
+                    )
+                figure.layout.uirevision = make_plot_id(
                     ensemble,
                     source,
                     co2_scale,
                     cont_info,
                     realizations,
-                    len(figs),
+                    active_tab,
                 )
-                y_limits = [
-                    y_min_val if len(y_min_auto) == 0 else None,
-                    y_max_val if len(y_max_auto) == 0 else None,
-                ]
+            elif (
+                realizations
+                and source == GraphSource.UNSMRY
+                and active_tab == MainTabOption.CONTAINMENT_OVER_TIME
+            ):
                 if (
-                    source == GraphSource.CONTAINMENT_MASS
+                    self._unsmry_providers is not None
+                    and ensemble in self._unsmry_providers
                     and ensemble in self._co2_table_providers
                 ):
-                    figs[: len(figs)] = generate_containment_figures(
+                    figure = generate_unsmry_figures(
+                        self._unsmry_providers[ensemble],
+                        co2_scale,
                         self._co2_table_providers[ensemble],
-                        co2_scale,
-                        realizations,
-                        y_limits,
-                        cont_info,
-                        legend_data,
                     )
-                elif (
-                    source == GraphSource.CONTAINMENT_ACTUAL_VOLUME
-                    and ensemble in self._co2_actual_volume_table_providers
-                ):
-                    figs[: len(figs)] = generate_containment_figures(
-                        self._co2_actual_volume_table_providers[ensemble],
-                        co2_scale,
-                        realizations,
-                        y_limits,
-                        cont_info,
-                        legend_data,
-                    )
-                set_plot_ids(figs, plot_ids)
-            elif source == GraphSource.UNSMRY:
-                if self._unsmry_providers is not None:
-                    if ensemble in self._unsmry_providers:
-                        figs[0] = go.Figure()
-                        figs[1] = generate_unsmry_figures(
-                            self._unsmry_providers[ensemble],
-                            co2_scale,
-                            self._co2_table_providers[ensemble],
-                        )
-                        figs[2] = go.Figure()
                 else:
                     LOGGER.warning(
-                        """UNSMRY file has not been specified as input.
-                         Please use unsmry_relpath in the configuration."""
+                        "UNSMRY data has not been specified for ensemble %s", ensemble
                     )
-            return figs  # type: ignore
+            figures = [no_update, no_update, no_update]
+            figures[active_index] = figure
+            updated_generation_keys[active_tab.value] = generation_key
+            return (
+                figures[0],
+                figures[1],
+                figures[2],
+                updated_generation_keys,
+            )
 
     def _add_legend_change_callback(self) -> None:
         @callback(
