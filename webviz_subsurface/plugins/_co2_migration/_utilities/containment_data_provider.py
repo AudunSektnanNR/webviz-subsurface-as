@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Optional, Sequence, Union
 
 import pandas as pd
 
@@ -41,10 +41,8 @@ class ContainmentDataProvider:
     def realizations(self) -> List[int]:
         return self._provider.realizations()
 
-    def extract_dataframe(self, realization: int) -> pd.DataFrame:
-        df = self._provider.get_column_data(
-            self._provider.column_names(), [realization]
-        )
+    def extract_dataframes(self, realizations: Sequence[int]) -> pd.DataFrame:
+        df = self._provider.get_column_data(self._provider.column_names(), realizations)
         # Backward compatibility:
         df["containment"] = df["containment"].replace({"hazardous": "nogo"})
         return df

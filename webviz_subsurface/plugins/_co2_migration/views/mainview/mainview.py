@@ -38,6 +38,7 @@ class MapViewElement(ViewElementABC):
         TOP_ELEMENT = "top-element"
         BOTTOM_ELEMENT = "bottom-element"
         LEGEND_DATA_STORE = "legend-data-store"
+        PLOT_GENERATION_STORE = "plot-generation-store"
         SUMMARY_TABS = "summary-tabs"
         CSV_EXPORT_BUTTON = "csv-export-button"
         DOWNLOAD_CSV = "download-csv"
@@ -133,6 +134,14 @@ class MapViewElement(ViewElementABC):
                         time_legendonly=None,
                         stats_legendonly=None,
                     ),
+                )
+            )
+            layout_elements.append(
+                dcc.Store(
+                    id=self.register_component_unique_id(
+                        self.Ids.PLOT_GENERATION_STORE
+                    ),
+                    data={},
                 )
             )
         if self._content["maps"] and self._content["any_table"]:
