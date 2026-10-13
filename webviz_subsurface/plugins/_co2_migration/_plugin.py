@@ -91,7 +91,9 @@ class CO2Migration(WebvizPluginABC):
     ---
 
     * **`ensembles`:** Which ensembles in `shared_settings` to visualize.
-    * **`well_pick_file`:** Path to a file containing well picks
+    * **`well_pick_file`:** Path to a file containing well picks. A relative path is
+        read from each realization; an absolute path is one file used for all
+        realizations. If the file is missing or cannot be read, no well picks are shown.
     * **`plume_mass_relpath`:** Path to a table of co2 _containment data_ for co2 mass
     * **`plume_actual_volume_relpath`:** Path to a table of co2 _containment data_ for co2
         volume of type "actual"
