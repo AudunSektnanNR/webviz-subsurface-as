@@ -8,7 +8,6 @@ import numpy as np
 import plotly.graph_objects as go
 import webviz_subsurface_components as wsc
 from dash import dcc, html
-from flask_caching import Cache
 
 from webviz_subsurface._providers import (
     EnsembleSurfaceProvider,
@@ -57,6 +56,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.summary_graphs import (
     generate_summary_figure,
 )
 from webviz_subsurface.plugins._co2_migration._utilities.surface_publishing import (
+    SurfaceTransform,
     TruncatedSurfaceAddress,
     publish_and_get_surface_metadata,
 )
@@ -97,15 +97,13 @@ class SurfaceData:
         color_map_range: Tuple[Optional[float], Optional[float]],
         color_map_name: str,
         readable_name_: str,
-        visualization_info: Dict[str, Any],
-        map_attribute_names: FilteredMapAttribute,
+        transform: SurfaceTransform,
     ) -> Tuple[Any, Optional[Any]]:
         surf_meta, img_url, summed_mass = publish_and_get_surface_metadata(
             server,
             provider,
             address,
-            visualization_info,
-            map_attribute_names,
+            transform,
         )
         if surf_meta is None:  # Surface file does not exist
             return None, None
@@ -387,28 +385,6 @@ def create_map_annotations(
     return annotations
 
 
-def create_map_viewports() -> Dict:
-    return {
-        "layout": [1, 1],
-        "viewports": [
-            {
-                "id": "1_view",
-                "show3D": False,
-                "isSync": True,
-                "layerIds": [
-                    "colormap-layer",
-                    "fault-polygons-layer",
-                    "license-boundary-layer",
-                    "nogo-boundary-layer",
-                    "hazardous-boundary-layer",  # Keep for backward compatibility
-                    "well-picks-layer",
-                    "plume-polygon-layer",
-                ],
-            }
-        ],
-    }
-
-
 # pylint: disable=too-many-arguments
 def create_map_layers(
     realizations: List[int],
@@ -628,34 +604,6 @@ def generate_unsmry_figures(
         co2_mass_scale,
         table_provider_containment,
     )
-
-
-def process_visualization_info(
-    attribute: str,
-    thresholds: dict,
-    unit: str,
-    stored_info: Dict[str, Any],
-    cache: Cache,
-) -> Dict[str, Any]:
-    """
-    Clear surface cache if the threshold for visualization or mass unit is changed
-    """
-    stored_info["attribute"] = attribute
-    stored_info["change"] = False
-    if (
-        MapType[MapAttribute(attribute).name].value not in ["PLUME", "MIGRATION_TIME"]
-        and unit != stored_info["unit"]
-    ):
-        stored_info["unit"] = unit
-        stored_info["change"] = True
-    if thresholds is not None:
-        for att in stored_info["thresholds"].keys():
-            if stored_info["thresholds"][att] != thresholds[att]:
-                stored_info["change"] = True
-                stored_info["thresholds"][att] = thresholds[att]
-    if stored_info["change"]:
-        cache.clear()
-    return stored_info
 
 
 # pylint: disable=too-many-locals

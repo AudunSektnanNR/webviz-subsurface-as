@@ -91,11 +91,9 @@ class ViewSettings(SettingsGroupABC):
         PLUME_THRESHOLD = "plume-threshold"
         PLUME_SMOOTHING = "plume-smoothing"
 
-        VISUALIZATION_UPDATE = "visualization-update"
         VISUALIZATION_THRESHOLD_BUTTON = "visualization-threshold-button"
         VISUALIZATION_THRESHOLD_DIALOG = "visualization-threshold-dialog"
         MASS_UNIT = "mass-unit"
-        MASS_UNIT_UPDATE = "mass-unit-update"
 
         FEEDBACK_BUTTON = "feedback-button"
         FEEDBACK = "feedback"
@@ -150,7 +148,6 @@ class ViewSettings(SettingsGroupABC):
                 VisualizationThresholdsLayout(
                     self._threshold_ids,
                     self._thresholds,
-                    self.register_component_unique_id(self.Ids.VISUALIZATION_UPDATE),
                 ),
                 MapSelectorLayout(
                     self._color_scale_names,
@@ -164,7 +161,6 @@ class ViewSettings(SettingsGroupABC):
                     self.register_component_unique_id(self.Ids.CONTOURS_SWITCH),
                     self.register_component_unique_id(self.Ids.CONTOURS_QUANTITY),
                     self.register_component_unique_id(self.Ids.MASS_UNIT),
-                    self.register_component_unique_id(self.Ids.MASS_UNIT_UPDATE),
                     self._map_attribute_names,
                 ),
             ]
@@ -677,7 +673,6 @@ class VisualizationThresholdsLayout(wcc.Dialog):
         self,
         ids: List[str],
         thresholds: MapThresholds,
-        visualization_update_id: str,
     ) -> None:
         standard_thresholds = thresholds.standard_thresholds
 
@@ -685,7 +680,6 @@ class VisualizationThresholdsLayout(wcc.Dialog):
             html.Div(
                 "Here you can select a filter for the visualization of the map, "
                 "hiding values smaller than the selected minimum cutoff. "
-                "After changing the threshold value, press 'Update' to have the map reappear. "
                 "A value of -1 can be used to visualize zeros."
             ),
             html.Div("", style={"height": "30px"}),
@@ -708,6 +702,7 @@ class VisualizationThresholdsLayout(wcc.Dialog):
                         type="number",
                         value=standard_thresholds[id],
                         step="0.0005",
+                        debounce=True,
                         style={"width": "25%"},
                     ),
                 ],
@@ -715,21 +710,6 @@ class VisualizationThresholdsLayout(wcc.Dialog):
             )
             for id in ids
         ]
-        fields.append(html.Div(style={"height": "20px"}))
-        fields.append(
-            html.Div(
-                [
-                    html.Div(style={"width": "80%"}),
-                    html.Button(
-                        "Update",
-                        id=visualization_update_id,
-                        style=LayoutStyle.VISUALIZATION_BUTTON,
-                        n_clicks=0,
-                    ),
-                ],
-                style=ROW,
-            )
-        )
         super().__init__(
             title=LayoutLabels.VISUALIZATION_THRESHOLDS,
             id=ViewSettings.Ids.VISUALIZATION_THRESHOLD_DIALOG,
@@ -754,7 +734,6 @@ class MapSelectorLayout(wcc.Selectors):
         contour_switch_id: str,
         contour_quantity_id: str,
         mass_unit_id: str,
-        mass_unit_update_id: str,
         map_attribute_names: FilteredMapAttribute,
     ):
         default_colormap = (
@@ -821,25 +800,11 @@ class MapSelectorLayout(wcc.Selectors):
                             style=ROW,
                         ),
                         "Mass unit (for mass maps)",
-                        html.Div(
-                            [
-                                html.Div(
-                                    wcc.Dropdown(
-                                        id=mass_unit_id,
-                                        options=["kg", "tons", "M tons"],
-                                        value="tons",
-                                        clearable=False,
-                                    ),
-                                    style={"width": "50%"},
-                                ),
-                                html.Button(
-                                    "Update unit",
-                                    id=mass_unit_update_id,
-                                    style=LayoutStyle.VISUALIZATION_BUTTON,
-                                    n_clicks=0,
-                                ),
-                            ],
-                            style=ROW,
+                        wcc.Dropdown(
+                            id=mass_unit_id,
+                            options=["kg", "tons", "M tons"],
+                            value="tons",
+                            clearable=False,
                         ),
                         "Contours",
                         html.Div(

@@ -6,7 +6,6 @@ import plotly.graph_objects as go
 from dash import (
     Dash,
     Input,
-    NoUpdate,
     Output,
     Patch,
     State,
@@ -25,7 +24,6 @@ from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     SurfaceData,
     create_map_annotations,
     create_map_layers,
-    create_map_viewports,
     derive_surface_address,
     export_figure_data_to_csv,
     extract_legendonly,
@@ -36,7 +34,6 @@ from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     make_plot_id,
     process_containment_info,
     process_summed_mass,
-    process_visualization_info,
     property_origin,
     readable_name,
 )
@@ -78,6 +75,7 @@ from . import _error
 from ._types import LegendData
 from ._utilities.color_tables import co2migration_color_tables
 from ._utilities.containment_info import MainTabOption, StatisticsTabOption
+from ._utilities.surface_publishing import SurfaceTransform
 
 LOGGER = logging.getLogger(__name__)
 TABLES_PATH = "share/results/tables"
@@ -272,12 +270,6 @@ class CO2Migration(WebvizPluginABC):
             raise
 
         self._summed_co2: Dict[str, Any] = {}
-        self._visualization_info = {
-            "thresholds": self._map_thresholds.standard_thresholds,
-            "n_clicks": 0,
-            "change": False,
-            "unit": "tons",
-        }
         self._color_tables = co2migration_color_tables()
         self._well_pick_names: Dict[str, List[str]] = {
             ens: (
@@ -423,7 +415,6 @@ class CO2Migration(WebvizPluginABC):
             Output(
                 self._view_component(MapViewElement.Ids.MAP_ANNOTATIONS), "children"
             ),
-            Output(self._view_component(MapViewElement.Ids.DECKGL_MAP), "views"),
             inputs={
                 "attribute": Input(
                     self._settings_component(ViewSettings.Ids.PROPERTY), "value"
@@ -470,16 +461,8 @@ class CO2Migration(WebvizPluginABC):
                     self._settings_component(ViewSettings.Ids.PLUME_SMOOTHING),
                     "value",
                 ),
-                "visualization_update": Input(
-                    self._settings_component(ViewSettings.Ids.VISUALIZATION_UPDATE),
-                    "n_clicks",
-                ),
                 "mass_unit": Input(
                     self._settings_component(ViewSettings.Ids.MASS_UNIT), "value"
-                ),
-                "mass_unit_update": Input(
-                    self._settings_component(ViewSettings.Ids.MASS_UNIT_UPDATE),
-                    "n_clicks",
                 ),
                 "options_dialog_options": Input(
                     ViewSettings.Ids.OPTIONS_DIALOG_OPTIONS, "value"
@@ -489,9 +472,6 @@ class CO2Migration(WebvizPluginABC):
                 ),
                 "ensemble": Input(
                     self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"
-                ),
-                "current_views": State(
-                    self._view_component(MapViewElement.Ids.DECKGL_MAP), "views"
                 ),
                 "thresholds": [Input(id, "value") for id in self._threshold_ids],
             },
@@ -511,41 +491,34 @@ class CO2Migration(WebvizPluginABC):
             contour_quantity: Optional[float],
             plume_threshold: Optional[float],
             plume_smoothing: Optional[float],
-            visualization_update: int,
             mass_unit: str,
-            mass_unit_update: int,
             options_dialog_options: List[str],
             selected_wells: List[str],
             ensemble: str,
-            current_views: List[Any],
-            thresholds: List[float],
-        ) -> Tuple[
-            List[Dict[Any, Any]], Optional[List[Any]], Union[Dict[Any, Any], NoUpdate]
-        ]:
-            # Unable to clear cache (when needed) without the protected member
-            # pylint: disable=protected-access
+            thresholds: List[Optional[float]],
+        ) -> Tuple[List[Dict[Any, Any]], Optional[List[Any]]]:
             current_thresholds = dict(zip(self._threshold_ids, thresholds))
-            assert visualization_update >= 0  # Need the input to trigger callback
-            assert mass_unit_update >= 0  # These are just to silence pylint
-            self._visualization_info = process_visualization_info(
-                attribute,
-                current_thresholds,
-                mass_unit,
-                self._visualization_info,
-                self._surface_server._array_cache,
-            )
-            if self._visualization_info["change"]:
-                return [], None, no_update
             attribute = MapAttribute(attribute)
+            map_type = MapType[attribute.name].value
+            visualization_threshold = (
+                current_thresholds.get(attribute.value)
+                if map_type not in ("PLUME", "MIGRATION_TIME")
+                else None
+            )
+            if (
+                map_type not in ("PLUME", "MIGRATION_TIME")
+                and visualization_threshold is None
+            ):
+                raise PreventUpdate
             if len(realization) == 0 or ensemble is None:
                 raise PreventUpdate
-            if MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME":
+            if map_type == "MIGRATION_TIME":
                 datestr = None
             else:
                 datestr = self._ensemble_dates[ensemble][date]
             # Contour data
             contour_data = None
-            if MapType[MapAttribute(attribute).name].value == "PLUME":
+            if map_type == "PLUME":
                 contour_data = {
                     "property": property_origin(attribute, self._map_attribute_names),
                     "threshold": plume_threshold,
@@ -554,28 +527,31 @@ class CO2Migration(WebvizPluginABC):
             # Surface
             surf_data, summed_mass = None, None
             if formation is not None and len(realization) > 0:
+                surface_address = derive_surface_address(
+                    formation,
+                    attribute,
+                    datestr,
+                    realization,
+                    self._map_attribute_names,
+                    statistic,
+                    contour_data,
+                )
                 surf_data, summed_mass = SurfaceData.from_server(
                     server=self._surface_server,
                     provider=self._ensemble_surface_providers[ensemble],
-                    address=derive_surface_address(
-                        formation,
-                        attribute,
-                        datestr,
-                        realization,
-                        self._map_attribute_names,
-                        statistic,
-                        contour_data,
-                    ),
+                    address=surface_address,
                     color_map_range=(
                         cm_min_val if len(cm_min_auto) == 0 else None,
                         cm_max_val if len(cm_max_auto) == 0 else None,
                     ),
                     color_map_name=color_map_name,
                     readable_name_=readable_name(attribute),
-                    visualization_info=self._visualization_info,
-                    map_attribute_names=self._map_attribute_names,
+                    transform=SurfaceTransform(
+                        map_attribute=attribute,
+                        mass_unit=mass_unit,
+                        visualization_threshold=visualization_threshold,
+                    ),
                 )
-            assert isinstance(self._visualization_info["unit"], str)
             current_summed_mass, self._summed_co2 = process_summed_mass(
                 formation,
                 realization,
@@ -583,7 +559,7 @@ class CO2Migration(WebvizPluginABC):
                 attribute,
                 summed_mass,
                 self._summed_co2,
-                self._visualization_info["unit"],
+                mass_unit,
             )
             plume_polygon = None
             if contour_data is not None:
@@ -627,17 +603,14 @@ class CO2Migration(WebvizPluginABC):
                 surface_data=surf_data,
                 colortables=self._color_tables,
                 attribute=attribute,
-                unit=self._visualization_info["unit"],
+                unit=mass_unit,
                 current_total=current_summed_mass,
                 options=options_dialog_options,
                 con_url=containment_polygon_url,
                 haz_url=hazardous_polygon_url,
                 nogo_url=nogo_polygon_url,
             )
-            viewports: Union[Dict[Any, Any], NoUpdate] = (
-                no_update if current_views else create_map_viewports()
-            )
-            return layers, annotations, viewports
+            return layers, annotations
 
     def _add_set_well_options_callback(self) -> None:
         @callback(
