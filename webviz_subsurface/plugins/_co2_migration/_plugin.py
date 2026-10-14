@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -68,6 +69,8 @@ from webviz_subsurface.plugins._co2_migration.views.mainview.mainview import (
     MapViewElement,
 )
 from webviz_subsurface.plugins._co2_migration.views.mainview.settings import (
+    COL,
+    HIDDEN,
     ViewSettings,
 )
 
@@ -322,6 +325,7 @@ class CO2Migration(WebvizPluginABC):
             self._add_legend_change_callback()
             self._add_set_unit_list_callback()
             self._add_time_plot_visibility_callback()
+            self._add_graph_settings_visibility_callback()
             self._add_csv_export_callback()
 
         if self._content["maps"]:
@@ -362,17 +366,17 @@ class CO2Migration(WebvizPluginABC):
 
             styles = [{"height": f"{slider_value * 0.9 - 4}vh", "width": "90%"}] * 3
             if source == GraphSource.UNSMRY and self._unsmry_providers is None:
-                styles = [{"display": "none"}] * 3
+                styles = [HIDDEN] * 3
             elif (
                 source == GraphSource.CONTAINMENT_MASS
                 and ensemble not in self._co2_table_providers
             ):
-                styles = [{"display": "none"}] * 3
+                styles = [HIDDEN] * 3
             elif (
                 source == GraphSource.CONTAINMENT_ACTUAL_VOLUME
                 and ensemble not in self._co2_actual_volume_table_providers
             ):
-                styles = [{"display": "none"}] * 3
+                styles = [HIDDEN] * 3
 
             return [top_style, bottom_style] + styles
 
@@ -644,7 +648,7 @@ class CO2Migration(WebvizPluginABC):
         )
         def toggle_date_slider(attribute: str) -> Dict[str, str]:
             if MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME":
-                return {"display": "none"}
+                return HIDDEN
             return {}
 
     def _add_set_dates_callback(self) -> None:
@@ -677,20 +681,49 @@ class CO2Migration(WebvizPluginABC):
             ),
             Output(self._settings_component(ViewSettings.Ids.Y_LIM_OPTIONS), "style"),
             Input(self._settings_component(ViewSettings.Ids.REALIZATION), "value"),
-            State(self._settings_component(ViewSettings.Ids.REAL_OR_STAT_DIV), "style"),
+            Input(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
         )
         def toggle_time_plot_options_visibility(
             realizations: List[int],
-            current_style: Dict[str, str],
+            active_tab: MainTabOption,
         ) -> Tuple[Dict[str, str], Dict[str, str]]:
+            if active_tab != MainTabOption.CONTAINMENT_OVER_TIME:
+                return (HIDDEN, HIDDEN)
             if len(realizations) == 1:
-                return (
-                    {**current_style, "display": "none"},
-                    {"display": "flex", "flex-direction": "column"},
-                )
+                return (HIDDEN, {**COL, "margin-top": "8px"})
+            return ({**COL, "margin-top": "8px"}, HIDDEN)
+
+    def _add_graph_settings_visibility_callback(self) -> None:
+        @callback(
+            Output(self._settings_component(ViewSettings.Ids.DATE_OPTION_COL), "style"),
+            Output(
+                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION_DIV),
+                "style",
+            ),
+            Output(
+                self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS_DIV),
+                "style",
+            ),
+            Input(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
+            Input(
+                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
+                "value",
+            ),
+        )
+        def toggle_graph_settings(
+            active_tab: MainTabOption,
+            statistics_tab_option: StatisticsTabOption,
+        ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
+            show_statistics = active_tab == MainTabOption.STATISTICS
             return (
-                {**current_style, "display": "flex"},
-                {"display": "none"},
+                {**COL, "margin-top": "8px"}
+                if active_tab != MainTabOption.CONTAINMENT_OVER_TIME
+                else HIDDEN,
+                {**COL, "margin-top": "8px"} if show_statistics else HIDDEN,
+                COL
+                if show_statistics
+                and statistics_tab_option == StatisticsTabOption.BOX_PLOT
+                else HIDDEN,
             )
 
     def _add_set_unit_list_callback(self) -> None:

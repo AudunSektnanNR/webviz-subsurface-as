@@ -81,7 +81,6 @@ def _surface_cache_address(
     )
 
 
-
 def publish_and_get_surface_metadata(
     server: SurfaceArrayServer,
     provider: EnsembleSurfaceProvider,

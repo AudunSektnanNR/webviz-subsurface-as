@@ -35,6 +35,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.generic import (
 
 ROW = {"display": "flex", "flex-direction": "row"}
 COL = {"display": "flex", "flex-direction": "column"}
+HIDDEN = {"display": "none"}
 
 
 class ViewSettings(SettingsGroupABC):
@@ -91,7 +92,9 @@ class ViewSettings(SettingsGroupABC):
         DATE_OPTION = "date-option"
         DATE_OPTION_COL = "date-option-column"
         STATISTICS_TAB_OPTION = "statistics-tab-option"
+        STATISTICS_TAB_OPTION_DIV = "statistics-tab-option-div"
         BOX_SHOW_POINTS = "box-plot-points"
+        BOX_SHOW_POINTS_DIV = "box-plot-points-div"
 
         VISUALIZATION_THRESHOLD_BUTTON = "visualization-threshold-button"
         VISUALIZATION_THRESHOLD_DIALOG = "visualization-threshold-dialog"
@@ -203,7 +206,9 @@ class ViewSettings(SettingsGroupABC):
                             self.Ids.DATE_OPTION,
                             self.Ids.DATE_OPTION_COL,
                             self.Ids.STATISTICS_TAB_OPTION,
+                            self.Ids.STATISTICS_TAB_OPTION_DIV,
                             self.Ids.BOX_SHOW_POINTS,
+                            self.Ids.BOX_SHOW_POINTS_DIV,
                         ]
                     },
                     self._content,
@@ -308,13 +313,18 @@ class ViewSettings(SettingsGroupABC):
                 return len(min_auto) == 1, len(max_auto) == 1
 
             @callback(
-                Output(
-                    self.component_unique_id(self.Ids.MASS_UNIT).to_string(), "disabled"
-                ),
+                Output(self.component_unique_id(self.Ids.MASS).to_string(), "style"),
+                Output(self.component_unique_id(self.Ids.PLUME).to_string(), "style"),
                 Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
             )
-            def toggle_unit(attribute: str) -> bool:
-                return MapType[MapAttribute(attribute).name].value != "MASS"
+            def toggle_property_specific_settings(
+                attribute: str,
+            ) -> Tuple[Dict[str, str], Dict[str, str]]:
+                map_type = MapType[MapAttribute(attribute).name].value
+                return (
+                    COL if map_type == "MASS" else HIDDEN,
+                    ROW if map_type == "PLUME" else HIDDEN,
+                )
 
         if self._content["any_table"]:
 
@@ -729,6 +739,7 @@ class MapSelectorLayout(wcc.Selectors):
             else color_scale_names[0]
         )
         default_property = next(iter(map_attribute_names.filtered_values)).value
+        default_map_type = MapType[MapAttribute(default_property).name].value
         super().__init__(
             label="Map Settings",
             open_details=True,
@@ -796,7 +807,7 @@ class MapSelectorLayout(wcc.Selectors):
                                 ),
                             ],
                             id=mass_id,
-                            style=COL,
+                            style=(COL if default_map_type == "MASS" else HIDDEN),
                         ),
                         "Contours",
                         html.Div(
@@ -852,7 +863,7 @@ class MapSelectorLayout(wcc.Selectors):
                                 ),
                             ],
                             id=plume_id,
-                            style=ROW,
+                            style=(ROW if default_map_type == "PLUME" else HIDDEN),
                         ),
                         OpenVisualizationThresholdsButton(),
                     ],
@@ -1055,7 +1066,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                 ),
                 html.Div(
                     [
-                        "Time plot options:",
+                        "Lines to display:",
                         dcc.RadioItems(
                             options=[  # type: ignore[arg-type]
                                 {"label": "Mean/P10/P90", "value": "stat"},
@@ -1067,11 +1078,11 @@ class GraphSelectorsLayout(wcc.Selectors):
                         ),
                     ],
                     id=containment_ids[ids.REAL_OR_STAT_DIV],
-                    style={**COL, "margin-top": "10px"},
+                    style=HIDDEN,
                 ),
                 html.Div(
                     [
-                        "State at date:",
+                        "Date",
                         wcc.Dropdown(
                             id=containment_ids[ids.DATE_OPTION],
                             clearable=False,
@@ -1111,11 +1122,8 @@ class GraphSelectorsLayout(wcc.Selectors):
                     id=containment_ids[ids.Y_LIM_OPTIONS],
                 ),
                 html.Div(
-                    "Statistics tab:",
-                    style={"margin-top": "10px"},
-                ),
-                html.Div(
                     [
+                        "Plot type:",
                         dcc.RadioItems(
                             options=[  # type: ignore[arg-type]
                                 {
@@ -1129,26 +1137,27 @@ class GraphSelectorsLayout(wcc.Selectors):
                             ],
                             value=StatisticsTabOption.PROBABILITY_PLOT,
                             id=containment_ids[ids.STATISTICS_TAB_OPTION],
+                            inline=True,
                         ),
                     ],
-                ),
-                html.Div(
-                    "Box plot points to show:",
-                    style={"margin-top": "10px"},
+                    id=containment_ids[ids.STATISTICS_TAB_OPTION_DIV],
+                    style=HIDDEN,
                 ),
                 html.Div(
                     [
+                        "Points to show:",
                         dcc.RadioItems(
                             options=[  # type: ignore[arg-type]
                                 {"label": "All", "value": "all_points"},
-                                {"label": "Outliers", "value": "only_outliers"},
+                                {"label": "Hide outliers", "value": "only_outliers"},
                             ],
                             value="only_outliers",
                             id=containment_ids[ids.BOX_SHOW_POINTS],
                             inline=True,
                         ),
                     ],
-                    style=ROW,
+                    id=containment_ids[ids.BOX_SHOW_POINTS_DIV],
+                    style=HIDDEN,
                 ),
             ],
         )
