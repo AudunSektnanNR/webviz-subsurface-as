@@ -45,11 +45,11 @@ class ViewSettings(SettingsGroupABC):
         OPTIONS_DIALOG_WELL_FILTER = "options-dialog-well-filter"
         WELL_FILTER_HEADER = "well-filter-header"
 
-        FORMATION = "formation"
         ENSEMBLE = "ensemble"
         REALIZATION = "realization"
         ALL_REAL = "all-realizations"
 
+        FORMATION = "formation"
         PROPERTY = "property"
         STATISTIC = "statistic"
         COLOR_SCALE = "color-scale"
@@ -57,8 +57,13 @@ class ViewSettings(SettingsGroupABC):
         CM_MAX = "cm-max"
         CM_MIN_AUTO = "cm-min-auto"
         CM_MAX_AUTO = "cm-max-auto"
+        MASS = "mass"
+        MASS_UNIT = "mass-unit"
         CONTOURS_SWITCH = "contours-switch"
         CONTOURS_QUANTITY = "contours-quantity"
+        PLUME = "plume"
+        PLUME_THRESHOLD = "plume-threshold"
+        PLUME_SMOOTHING = "plume-smoothing"
 
         GRAPH_SOURCE = "graph-source"
         CO2_SCALE = "co2-scale"
@@ -88,12 +93,8 @@ class ViewSettings(SettingsGroupABC):
         STATISTICS_TAB_OPTION = "statistics-tab-option"
         BOX_SHOW_POINTS = "box-plot-points"
 
-        PLUME_THRESHOLD = "plume-threshold"
-        PLUME_SMOOTHING = "plume-smoothing"
-
         VISUALIZATION_THRESHOLD_BUTTON = "visualization-threshold-button"
         VISUALIZATION_THRESHOLD_DIALOG = "visualization-threshold-dialog"
-        MASS_UNIT = "mass-unit"
 
         FEEDBACK_BUTTON = "feedback-button"
         FEEDBACK = "feedback"
@@ -142,9 +143,6 @@ class ViewSettings(SettingsGroupABC):
         )
         if self._content["maps"]:
             menu_layout += [
-                FilterSelectorLayout(
-                    self.register_component_unique_id(self.Ids.FORMATION)
-                ),
                 VisualizationThresholdsLayout(
                     self._threshold_ids,
                     self._thresholds,
@@ -153,6 +151,7 @@ class ViewSettings(SettingsGroupABC):
                     self._color_scale_names,
                     self.register_component_unique_id(self.Ids.PROPERTY),
                     self.register_component_unique_id(self.Ids.STATISTIC),
+                    self.register_component_unique_id(self.Ids.FORMATION),
                     self.register_component_unique_id(self.Ids.COLOR_SCALE),
                     self.register_component_unique_id(self.Ids.CM_MIN),
                     self.register_component_unique_id(self.Ids.CM_MAX),
@@ -160,7 +159,11 @@ class ViewSettings(SettingsGroupABC):
                     self.register_component_unique_id(self.Ids.CM_MAX_AUTO),
                     self.register_component_unique_id(self.Ids.CONTOURS_SWITCH),
                     self.register_component_unique_id(self.Ids.CONTOURS_QUANTITY),
+                    self.register_component_unique_id(self.Ids.MASS),
                     self.register_component_unique_id(self.Ids.MASS_UNIT),
+                    self.register_component_unique_id(self.Ids.PLUME),
+                    self.register_component_unique_id(self.Ids.PLUME_THRESHOLD),
+                    self.register_component_unique_id(self.Ids.PLUME_SMOOTHING),
                     self._map_attribute_names,
                 ),
             ]
@@ -205,13 +208,6 @@ class ViewSettings(SettingsGroupABC):
                     },
                     self._content,
                 )
-            )
-        if self._content["maps"]:
-            menu_layout.append(
-                ExperimentalFeaturesLayout(
-                    self.register_component_unique_id(self.Ids.PLUME_THRESHOLD),
-                    self.register_component_unique_id(self.Ids.PLUME_SMOOTHING),
-                ),
             )
         menu_layout += [
             FeedbackLayout(),
@@ -642,20 +638,6 @@ class WellFilter(html.Div):
         )
 
 
-class FilterSelectorLayout(wcc.Selectors):
-    def __init__(self, formation_id: str):
-        super().__init__(
-            label="Filter Settings",
-            children=[
-                "Formation",
-                wcc.Dropdown(
-                    id=formation_id,
-                    clearable=False,
-                ),
-            ],
-        )
-
-
 class OpenVisualizationThresholdsButton(html.Button):
     def __init__(self) -> None:
         super().__init__(
@@ -726,6 +708,7 @@ class MapSelectorLayout(wcc.Selectors):
         color_scale_names: List[str],
         property_id: str,
         statistic_id: str,
+        formation_id: str,
         colormap_id: str,
         cm_min_id: str,
         cm_max_id: str,
@@ -733,7 +716,11 @@ class MapSelectorLayout(wcc.Selectors):
         cm_max_auto_id: str,
         contour_switch_id: str,
         contour_quantity_id: str,
+        mass_id: str,
         mass_unit_id: str,
+        plume_id: str,
+        plume_threshold_id: str,
+        plume_smoothing_id: str,
         map_attribute_names: FilteredMapAttribute,
     ):
         default_colormap = (
@@ -741,6 +728,7 @@ class MapSelectorLayout(wcc.Selectors):
             if "turbo (Seq)" in color_scale_names
             else color_scale_names[0]
         )
+        default_property = next(iter(map_attribute_names.filtered_values)).value
         super().__init__(
             label="Map Settings",
             open_details=True,
@@ -751,7 +739,7 @@ class MapSelectorLayout(wcc.Selectors):
                         wcc.Dropdown(
                             id=property_id,
                             options=_compile_property_options(map_attribute_names),
-                            value=next(iter(map_attribute_names.filtered_values)).value,
+                            value=default_property,
                             clearable=False,
                         ),
                         "Statistic",
@@ -761,12 +749,10 @@ class MapSelectorLayout(wcc.Selectors):
                             value=SurfaceStatistic.MEAN,
                             clearable=False,
                         ),
-                        html.Div(
-                            style={
-                                "height": "1px",
-                                "backgroundColor": "lightgray",
-                                "gridColumnStart": "span 2",
-                            }
+                        "Formation",
+                        wcc.Dropdown(
+                            id=formation_id,
+                            clearable=False,
                         ),
                         "Color Scale",
                         dcc.Dropdown(
@@ -799,12 +785,18 @@ class MapSelectorLayout(wcc.Selectors):
                             ],
                             style=ROW,
                         ),
-                        "Mass unit (for mass maps)",
-                        wcc.Dropdown(
-                            id=mass_unit_id,
-                            options=["kg", "tons", "M tons"],
-                            value="tons",
-                            clearable=False,
+                        html.Div(
+                            [
+                                "Mass unit (for mass maps)",
+                                wcc.Dropdown(
+                                    id=mass_unit_id,
+                                    options=["kg", "tons", "M tons"],
+                                    value="tons",
+                                    clearable=False,
+                                ),
+                            ],
+                            id=mass_id,
+                            style=COL,
                         ),
                         "Contours",
                         html.Div(
@@ -828,6 +820,39 @@ class MapSelectorLayout(wcc.Selectors):
                                 "Contours work best with relatively smooth maps,"
                                 " and Minimum and Maximum set to 'auto'."
                             ),
+                        ),
+                        html.Div(
+                            children=[
+                                html.Div(
+                                    [
+                                        html.Div("Plume Threshold"),
+                                        dcc.Input(
+                                            id=plume_threshold_id,
+                                            type="number",
+                                            min=0,
+                                            value=0.000001,
+                                            placeholder="Lower property threshold",
+                                        ),
+                                    ],
+                                    style={**COL, "width": "50%"},
+                                ),
+                                html.Div(
+                                    [
+                                        html.Div("Smoothing"),
+                                        dcc.Input(
+                                            id=plume_smoothing_id,
+                                            type="number",
+                                            min=0,
+                                            value=0,
+                                            step=1,
+                                            placeholder="Smoothing [#pixels]",
+                                        ),
+                                    ],
+                                    style={**COL, "width": "50%"},
+                                ),
+                            ],
+                            id=plume_id,
+                            style=ROW,
                         ),
                         OpenVisualizationThresholdsButton(),
                     ],
@@ -1124,43 +1149,6 @@ class GraphSelectorsLayout(wcc.Selectors):
                         ),
                     ],
                     style=ROW,
-                ),
-            ],
-        )
-
-
-class ExperimentalFeaturesLayout(wcc.Selectors):
-    def __init__(self, plume_threshold_id: str, plume_smoothing_id: str):
-        super().__init__(
-            label="Experimental",
-            open_details=False,
-            children=[
-                html.Div(
-                    children=[
-                        html.Div("Plume Threshold"),
-                        dcc.Input(
-                            id=plume_threshold_id,
-                            type="number",
-                            min=0,
-                            value=0.000001,
-                            placeholder="Lower property threshold",
-                            style={"textAlign": "right"},
-                        ),
-                    ],
-                ),
-                html.Div(
-                    children=[
-                        html.Div("Plume Smoothing"),
-                        dcc.Input(
-                            id=plume_smoothing_id,
-                            type="number",
-                            min=0,
-                            value=0,
-                            step=1,
-                            placeholder="Smoothing [#pixels]",
-                            style={"textAlign": "right"},
-                        ),
-                    ],
                 ),
             ],
         )
