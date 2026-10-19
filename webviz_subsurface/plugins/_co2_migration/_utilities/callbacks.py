@@ -396,13 +396,13 @@ def create_map_layers(
     hazardous_bounds_url: Optional[str],  # Keep for backward compatibility
     well_pick_provider: Optional[EnsembleWellPicks],
     plume_extent_data: Optional[geojson.FeatureCollection],
-    options_dialog_options: List[str],
+    overlay_dialog_options: List[str],
     selected_wells: List[str],
     show_contours: bool,
     num_contours: Optional[float],
 ) -> List[Dict]:
     layers = []
-    outline = LayoutLabels.SHOW_POLYGONS_AS_OUTLINES in options_dialog_options
+    outline = LayoutLabels.SHOW_POLYGONS_AS_OUTLINES in overlay_dialog_options
     if surface_data is not None:
         # Update ColormapLayer
         meta = surface_data.meta_data
@@ -442,7 +442,7 @@ def create_map_layers(
 
     if (
         fault_polygon_url is not None
-        and LayoutLabels.SHOW_FAULTPOLYGONS in options_dialog_options
+        and LayoutLabels.SHOW_FAULTPOLYGONS in overlay_dialog_options
     ):
         layers.append(
             {
@@ -455,7 +455,7 @@ def create_map_layers(
 
     if (
         containment_bounds_url is not None
-        and LayoutLabels.SHOW_CONTAINMENT_POLYGON in options_dialog_options
+        and LayoutLabels.SHOW_CONTAINMENT_POLYGON in overlay_dialog_options
     ):
         layers.append(
             {
@@ -475,7 +475,7 @@ def create_map_layers(
 
     if (
         nogo_bounds_url is not None
-        and LayoutLabels.SHOW_NOGO_POLYGON in options_dialog_options
+        and LayoutLabels.SHOW_NOGO_POLYGON in overlay_dialog_options
     ):
         layers.append(
             {
@@ -495,7 +495,7 @@ def create_map_layers(
 
     if (
         hazardous_bounds_url is not None
-        and LayoutLabels.SHOW_NOGO_POLYGON in options_dialog_options
+        and LayoutLabels.SHOW_NOGO_POLYGON in overlay_dialog_options
     ):
         layers.append(
             {
@@ -517,7 +517,7 @@ def create_map_layers(
         well_pick_provider is not None
         and formation is not None
         and len(realizations) > 0
-        and LayoutLabels.SHOW_WELLS in options_dialog_options
+        and LayoutLabels.SHOW_WELLS in overlay_dialog_options
     ):
         layer = well_pick_provider.geojson_layer(
             realizations[0], selected_wells, formation

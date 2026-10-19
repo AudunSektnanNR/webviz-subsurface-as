@@ -36,23 +36,32 @@ from webviz_subsurface.plugins._co2_migration._utilities.generic import (
 ROW = {"display": "flex", "flex-direction": "row"}
 COL = {"display": "flex", "flex-direction": "column"}
 HIDDEN = {"display": "none"}
+FILL = {"flex": 1}
+LABEL = {"width": "75px", "flexShrink": 0, "alignSelf": "center"}
+WIDE_LABEL = {**LABEL, "width": "145px", "whiteSpace": "nowrap"}
+GRAPH_LABEL = {**LABEL, "width": "70px"}
+SECTION = {"fontWeight": "bold", "marginTop": "8px"}
+ROWS = {**COL, "gap": "4px"}
 
 
 class ViewSettings(SettingsGroupABC):
     class Ids(StrEnum):
-        OPTIONS_DIALOG_BUTTON = "options-dialog-button"
-        OPTIONS_DIALOG = "options-dialog"
-        OPTIONS_DIALOG_OPTIONS = "options-dialog-options"
-        OPTIONS_DIALOG_WELL_FILTER = "options-dialog-well-filter"
+        OVERLAY_DIALOG_BUTTON = "overlay-dialog-button"
+        OVERLAY_DIALOG = "overlay-dialog"
+        OVERLAY_DIALOG_OPTIONS = "overlay-dialog-options"
+        OVERLAY_DIALOG_WELL_FILTER = "overlay-dialog-well-filter"
         WELL_FILTER_HEADER = "well-filter-header"
 
         ENSEMBLE = "ensemble"
         REALIZATION = "realization"
         ALL_REAL = "all-realizations"
 
-        FORMATION = "formation"
+        SETTINGS_TABS = "settings-tabs"
+
+        FORMATION = "formation"  # Displayed as Zone in the UI
         PROPERTY = "property"
         STATISTIC = "statistic"
+        STATISTIC_ROW = "statistic-row"
         COLOR_SCALE = "color-scale"
         CM_MIN = "cm-min"
         CM_MAX = "cm-max"
@@ -95,6 +104,7 @@ class ViewSettings(SettingsGroupABC):
         STATISTICS_TAB_OPTION_DIV = "statistics-tab-option-div"
         BOX_SHOW_POINTS = "box-plot-points"
         BOX_SHOW_POINTS_DIV = "box-plot-points-div"
+        GRAPH_DISPLAY_HEADER = "graph-display-header"
 
         VISUALIZATION_THRESHOLD_BUTTON = "visualization-threshold-button"
         VISUALIZATION_THRESHOLD_DIALOG = "visualization-threshold-dialog"
@@ -132,10 +142,11 @@ class ViewSettings(SettingsGroupABC):
     def layout(self) -> List[Component]:
         menu_layout: List[Component] = []
         if self._content["maps"]:
-            menu_layout += [
-                DialogLayout(self._well_names_dict, list(self._ensemble_paths.keys())),
-                OpenDialogButton(),
-            ]
+            menu_layout.append(
+                OverlayDialogLayout(
+                    self._well_names_dict, list(self._ensemble_paths.keys())
+                )
+            )
         menu_layout.append(
             EnsembleSelectorLayout(
                 self.register_component_unique_id(self.Ids.ENSEMBLE),
@@ -144,76 +155,95 @@ class ViewSettings(SettingsGroupABC):
                 list(self._ensemble_paths.keys()),
             )
         )
+        tabs: List[Component] = []
         if self._content["maps"]:
-            menu_layout += [
+            menu_layout.append(
                 VisualizationThresholdsLayout(
                     self._threshold_ids,
                     self._thresholds,
-                ),
-                MapSelectorLayout(
-                    self._color_scale_names,
-                    self.register_component_unique_id(self.Ids.PROPERTY),
-                    self.register_component_unique_id(self.Ids.STATISTIC),
-                    self.register_component_unique_id(self.Ids.FORMATION),
-                    self.register_component_unique_id(self.Ids.COLOR_SCALE),
-                    self.register_component_unique_id(self.Ids.CM_MIN),
-                    self.register_component_unique_id(self.Ids.CM_MAX),
-                    self.register_component_unique_id(self.Ids.CM_MIN_AUTO),
-                    self.register_component_unique_id(self.Ids.CM_MAX_AUTO),
-                    self.register_component_unique_id(self.Ids.CONTOURS_SWITCH),
-                    self.register_component_unique_id(self.Ids.CONTOURS_QUANTITY),
-                    self.register_component_unique_id(self.Ids.MASS),
-                    self.register_component_unique_id(self.Ids.MASS_UNIT),
-                    self.register_component_unique_id(self.Ids.PLUME),
-                    self.register_component_unique_id(self.Ids.PLUME_THRESHOLD),
-                    self.register_component_unique_id(self.Ids.PLUME_SMOOTHING),
-                    self._map_attribute_names,
-                ),
-            ]
-        if self._content["any_table"]:
-            menu_layout.append(
-                GraphSelectorsLayout(
-                    self.register_component_unique_id(self.Ids.GRAPH_SOURCE),
-                    self.register_component_unique_id(self.Ids.CO2_SCALE),
-                    [
-                        self.register_component_unique_id(self.Ids.Y_MIN_GRAPH),
-                        self.register_component_unique_id(self.Ids.Y_MIN_AUTO_GRAPH),
-                    ],
-                    [
-                        self.register_component_unique_id(self.Ids.Y_MAX_GRAPH),
-                        self.register_component_unique_id(self.Ids.Y_MAX_AUTO_GRAPH),
-                    ],
-                    {
-                        k: self.register_component_unique_id(k)
-                        for k in [
-                            self.Ids.COLOR_BY,
-                            self.Ids.MARK_BY,
-                            self.Ids.SORT_PLOT,
-                            self.Ids.ZONE,
-                            self.Ids.ZONE_COL,
-                            self.Ids.REGION,
-                            self.Ids.REGION_COL,
-                            self.Ids.ZONE_REGION,
-                            self.Ids.PHASE,
-                            self.Ids.PHASE_MENU,
-                            self.Ids.CONTAINMENT,
-                            self.Ids.CONTAINMENT_MENU,
-                            self.Ids.PLUME_GROUP,
-                            self.Ids.PLUME_GROUP_MENU,
-                            self.Ids.REAL_OR_STAT,
-                            self.Ids.REAL_OR_STAT_DIV,
-                            self.Ids.Y_LIM_OPTIONS,
-                            self.Ids.DATE_OPTION,
-                            self.Ids.DATE_OPTION_COL,
-                            self.Ids.STATISTICS_TAB_OPTION,
-                            self.Ids.STATISTICS_TAB_OPTION_DIV,
-                            self.Ids.BOX_SHOW_POINTS,
-                            self.Ids.BOX_SHOW_POINTS_DIV,
-                        ]
-                    },
-                    self._content,
                 )
             )
+            map_settings = MapSelectorLayout(
+                self._color_scale_names,
+                self.register_component_unique_id(self.Ids.PROPERTY),
+                self.register_component_unique_id(self.Ids.STATISTIC),
+                self.register_component_unique_id(self.Ids.STATISTIC_ROW),
+                self.register_component_unique_id(self.Ids.FORMATION),
+                self.register_component_unique_id(self.Ids.COLOR_SCALE),
+                self.register_component_unique_id(self.Ids.CM_MIN),
+                self.register_component_unique_id(self.Ids.CM_MAX),
+                self.register_component_unique_id(self.Ids.CM_MIN_AUTO),
+                self.register_component_unique_id(self.Ids.CM_MAX_AUTO),
+                self.register_component_unique_id(self.Ids.CONTOURS_SWITCH),
+                self.register_component_unique_id(self.Ids.CONTOURS_QUANTITY),
+                self.register_component_unique_id(self.Ids.MASS),
+                self.register_component_unique_id(self.Ids.MASS_UNIT),
+                self.register_component_unique_id(self.Ids.PLUME),
+                self.register_component_unique_id(self.Ids.PLUME_THRESHOLD),
+                self.register_component_unique_id(self.Ids.PLUME_SMOOTHING),
+                self._map_attribute_names,
+            )
+            tabs.append(
+                wcc.Tab(label="Map settings", value="map", children=[map_settings])
+            )
+        if self._content["any_table"]:
+            graph_settings = GraphSelectorsLayout(
+                self.register_component_unique_id(self.Ids.GRAPH_SOURCE),
+                self.register_component_unique_id(self.Ids.CO2_SCALE),
+                [
+                    self.register_component_unique_id(self.Ids.Y_MIN_GRAPH),
+                    self.register_component_unique_id(self.Ids.Y_MIN_AUTO_GRAPH),
+                ],
+                [
+                    self.register_component_unique_id(self.Ids.Y_MAX_GRAPH),
+                    self.register_component_unique_id(self.Ids.Y_MAX_AUTO_GRAPH),
+                ],
+                {
+                    k: self.register_component_unique_id(k)
+                    for k in [
+                        self.Ids.COLOR_BY,
+                        self.Ids.MARK_BY,
+                        self.Ids.SORT_PLOT,
+                        self.Ids.ZONE,
+                        self.Ids.ZONE_COL,
+                        self.Ids.REGION,
+                        self.Ids.REGION_COL,
+                        self.Ids.ZONE_REGION,
+                        self.Ids.PHASE,
+                        self.Ids.PHASE_MENU,
+                        self.Ids.CONTAINMENT,
+                        self.Ids.CONTAINMENT_MENU,
+                        self.Ids.PLUME_GROUP,
+                        self.Ids.PLUME_GROUP_MENU,
+                        self.Ids.REAL_OR_STAT,
+                        self.Ids.REAL_OR_STAT_DIV,
+                        self.Ids.Y_LIM_OPTIONS,
+                        self.Ids.DATE_OPTION,
+                        self.Ids.DATE_OPTION_COL,
+                        self.Ids.STATISTICS_TAB_OPTION,
+                        self.Ids.STATISTICS_TAB_OPTION_DIV,
+                        self.Ids.BOX_SHOW_POINTS,
+                        self.Ids.BOX_SHOW_POINTS_DIV,
+                        self.Ids.GRAPH_DISPLAY_HEADER,
+                    ]
+                },
+                self._content,
+            )
+            tabs.append(
+                wcc.Tab(
+                    label="Graph settings", value="graph", children=[graph_settings]
+                )
+            )
+        if len(tabs) > 1:
+            menu_layout.append(
+                wcc.Tabs(
+                    id=self.register_component_unique_id(self.Ids.SETTINGS_TABS),
+                    value="map",
+                    children=tabs,
+                )
+            )
+        else:
+            menu_layout += [c for tab in tabs for c in tab.children]
         menu_layout += [
             FeedbackLayout(),
             FeedbackButton(),
@@ -285,13 +315,9 @@ class ViewSettings(SettingsGroupABC):
                 Input(
                     self.component_unique_id(self.Ids.REALIZATION).to_string(), "value"
                 ),
-                Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
             )
-            def toggle_statistics(realizations: List[int], attribute: str) -> bool:
-                return (
-                    len(realizations) <= 1
-                    or MapType[MapAttribute(attribute).name].value == "PLUME"
-                )
+            def toggle_statistics(realizations: List[int]) -> bool:
+                return len(realizations) <= 1
 
             @callback(
                 Output(
@@ -315,15 +341,20 @@ class ViewSettings(SettingsGroupABC):
             @callback(
                 Output(self.component_unique_id(self.Ids.MASS).to_string(), "style"),
                 Output(self.component_unique_id(self.Ids.PLUME).to_string(), "style"),
+                Output(
+                    self.component_unique_id(self.Ids.STATISTIC_ROW).to_string(),
+                    "style",
+                ),
                 Input(self.component_unique_id(self.Ids.PROPERTY).to_string(), "value"),
             )
             def toggle_property_specific_settings(
                 attribute: str,
-            ) -> Tuple[Dict[str, str], Dict[str, str]]:
+            ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
                 map_type = MapType[MapAttribute(attribute).name].value
                 return (
-                    COL if map_type == "MASS" else HIDDEN,
-                    ROW if map_type == "PLUME" else HIDDEN,
+                    ROW if map_type == "MASS" else HIDDEN,
+                    ROWS if map_type == "PLUME" else HIDDEN,
+                    HIDDEN if map_type == "PLUME" else ROW,
                 )
 
         if self._content["any_table"]:
@@ -567,18 +598,18 @@ class ViewSettings(SettingsGroupABC):
                 return region != "all", zone != "all"
 
 
-class OpenDialogButton(html.Button):
+class OpenOverlayDialogButton(html.Button):
     def __init__(self) -> None:
         super().__init__(
-            LayoutLabels.COMMON_SELECTIONS,
-            id=ViewSettings.Ids.OPTIONS_DIALOG_BUTTON,
-            style=LayoutStyle.OPTIONS_BUTTON,
+            LayoutLabels.OVERLAY_FILTER,
+            id=ViewSettings.Ids.OVERLAY_DIALOG_BUTTON,
+            style=LayoutStyle.OVERLAY_BUTTON,
             n_clicks=0,
         )
 
 
-class DialogLayout(wcc.Dialog):
-    """Layout for the options dialog"""
+class OverlayDialogLayout(wcc.Dialog):
+    """Layout for the overlay dialog"""
 
     def __init__(
         self,
@@ -600,13 +631,13 @@ class DialogLayout(wcc.Dialog):
         ]
 
         super().__init__(
-            title=LayoutLabels.COMMON_SELECTIONS,
-            id=ViewSettings.Ids.OPTIONS_DIALOG,
+            title=LayoutLabels.OVERLAY_FILTER,
+            id=ViewSettings.Ids.OVERLAY_DIALOG,
             draggable=True,
             open=False,
             children=[
                 wcc.Checklist(
-                    id=ViewSettings.Ids.OPTIONS_DIALOG_OPTIONS,
+                    id=ViewSettings.Ids.OVERLAY_DIALOG_OPTIONS,
                     options=[{"label": opt, "value": opt} for opt in checklist_options],
                     value=checklist_values,
                 ),
@@ -638,7 +669,7 @@ class WellFilter(html.Div):
             children=wcc.SelectWithLabel(
                 style={"display": "block" if well_names_dict[ensembles[0]] else "none"},
                 label=LayoutLabels.WELL_FILTER,
-                id=ViewSettings.Ids.OPTIONS_DIALOG_WELL_FILTER,
+                id=ViewSettings.Ids.OVERLAY_DIALOG_WELL_FILTER,
                 options=[
                     {"label": i, "value": i} for i in well_names_dict[ensembles[0]]
                 ],
@@ -711,13 +742,14 @@ class VisualizationThresholdsLayout(wcc.Dialog):
         )
 
 
-class MapSelectorLayout(wcc.Selectors):
+class MapSelectorLayout(html.Div):
     # pylint: disable=too-many-arguments
     def __init__(
         self,
         color_scale_names: List[str],
         property_id: str,
         statistic_id: str,
+        statistic_row_id: str,
         formation_id: str,
         colormap_id: str,
         cm_min_id: str,
@@ -741,77 +773,124 @@ class MapSelectorLayout(wcc.Selectors):
         default_property = next(iter(map_attribute_names.filtered_values)).value
         default_map_type = MapType[MapAttribute(default_property).name].value
         super().__init__(
-            label="Map Settings",
-            open_details=True,
             children=[
                 html.Div(
                     [
-                        "Property",
-                        wcc.Dropdown(
-                            id=property_id,
-                            options=_compile_property_options(map_attribute_names),
-                            value=default_property,
-                            clearable=False,
-                        ),
-                        "Statistic",
-                        wcc.Dropdown(
-                            id=statistic_id,
-                            options=[s.value for s in SurfaceStatistic],
-                            value=SurfaceStatistic.MEAN,
-                            clearable=False,
-                        ),
-                        "Formation",
-                        wcc.Dropdown(
-                            id=formation_id,
-                            clearable=False,
-                        ),
-                        "Color Scale",
-                        dcc.Dropdown(
-                            id=colormap_id,
-                            options=color_scale_names,
-                            value=default_colormap,
-                            clearable=False,
-                        ),
-                        "Minimum",
+                        html.Div("Data", style=SECTION),
                         html.Div(
                             [
-                                dcc.Input(id=cm_min_id, type="number"),
+                                html.Div("Property", style=LABEL),
+                                html.Div(
+                                    wcc.Dropdown(
+                                        id=property_id,
+                                        options=_compile_property_options(
+                                            map_attribute_names
+                                        ),
+                                        value=default_property,
+                                        clearable=False,
+                                    ),
+                                    style=FILL,
+                                ),
+                            ],
+                            style=ROW,
+                        ),
+                        html.Div(
+                            [
+                                html.Div("Unit", style=LABEL),
+                                html.Div(
+                                    wcc.Dropdown(
+                                        id=mass_unit_id,
+                                        options=["kg", "tons", "M tons"],
+                                        value="tons",
+                                        clearable=False,
+                                    ),
+                                    style=FILL,
+                                ),
+                            ],
+                            id=mass_id,
+                            style=(ROW if default_map_type == "MASS" else HIDDEN),
+                        ),
+                        html.Div(
+                            [
+                                html.Div("Statistic", style=LABEL),
+                                html.Div(
+                                    wcc.Dropdown(
+                                        id=statistic_id,
+                                        options=[s.value for s in SurfaceStatistic],
+                                        value=SurfaceStatistic.MEAN,
+                                        clearable=False,
+                                    ),
+                                    style=FILL,
+                                ),
+                            ],
+                            id=statistic_row_id,
+                            style=(HIDDEN if default_map_type == "PLUME" else ROW),
+                        ),
+                        html.Div("Filter", style=SECTION),
+                        html.Div(
+                            [
+                                html.Div("Zone", style=LABEL),
+                                html.Div(
+                                    wcc.Dropdown(
+                                        id=formation_id,
+                                        clearable=False,
+                                    ),
+                                    style=FILL,
+                                ),
+                            ],
+                            style=ROW,
+                        ),
+                        html.Div("Display", style=SECTION),
+                        html.Div(
+                            [
+                                html.Div("Colormap", style=LABEL),
+                                dcc.Dropdown(
+                                    id=colormap_id,
+                                    options=color_scale_names,
+                                    value=default_colormap,
+                                    clearable=False,
+                                    style=FILL,
+                                ),
+                            ],
+                            style=ROW,
+                        ),
+                        html.Div(
+                            [
+                                html.Div("Minimum", style=LABEL),
+                                dcc.Input(
+                                    id=cm_min_id,
+                                    type="number",
+                                    style={"flex": 1, "minWidth": 0},
+                                ),
                                 dcc.Checklist(
                                     ["Auto"],
                                     ["Auto"],
                                     id=cm_min_auto_id,
+                                    style={"whiteSpace": "nowrap"},
                                 ),
                             ],
                             style=ROW,
                         ),
-                        "Maximum",
                         html.Div(
                             [
-                                dcc.Input(id=cm_max_id, type="number"),
+                                html.Div("Maximum", style=LABEL),
+                                dcc.Input(
+                                    id=cm_max_id,
+                                    type="number",
+                                    style={"flex": 1, "minWidth": 0},
+                                ),
                                 dcc.Checklist(
                                     ["Auto"],
                                     ["Auto"],
                                     id=cm_max_auto_id,
+                                    style={"whiteSpace": "nowrap"},
                                 ),
                             ],
                             style=ROW,
                         ),
                         html.Div(
                             [
-                                "Mass unit (for mass maps)",
-                                wcc.Dropdown(
-                                    id=mass_unit_id,
-                                    options=["kg", "tons", "M tons"],
-                                    value="tons",
-                                    clearable=False,
-                                ),
-                            ],
-                            id=mass_id,
-                            style=(COL if default_map_type == "MASS" else HIDDEN),
-                        ),
-                        "Contours",
-                        html.Div(
-                            [
+                                html.Div("Contours", style=LABEL),
                                 "#",
                                 dcc.Input(
                                     id=contour_quantity_id,
@@ -836,20 +915,21 @@ class MapSelectorLayout(wcc.Selectors):
                             children=[
                                 html.Div(
                                     [
-                                        html.Div("Plume Threshold"),
+                                        html.Div("Plume threshold", style=WIDE_LABEL),
                                         dcc.Input(
                                             id=plume_threshold_id,
                                             type="number",
                                             min=0,
                                             value=0.000001,
                                             placeholder="Lower property threshold",
+                                            style={"flex": 1, "minWidth": 0},
                                         ),
                                     ],
-                                    style={**COL, "width": "50%"},
+                                    style=ROW,
                                 ),
                                 html.Div(
                                     [
-                                        html.Div("Smoothing"),
+                                        html.Div("Plume smoothing", style=WIDE_LABEL),
                                         dcc.Input(
                                             id=plume_smoothing_id,
                                             type="number",
@@ -857,22 +937,25 @@ class MapSelectorLayout(wcc.Selectors):
                                             value=0,
                                             step=1,
                                             placeholder="Smoothing [#pixels]",
+                                            style={"flex": 1, "minWidth": 0},
                                         ),
                                     ],
-                                    style={**COL, "width": "50%"},
+                                    style=ROW,
                                 ),
                             ],
                             id=plume_id,
-                            style=(ROW if default_map_type == "PLUME" else HIDDEN),
+                            style=(ROWS if default_map_type == "PLUME" else HIDDEN),
                         ),
+                        OpenOverlayDialogButton(),
                         OpenVisualizationThresholdsButton(),
                     ],
-                )
+                    style=ROWS,
+                ),
             ],
         )
 
 
-class GraphSelectorsLayout(wcc.Selectors):
+class GraphSelectorsLayout(html.Div):
     # pylint: disable=too-many-locals
     def __init__(
         self,
@@ -922,82 +1005,99 @@ class GraphSelectorsLayout(wcc.Selectors):
         )
         ids = ViewSettings.Ids
         super().__init__(
-            label="Graph Settings",
-            open_details=not content["maps"],
+            style=ROWS,
             children=[
-                "Source",
-                wcc.Dropdown(
-                    id=graph_source_id,
-                    options=source_options,
-                    value=source_options[0],
-                    clearable=False,
-                ),
-                "Unit",
-                wcc.Dropdown(
-                    id=co2_scale_id,
-                    options=unit_options,
-                    value=init_unit,
-                    clearable=False,
-                ),
+                html.Div("Data", style=SECTION),
                 html.Div(
                     [
+                        html.Div("Source", style=GRAPH_LABEL),
                         html.Div(
-                            [
-                                "Color by",
-                                wcc.Dropdown(
-                                    options=color_options,
-                                    value=color_choice,
-                                    id=containment_ids[ids.COLOR_BY],
-                                    clearable=False,
-                                ),
-                            ],
-                            style={**COL, "width": "50%"},
-                        ),
-                        html.Div(
-                            [
-                                "Mark by",
-                                wcc.Dropdown(
-                                    options=mark_options,
-                                    value=mark_choice,
-                                    id=containment_ids[ids.MARK_BY],
-                                    clearable=False,
-                                ),
-                            ],
-                            style={**COL, "width": "50%"},
+                            wcc.Dropdown(
+                                id=graph_source_id,
+                                options=source_options,
+                                value=source_options[0],
+                                clearable=False,
+                            ),
+                            style=FILL,
                         ),
                     ],
-                    style={
-                        **ROW,
-                        "margin-top": "10px",
-                        "margin-bottom": "1px",
-                    },
+                    style=ROW,
                 ),
                 html.Div(
                     [
-                        "Sort by",
+                        html.Div("Unit", style=GRAPH_LABEL),
+                        html.Div(
+                            wcc.Dropdown(
+                                id=co2_scale_id,
+                                options=unit_options,
+                                value=init_unit,
+                                clearable=False,
+                            ),
+                            style=FILL,
+                        ),
+                    ],
+                    style=ROW,
+                ),
+                html.Div("Grouping", style=SECTION),
+                html.Div(
+                    [
+                        html.Div("Color by", style=GRAPH_LABEL),
+                        html.Div(
+                            wcc.Dropdown(
+                                options=color_options,
+                                value=color_choice,
+                                id=containment_ids[ids.COLOR_BY],
+                                clearable=False,
+                            ),
+                            style=FILL,
+                        ),
+                    ],
+                    style=ROW,
+                ),
+                html.Div(
+                    [
+                        html.Div("Mark by", style=GRAPH_LABEL),
+                        html.Div(
+                            wcc.Dropdown(
+                                options=mark_options,
+                                value=mark_choice,
+                                id=containment_ids[ids.MARK_BY],
+                                clearable=False,
+                            ),
+                            style=FILL,
+                        ),
+                    ],
+                    style=ROW,
+                ),
+                html.Div(
+                    [
+                        html.Div("Sort by", style=GRAPH_LABEL),
                         dcc.RadioItems(
-                            options=["color", "marking"],
+                            options=[
+                                {"label": "colors", "value": "color"},
+                                {"label": "marks", "value": "marking"},
+                            ],
                             value="color",
                             id=containment_ids[ids.SORT_PLOT],
                             inline=True,
                         ),
                     ],
-                    style={
-                        **ROW,
-                        "margin-top": "5px",
-                        "margin-bottom": "1px",
-                    },
+                    style=ROW,
                 ),
+                html.Div("Filter", style=SECTION),
                 html.Div(
                     [
                         html.Div(
                             [
-                                "Zone",
-                                wcc.Dropdown(
-                                    options=[{"label": "All", "value": "all"}],
-                                    value="all",
-                                    id=containment_ids[ids.ZONE],
-                                    clearable=False,
+                                html.Div("Zone", style=GRAPH_LABEL),
+                                html.Div(
+                                    wcc.Dropdown(
+                                        options=[{"label": "All", "value": "all"}],
+                                        value="all",
+                                        id=containment_ids[ids.ZONE],
+                                        clearable=False,
+                                    ),
+                                    style=FILL,
                                 ),
                             ],
                             id=containment_ids[ids.ZONE_COL],
@@ -1005,12 +1105,15 @@ class GraphSelectorsLayout(wcc.Selectors):
                         ),
                         html.Div(
                             [
-                                "Region",
-                                wcc.Dropdown(
-                                    options=[{"label": "All", "value": "all"}],
-                                    value="all",
-                                    id=containment_ids[ids.REGION],
-                                    clearable=False,
+                                html.Div("Region", style=GRAPH_LABEL),
+                                html.Div(
+                                    wcc.Dropdown(
+                                        options=[{"label": "All", "value": "all"}],
+                                        value="all",
+                                        id=containment_ids[ids.REGION],
+                                        clearable=False,
+                                    ),
+                                    style=FILL,
                                 ),
                             ],
                             id=containment_ids[ids.REGION_COL],
@@ -1018,12 +1121,15 @@ class GraphSelectorsLayout(wcc.Selectors):
                         ),
                         html.Div(
                             [
-                                "Phase",
-                                wcc.Dropdown(
-                                    options=[{"label": "Total", "value": "total"}],
-                                    value="total",
-                                    clearable=False,
-                                    id=containment_ids[ids.PHASE],
+                                html.Div("Phase", style=GRAPH_LABEL),
+                                html.Div(
+                                    wcc.Dropdown(
+                                        options=[{"label": "Total", "value": "total"}],
+                                        value="total",
+                                        clearable=False,
+                                        id=containment_ids[ids.PHASE],
+                                    ),
+                                    style=FILL,
                                 ),
                             ],
                             id=containment_ids[ids.PHASE_MENU],
@@ -1031,17 +1137,26 @@ class GraphSelectorsLayout(wcc.Selectors):
                         ),
                         html.Div(
                             [
-                                "Containment",
-                                wcc.Dropdown(
-                                    options=[
-                                        {"label": "All areas", "value": "total"},
-                                        {"label": "Contained", "value": "contained"},
-                                        {"label": "Outside", "value": "outside"},
-                                        {"label": "No-go", "value": "nogo"},
-                                    ],
-                                    value="total",
-                                    clearable=False,
-                                    id=containment_ids[ids.CONTAINMENT],
+                                html.Div(
+                                    "Containment",
+                                    style={**GRAPH_LABEL, "width": "95px"},
+                                ),
+                                html.Div(
+                                    wcc.Dropdown(
+                                        options=[
+                                            {"label": "All areas", "value": "total"},
+                                            {
+                                                "label": "Contained",
+                                                "value": "contained",
+                                            },
+                                            {"label": "Outside", "value": "outside"},
+                                            {"label": "No-go", "value": "nogo"},
+                                        ],
+                                        value="total",
+                                        clearable=False,
+                                        id=containment_ids[ids.CONTAINMENT],
+                                    ),
+                                    style=FILL,
                                 ),
                             ],
                             id=containment_ids[ids.CONTAINMENT_MENU],
@@ -1049,12 +1164,15 @@ class GraphSelectorsLayout(wcc.Selectors):
                         ),
                         html.Div(
                             [
-                                "Plume",
-                                wcc.Dropdown(
-                                    options=[{"label": "All", "value": "all"}],
-                                    value="all",
-                                    id=containment_ids[ids.PLUME_GROUP],
-                                    clearable=False,
+                                html.Div("Plume", style=GRAPH_LABEL),
+                                html.Div(
+                                    wcc.Dropdown(
+                                        options=[{"label": "All", "value": "all"}],
+                                        value="all",
+                                        id=containment_ids[ids.PLUME_GROUP],
+                                        clearable=False,
+                                    ),
+                                    style=FILL,
                                 ),
                             ],
                             id=containment_ids[ids.PLUME_GROUP_MENU],
@@ -1062,11 +1180,30 @@ class GraphSelectorsLayout(wcc.Selectors):
                         ),
                     ],
                     id=containment_ids[ids.ZONE_REGION],
-                    style=ROW,
+                    style=ROWS,
                 ),
                 html.Div(
                     [
-                        "Lines to display:",
+                        html.Div("Date", style=GRAPH_LABEL),
+                        html.Div(
+                            wcc.Dropdown(
+                                id=containment_ids[ids.DATE_OPTION],
+                                clearable=False,
+                            ),
+                            style=FILL,
+                        ),
+                    ],
+                    id=containment_ids[ids.DATE_OPTION_COL],
+                    style=ROW,
+                ),
+                html.Div(
+                    "Display",
+                    id=containment_ids[ids.GRAPH_DISPLAY_HEADER],
+                    style=HIDDEN,
+                ),
+                html.Div(
+                    [
+                        html.Div("Lines", style={**GRAPH_LABEL, "width": "40px"}),
                         dcc.RadioItems(
                             options=[  # type: ignore[arg-type]
                                 {"label": "Mean/P10/P90", "value": "stat"},
@@ -1082,56 +1219,61 @@ class GraphSelectorsLayout(wcc.Selectors):
                 ),
                 html.Div(
                     [
-                        "Date",
-                        wcc.Dropdown(
-                            id=containment_ids[ids.DATE_OPTION],
-                            clearable=False,
-                        ),
-                    ],
-                    id=containment_ids[ids.DATE_OPTION_COL],
-                    style={**COL, "width": "100%", "margin-top": "8px"},
-                ),
-                html.Div(
-                    [
-                        "Fix minimum y-value",
                         html.Div(
                             [
-                                dcc.Input(id=y_min_ids[0], type="number"),
+                                html.Div(
+                                    "Y minimum",
+                                    style={**GRAPH_LABEL, "width": "95px"},
+                                ),
+                                dcc.Input(
+                                    id=y_min_ids[0],
+                                    type="number",
+                                    style={"flex": 1, "minWidth": 0},
+                                ),
                                 dcc.Checklist(
                                     ["Auto"],
                                     ["Auto"],
                                     id=y_min_ids[1],
+                                    style={"whiteSpace": "nowrap"},
                                 ),
                             ],
                             style=ROW,
                         ),
-                        "Fix maximum y-value",
                         html.Div(
                             [
-                                dcc.Input(id=y_max_ids[0], type="number"),
+                                html.Div(
+                                    "Y maximum",
+                                    style={**GRAPH_LABEL, "width": "95px"},
+                                ),
+                                dcc.Input(
+                                    id=y_max_ids[0],
+                                    type="number",
+                                    style={"flex": 1, "minWidth": 0},
+                                ),
                                 dcc.Checklist(
                                     ["Auto"],
                                     ["Auto"],
                                     id=y_max_ids[1],
+                                    style={"whiteSpace": "nowrap"},
                                 ),
                             ],
                             style=ROW,
                         ),
                     ],
-                    style=COL,
+                    style=HIDDEN,
                     id=containment_ids[ids.Y_LIM_OPTIONS],
                 ),
                 html.Div(
                     [
-                        "Plot type:",
+                        html.Div("Plot type", style=GRAPH_LABEL),
                         dcc.RadioItems(
                             options=[  # type: ignore[arg-type]
                                 {
-                                    "label": "Probability plot",
+                                    "label": "Probability",
                                     "value": StatisticsTabOption.PROBABILITY_PLOT,
                                 },
                                 {
-                                    "label": "Box plot",
+                                    "label": "Box",
                                     "value": StatisticsTabOption.BOX_PLOT,
                                 },
                             ],
@@ -1145,7 +1287,7 @@ class GraphSelectorsLayout(wcc.Selectors):
                 ),
                 html.Div(
                     [
-                        "Points to show:",
+                        html.Div("Points", style=GRAPH_LABEL),
                         dcc.RadioItems(
                             options=[  # type: ignore[arg-type]
                                 {"label": "All", "value": "all_points"},
@@ -1163,7 +1305,7 @@ class GraphSelectorsLayout(wcc.Selectors):
         )
 
 
-class EnsembleSelectorLayout(wcc.Selectors):
+class EnsembleSelectorLayout(html.Div):
     def __init__(
         self,
         ensemble_id: str,
@@ -1172,19 +1314,28 @@ class EnsembleSelectorLayout(wcc.Selectors):
         ensembles: List[str],
     ):
         super().__init__(
-            label="Ensemble",
-            open_details=True,
+            style={"marginBottom": "10px"},
             children=[
-                "Ensemble",
-                wcc.Dropdown(
-                    id=ensemble_id,
-                    options=[{"value": en, "label": en} for en in ensembles],
-                    value=ensembles[0],
-                    clearable=False,
+                html.Div(
+                    [
+                        html.Div("Ensemble", style=WIDE_LABEL),
+                        html.Div(
+                            wcc.Dropdown(
+                                id=ensemble_id,
+                                options=[
+                                    {"value": en, "label": en} for en in ensembles
+                                ],
+                                value=ensembles[0],
+                                clearable=False,
+                            ),
+                            style=FILL,
+                        ),
+                    ],
+                    style=ROW,
                 ),
                 html.Div(
                     [
-                        html.Div("Realization", style={"width": "50%"}),
+                        html.Div("Realization", style=WIDE_LABEL),
                         html.Button(
                             "Select all",
                             id=all_real_id,
@@ -1296,14 +1447,6 @@ def get_emails() -> str:
     return ";".join(emails[:2]) + "?cc=" + ";".join(emails[2:])
 
 
-def _style(a: bool, width: str) -> Dict[str, str]:
-    return {
-        "display": "flex" if a else "none",
-        "flex-direction": "column",
-        "width": width if a else "100%",
-    }
-
-
 def _make_styles(
     color_choice: str,
     mark_choice: str,
@@ -1322,5 +1465,4 @@ def _make_styles(
         "plume_group" not in cm and has_plume_groups,
     ]
 
-    width = {4: "25%", 3: "33%", 2: "50%"}.get(sum(possible_filters), "100%")
-    return [_style(f, width) for f in possible_filters]
+    return [ROW if f else HIDDEN for f in possible_filters]

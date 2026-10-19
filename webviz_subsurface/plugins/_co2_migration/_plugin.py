@@ -69,8 +69,10 @@ from webviz_subsurface.plugins._co2_migration.views.mainview.mainview import (
     MapViewElement,
 )
 from webviz_subsurface.plugins._co2_migration.views.mainview.settings import (
-    COL,
     HIDDEN,
+    ROW,
+    ROWS,
+    SECTION,
     ViewSettings,
 )
 
@@ -333,7 +335,7 @@ class CO2Migration(WebvizPluginABC):
             self._add_date_slider_visibility_callback()
             self._add_set_well_options_callback()
             self._add_create_map_callback()
-            self._add_options_dialog_callback()
+            self._add_overlay_dialog_callback()
             self._add_thresholds_dialog_callback()
 
         self._add_feedback_dialog_callback()
@@ -400,12 +402,12 @@ class CO2Migration(WebvizPluginABC):
                 return _n_clicks > 0
             raise PreventUpdate
 
-    def _add_options_dialog_callback(self) -> None:
+    def _add_overlay_dialog_callback(self) -> None:
         @callback(
-            Output(ViewSettings.Ids.OPTIONS_DIALOG, "open"),
-            Input(ViewSettings.Ids.OPTIONS_DIALOG_BUTTON, "n_clicks"),
+            Output(ViewSettings.Ids.OVERLAY_DIALOG, "open"),
+            Input(ViewSettings.Ids.OVERLAY_DIALOG_BUTTON, "n_clicks"),
         )
-        def open_close_options_dialog(_n_clicks: Optional[int]) -> bool:
+        def open_close_overlay_dialog(_n_clicks: Optional[int]) -> bool:
             if _n_clicks is not None:
                 return _n_clicks > 0
             raise PreventUpdate
@@ -468,11 +470,11 @@ class CO2Migration(WebvizPluginABC):
                 "mass_unit": Input(
                     self._settings_component(ViewSettings.Ids.MASS_UNIT), "value"
                 ),
-                "options_dialog_options": Input(
-                    ViewSettings.Ids.OPTIONS_DIALOG_OPTIONS, "value"
+                "overlay_dialog_options": Input(
+                    ViewSettings.Ids.OVERLAY_DIALOG_OPTIONS, "value"
                 ),
                 "selected_wells": Input(
-                    ViewSettings.Ids.OPTIONS_DIALOG_WELL_FILTER, "value"
+                    ViewSettings.Ids.OVERLAY_DIALOG_WELL_FILTER, "value"
                 ),
                 "ensemble": Input(
                     self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"
@@ -496,7 +498,7 @@ class CO2Migration(WebvizPluginABC):
             plume_threshold: Optional[float],
             plume_smoothing: Optional[float],
             mass_unit: str,
-            options_dialog_options: List[str],
+            overlay_dialog_options: List[str],
             selected_wells: List[str],
             ensemble: str,
             thresholds: List[Optional[float]],
@@ -597,7 +599,7 @@ class CO2Migration(WebvizPluginABC):
                 hazardous_bounds_url=hazardous_polygon_url,
                 well_pick_provider=self._well_pick_provider.get(ensemble, None),
                 plume_extent_data=plume_polygon,
-                options_dialog_options=options_dialog_options,
+                overlay_dialog_options=overlay_dialog_options,
                 selected_wells=selected_wells,
                 show_contours=len(contour_switch) > 0,
                 num_contours=contour_quantity,
@@ -609,7 +611,7 @@ class CO2Migration(WebvizPluginABC):
                 attribute=attribute,
                 unit=mass_unit,
                 current_total=current_summed_mass,
-                options=options_dialog_options,
+                options=overlay_dialog_options,
                 con_url=containment_polygon_url,
                 haz_url=hazardous_polygon_url,
                 nogo_url=nogo_polygon_url,
@@ -618,9 +620,9 @@ class CO2Migration(WebvizPluginABC):
 
     def _add_set_well_options_callback(self) -> None:
         @callback(
-            Output(ViewSettings.Ids.OPTIONS_DIALOG_WELL_FILTER, "options"),
-            Output(ViewSettings.Ids.OPTIONS_DIALOG_WELL_FILTER, "value"),
-            Output(ViewSettings.Ids.OPTIONS_DIALOG_WELL_FILTER, "style"),
+            Output(ViewSettings.Ids.OVERLAY_DIALOG_WELL_FILTER, "options"),
+            Output(ViewSettings.Ids.OVERLAY_DIALOG_WELL_FILTER, "value"),
+            Output(ViewSettings.Ids.OVERLAY_DIALOG_WELL_FILTER, "style"),
             Output(ViewSettings.Ids.WELL_FILTER_HEADER, "style"),
             Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
         )
@@ -690,8 +692,8 @@ class CO2Migration(WebvizPluginABC):
             if active_tab != MainTabOption.CONTAINMENT_OVER_TIME:
                 return (HIDDEN, HIDDEN)
             if len(realizations) == 1:
-                return (HIDDEN, {**COL, "margin-top": "8px"})
-            return ({**COL, "margin-top": "8px"}, HIDDEN)
+                return (HIDDEN, ROWS)
+            return (ROW, HIDDEN)
 
     def _add_graph_settings_visibility_callback(self) -> None:
         @callback(
@@ -704,6 +706,10 @@ class CO2Migration(WebvizPluginABC):
                 self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS_DIV),
                 "style",
             ),
+            Output(
+                self._settings_component(ViewSettings.Ids.GRAPH_DISPLAY_HEADER),
+                "style",
+            ),
             Input(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
             Input(
                 self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
@@ -713,17 +719,17 @@ class CO2Migration(WebvizPluginABC):
         def toggle_graph_settings(
             active_tab: MainTabOption,
             statistics_tab_option: StatisticsTabOption,
-        ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
+        ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str], Dict[str, str]]:
             show_statistics = active_tab == MainTabOption.STATISTICS
             return (
-                {**COL, "margin-top": "8px"}
-                if active_tab != MainTabOption.CONTAINMENT_OVER_TIME
-                else HIDDEN,
-                {**COL, "margin-top": "8px"} if show_statistics else HIDDEN,
-                COL
+                ROW if active_tab != MainTabOption.CONTAINMENT_OVER_TIME else HIDDEN,
+                ROW if show_statistics else HIDDEN,
+                ROW
                 if show_statistics
                 and statistics_tab_option == StatisticsTabOption.BOX_PLOT
                 else HIDDEN,
+                # The containment state tab has no display options
+                SECTION if active_tab != MainTabOption.CONTAINMENT_STATE else HIDDEN,
             )
 
     def _add_set_unit_list_callback(self) -> None:
