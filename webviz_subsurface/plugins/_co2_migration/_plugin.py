@@ -28,6 +28,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     derive_surface_address,
     export_figure_data_to_csv,
     extract_legendonly,
+    find_table_date,
     generate_containment_figure,
     generate_unsmry_figures,
     get_plume_polygon,
@@ -65,12 +66,13 @@ from webviz_subsurface.plugins._co2_migration._utilities.initialization import (
     init_well_pick_provider,
 )
 from webviz_subsurface.plugins._co2_migration.views.mainview.mainview import (
+    DATE_SLIDER_HEIGHT,
+    DATE_SLIDER_STYLE,
     MainView,
     MapViewElement,
 )
 from webviz_subsurface.plugins._co2_migration.views.mainview.settings import (
     HIDDEN,
-    ROW,
     ROWS,
     SECTION,
     ViewSettings,
@@ -221,10 +223,6 @@ class CO2Migration(WebvizPluginABC):
             self._ensemble_surface_providers = init_surface_providers(
                 webviz_settings, ensembles
             )
-            # Dates
-            self._ensemble_dates = init_dates_per_ensemble(
-                ensembles, self._map_attribute_names, self._ensemble_surface_providers
-            )
             # Polygons
             self._fault_polygon_handlers = {
                 ens: FaultPolygonsHandler(
@@ -265,6 +263,13 @@ class CO2Migration(WebvizPluginABC):
                 self._co2_table_providers,
                 self._co2_actual_volume_table_providers,
                 self._unsmry_providers,
+            )
+            # Dates, shared by maps and graphs through the date slider
+            self._ensemble_dates = init_dates_per_ensemble(
+                ensembles,
+                self._map_attribute_names,
+                self._ensemble_surface_providers,
+                self._menu_options,
             )
             self._content = init_dictionary_of_content(
                 self._menu_options,
@@ -327,47 +332,66 @@ class CO2Migration(WebvizPluginABC):
             self._add_legend_change_callback()
             self._add_set_unit_list_callback()
             self._add_time_plot_visibility_callback()
-            self._add_graph_settings_visibility_callback()
             self._add_csv_export_callback()
+            self._add_resize_plot_callback()
 
         if self._content["maps"]:
-            self._add_set_dates_callback()
-            self._add_date_slider_visibility_callback()
             self._add_set_well_options_callback()
             self._add_create_map_callback()
             self._add_overlay_dialog_callback()
             self._add_thresholds_dialog_callback()
 
+        self._add_set_dates_callback()
+        self._add_date_slider_visibility_callback()
         self._add_feedback_dialog_callback()
 
-        if self._content["maps"] and self._content["any_table"]:
-            self._add_resize_plot_callback()
-
     def _add_resize_plot_callback(self) -> None:
-        @callback(
-            Output(self._view_component(MapViewElement.Ids.TOP_ELEMENT), "style"),
-            Output(self._view_component(MapViewElement.Ids.BOTTOM_ELEMENT), "style"),
-            Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "style"),
-            Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "style"),
-            Output(self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT), "style"),
-            Output(self._view_component(MapViewElement.Ids.BOX_PLOT), "style"),
-            Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
-            Input(self._view_component(MapViewElement.Ids.SIZE_SLIDER), "value"),
-            State(self._view_component(MapViewElement.Ids.TOP_ELEMENT), "style"),
-            State(self._view_component(MapViewElement.Ids.BOTTOM_ELEMENT), "style"),
-            Input(self._settings_component(ViewSettings.Ids.GRAPH_SOURCE), "value"),
-        )
+        has_maps = self._content["maps"]
+        outputs = [
+            Output(self._view_component(plot_id), "style")
+            for plot_id in (
+                MapViewElement.Ids.BAR_PLOT,
+                MapViewElement.Ids.TIME_PLOT,
+                MapViewElement.Ids.EXCEEDANCE_PLOT,
+                MapViewElement.Ids.BOX_PLOT,
+            )
+        ]
+        inputs = {
+            "ensemble": Input(
+                self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"
+            ),
+            "source": Input(
+                self._settings_component(ViewSettings.Ids.GRAPH_SOURCE), "value"
+            ),
+            "date_slider_style": Input(
+                self._view_component(MapViewElement.Ids.DATE_WRAPPER), "style"
+            ),
+        }
+        if has_maps:
+            outputs += [
+                Output(self._view_component(MapViewElement.Ids.TOP_ELEMENT), "style"),
+                Output(
+                    self._view_component(MapViewElement.Ids.BOTTOM_ELEMENT), "style"
+                ),
+            ]
+            inputs["slider_value"] = Input(
+                self._view_component(MapViewElement.Ids.SIZE_SLIDER), "value"
+            )
+
+        @callback(output=outputs, inputs=inputs)
         def resize_plots(
             ensemble: str,
-            slider_value: float,
-            top_style: Dict,
-            bottom_style: Dict,
             source: GraphSource,
+            date_slider_style: Dict[str, Any],
+            slider_value: float = 0,
         ) -> List[Dict]:
-            bottom_style["height"] = f"{slider_value}vh"
-            top_style["height"] = f"{80 - slider_value}vh"
-
-            styles = [{"height": f"{slider_value * 0.9 - 4}vh", "width": "100%"}] * 4
+            date_px = 0 if date_slider_style == HIDDEN else DATE_SLIDER_HEIGHT
+            graph_height = (
+                f"{slider_value * 0.9 - 4}vh"
+                if has_maps
+                else f"calc(90vh - {150 + date_px}px)"
+            )
+            styles = [{"height": graph_height, "width": "100%"}] * 4
             if source == GraphSource.UNSMRY and self._unsmry_providers is None:
                 styles = [HIDDEN] * 4
             elif (
@@ -381,7 +405,13 @@ class CO2Migration(WebvizPluginABC):
             ):
                 styles = [HIDDEN] * 4
 
-            return [top_style, bottom_style] + styles
+            if has_maps:
+                # The date slider takes its height from the map frame
+                styles += [
+                    {"height": f"calc({80 - slider_value}vh - {date_px}px)"},
+                    {"height": f"{slider_value}vh"},
+                ]
+            return styles
 
     def _add_feedback_dialog_callback(self) -> None:
         @callback(
@@ -645,14 +675,38 @@ class CO2Migration(WebvizPluginABC):
             )
 
     def _add_date_slider_visibility_callback(self) -> None:
+        inputs = {}
+        if self._content["maps"]:
+            inputs["attribute"] = Input(
+                self._settings_component(ViewSettings.Ids.PROPERTY), "value"
+            )
+        if self._content["any_table"]:
+            inputs["active_tab"] = Input(
+                self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"
+            )
+            inputs["source"] = Input(
+                self._settings_component(ViewSettings.Ids.GRAPH_SOURCE), "value"
+            )
+
         @callback(
             Output(self._view_component(MapViewElement.Ids.DATE_WRAPPER), "style"),
-            Input(self._settings_component(ViewSettings.Ids.PROPERTY), "value"),
+            inputs=inputs,
         )
-        def toggle_date_slider(attribute: str) -> Dict[str, str]:
-            if MapType[MapAttribute(attribute).name].value == "MIGRATION_TIME":
-                return HIDDEN
-            return {}
+        def toggle_date_slider(
+            attribute: Optional[str] = None,
+            active_tab: Optional[str] = None,
+            source: Optional[str] = None,
+        ) -> Dict[str, Any]:
+            map_uses_date = (
+                attribute is not None
+                and MapType[MapAttribute(attribute).name].value != "MIGRATION_TIME"
+            )
+            graph_uses_date = (
+                active_tab is not None
+                and active_tab != MainTabOption.CONTAINMENT_OVER_TIME
+                and source != GraphSource.UNSMRY
+            )
+            return DATE_SLIDER_STYLE if map_uses_date or graph_uses_date else HIDDEN
 
     def _add_set_dates_callback(self) -> None:
         @callback(
@@ -705,14 +759,6 @@ class CO2Migration(WebvizPluginABC):
                 SECTION if show_y_lim else HIDDEN,
             )
 
-    def _add_graph_settings_visibility_callback(self) -> None:
-        @callback(
-            Output(self._settings_component(ViewSettings.Ids.DATE_OPTION_COL), "style"),
-            Input(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
-        )
-        def toggle_graph_settings(active_tab: MainTabOption) -> Dict[str, str]:
-            return ROW if active_tab != MainTabOption.CONTAINMENT_OVER_TIME else HIDDEN
-
     def _add_set_unit_list_callback(self) -> None:
         @callback(
             Output(self._settings_component(ViewSettings.Ids.CO2_SCALE), "options"),
@@ -763,7 +809,7 @@ class CO2Migration(WebvizPluginABC):
             Input(self._settings_component(ViewSettings.Ids.MARK_BY), "value"),
             Input(self._settings_component(ViewSettings.Ids.SORT_PLOT), "value"),
             Input(self._view_component(MapViewElement.Ids.TIME_PLOT_LINES), "value"),
-            Input(self._settings_component(ViewSettings.Ids.DATE_OPTION), "value"),
+            Input(self._view_component(MapViewElement.Ids.DATE_SLIDER), "value"),
             Input(self._view_component(MapViewElement.Ids.OUTLIER_TOGGLE), "value"),
             Input(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
             State(
@@ -792,7 +838,7 @@ class CO2Migration(WebvizPluginABC):
             mark_choice: Optional[str],
             sorting: str,
             show_realizations: bool,
-            date_option: str,
+            date_index: Optional[int],
             show_all_points: bool,
             active_tab: MainTabOption,
             generation_keys: Optional[Dict[str, Any]],
@@ -813,7 +859,12 @@ class CO2Migration(WebvizPluginABC):
                 GraphSource.CONTAINMENT_ACTUAL_VOLUME,
             )
             cont_info = None
+            date_option = None
             if realizations and is_containment_source:
+                menu_options = self._menu_options[ensemble][source]
+                date_option = find_table_date(
+                    self._ensemble_dates[ensemble], date_index, menu_options["dates"]
+                )
                 cont_info = process_containment_info(
                     zone,
                     region,
@@ -824,9 +875,9 @@ class CO2Migration(WebvizPluginABC):
                     mark_choice,
                     sorting,
                     show_realizations,
-                    date_option,
+                    date_option or "",
                     show_all_points,
-                    self._menu_options[ensemble][source],
+                    menu_options,
                 )
 
             generation_key = make_plot_generation_key(
@@ -850,7 +901,11 @@ class CO2Migration(WebvizPluginABC):
                     if source == GraphSource.CONTAINMENT_MASS
                     else self._co2_actual_volume_table_providers.get(ensemble)
                 )
-                if table_provider is not None:
+                # Dated plots are left empty if the slider date is missing in the table
+                if table_provider is not None and (
+                    date_option is not None
+                    or active_tab == MainTabOption.CONTAINMENT_OVER_TIME
+                ):
                     figure = generate_containment_figure(
                         table_provider,
                         active_tab,

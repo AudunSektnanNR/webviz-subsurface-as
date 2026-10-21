@@ -602,6 +602,16 @@ def generate_unsmry_figures(
     )
 
 
+def find_table_date(
+    slider_dates: List[str], date_index: Optional[int], table_dates: List[str]
+) -> Optional[str]:
+    if date_index is None:
+        return None
+    # Map dates are formatted YYYYMMDD, table dates YYYY-MM-DD
+    date = slider_dates[date_index].replace("-", "")
+    return next((d for d in table_dates if d.replace("-", "") == date), None)
+
+
 # pylint: disable=too-many-locals
 def process_containment_info(
     zone: Optional[str],

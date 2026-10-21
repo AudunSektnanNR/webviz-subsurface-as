@@ -15,6 +15,8 @@ from webviz_subsurface.plugins._co2_migration._utilities.containment_info import
 )
 
 TAB_STYLE = {"flex": "1 1 auto", "width": "auto"}
+DATE_SLIDER_HEIGHT = 70  # px
+DATE_SLIDER_STYLE = {"height": f"{DATE_SLIDER_HEIGHT}px", "flexShrink": 0}
 
 
 class MainView(ViewABC):
@@ -95,20 +97,10 @@ class MapViewElement(ViewElementABC):
                             ],
                             style={
                                 "padding": "1%",
-                                "height": "80%",
+                                "height": "100%",
+                                "boxSizing": "border-box",
                                 "position": "relative",
                             },
-                        ),
-                        html.Div(
-                            wcc.Slider(
-                                id=self.register_component_unique_id(
-                                    self.Ids.DATE_SLIDER
-                                ),
-                                step=None,
-                                marks={0: ""},
-                                value=0,
-                            ),
-                            id=self.register_component_unique_id(self.Ids.DATE_WRAPPER),
                         ),
                     ],
                     style={
@@ -116,8 +108,19 @@ class MapViewElement(ViewElementABC):
                     },
                 )
             )
+        layout_elements.append(
+            html.Div(
+                wcc.Slider(
+                    id=self.register_component_unique_id(self.Ids.DATE_SLIDER),
+                    step=None,
+                    marks={0: ""},
+                    value=0,
+                ),
+                id=self.register_component_unique_id(self.Ids.DATE_WRAPPER),
+                style=DATE_SLIDER_STYLE,
+            )
+        )
         if self._content["any_table"]:
-            graph_style = {} if self._content["maps"] else {"height": "calc(90vh - 150px)"}
             layout_elements.append(
                 wcc.Frame(
                     # id=get_uuid(LayoutElements.PLOT_VIEW),
@@ -154,7 +157,6 @@ class MapViewElement(ViewElementABC):
                                 self.register_component_unique_id(
                                     self.Ids.SUMMARY_TABS
                                 ),
-                                graph_style=graph_style,
                             )
                         ),
                     ],
@@ -248,7 +250,6 @@ def _summary_graph_layout(
     csv_export_button_id: str,
     download_csv_id: str,
     summary_tabs_id: str,
-    graph_style: dict,
 ) -> List:
     return [
         html.Div(
@@ -296,7 +297,6 @@ def _summary_graph_layout(
                                         config={
                                             "displayModeBar": False,
                                         },
-                                        style=graph_style,
                                     ),
                                 ),
                             ],
@@ -323,7 +323,6 @@ def _summary_graph_layout(
                                             config={
                                                 "displayModeBar": False,
                                             },
-                                            style=graph_style,
                                         ),
                                     ],
                                     style={"position": "relative"},
@@ -343,7 +342,6 @@ def _summary_graph_layout(
                                         config={
                                             "displayModeBar": False,
                                         },
-                                        style=graph_style,
                                     ),
                                 ),
                             ],
@@ -367,7 +365,6 @@ def _summary_graph_layout(
                                             config={
                                                 "displayModeBar": False,
                                             },
-                                            style=graph_style,
                                         ),
                                     ],
                                     style={"position": "relative"},

@@ -93,8 +93,6 @@ class ViewSettings(SettingsGroupABC):
         PLUME_GROUP = "plume-group"
         CONTAINMENT_MENU = "containment-menu"
         PLUME_GROUP_MENU = "plume-group-menu"
-        DATE_OPTION = "date-option"
-        DATE_OPTION_COL = "date-option-column"
         GRAPH_FILTER_HEADER = "filter-header"
         GRAPH_DISPLAY_HEADER = "graph-display-header"
 
@@ -208,8 +206,6 @@ class ViewSettings(SettingsGroupABC):
                         self.Ids.PLUME_GROUP,
                         self.Ids.PLUME_GROUP_MENU,
                         self.Ids.Y_LIM_OPTIONS,
-                        self.Ids.DATE_OPTION,
-                        self.Ids.DATE_OPTION_COL,
                         self.Ids.GRAPH_FILTER_HEADER,
                         self.Ids.GRAPH_DISPLAY_HEADER,
                     ]
@@ -474,33 +470,6 @@ class ViewSettings(SettingsGroupABC):
 
             @callback(
                 Output(
-                    self.component_unique_id(self.Ids.DATE_OPTION).to_string(),
-                    "options",
-                ),
-                Output(
-                    self.component_unique_id(self.Ids.DATE_OPTION).to_string(), "value"
-                ),
-                Input(
-                    self.component_unique_id(self.Ids.GRAPH_SOURCE).to_string(), "value"
-                ),
-                Input(self.component_unique_id(self.Ids.ENSEMBLE).to_string(), "value"),
-                State(
-                    self.component_unique_id(self.Ids.DATE_OPTION).to_string(), "value"
-                ),
-            )
-            def set_date_option(
-                source: GraphSource,
-                ensemble: str,
-                current_value: str,
-            ) -> Tuple[List[Dict[str, str]], Union[Any, str]]:
-                if ensemble is not None:
-                    dates = self._menu_options[ensemble][source]["dates"]
-                    options = [{"label": date.title(), "value": date} for date in dates]
-                    return options, no_update if current_value in dates else dates[-1]
-                return [], None
-
-            @callback(
-                Output(
                     self.component_unique_id(self.Ids.MARK_BY).to_string(), "options"
                 ),
                 Output(self.component_unique_id(self.Ids.MARK_BY).to_string(), "value"),
@@ -597,7 +566,6 @@ class ViewSettings(SettingsGroupABC):
                         self.Ids.PHASE_MENU,
                         self.Ids.CONTAINMENT_MENU,
                         self.Ids.PLUME_GROUP_MENU,
-                        self.Ids.DATE_OPTION_COL,
                     )
                 ],
             )
@@ -1197,20 +1165,6 @@ class GraphSelectorsLayout(html.Div):
                     ],
                     id=containment_ids[ids.ZONE_REGION],
                     style=ROWS,
-                ),
-                html.Div(
-                    [
-                        html.Div("Date", style=GRAPH_LABEL),
-                        html.Div(
-                            wcc.Dropdown(
-                                id=containment_ids[ids.DATE_OPTION],
-                                clearable=False,
-                            ),
-                            style=FILL,
-                        ),
-                    ],
-                    id=containment_ids[ids.DATE_OPTION_COL],
-                    style=ROW,
                 ),
                 html.Div(
                     "Display",
