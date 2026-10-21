@@ -79,7 +79,7 @@ from webviz_subsurface.plugins._co2_migration.views.mainview.settings import (
 from . import _error
 from ._types import LegendData
 from ._utilities.color_tables import co2migration_color_tables
-from ._utilities.containment_info import MainTabOption, StatisticsTabOption
+from ._utilities.containment_info import MainTabOption
 from ._utilities.surface_publishing import SurfaceTransform
 
 LOGGER = logging.getLogger(__name__)
@@ -349,7 +349,8 @@ class CO2Migration(WebvizPluginABC):
             Output(self._view_component(MapViewElement.Ids.BOTTOM_ELEMENT), "style"),
             Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "style"),
             Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "style"),
-            Output(self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "style"),
+            Output(self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT), "style"),
+            Output(self._view_component(MapViewElement.Ids.BOX_PLOT), "style"),
             Input(self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"),
             Input(self._view_component(MapViewElement.Ids.SIZE_SLIDER), "value"),
             State(self._view_component(MapViewElement.Ids.TOP_ELEMENT), "style"),
@@ -366,19 +367,19 @@ class CO2Migration(WebvizPluginABC):
             bottom_style["height"] = f"{slider_value}vh"
             top_style["height"] = f"{80 - slider_value}vh"
 
-            styles = [{"height": f"{slider_value * 0.9 - 4}vh", "width": "90%"}] * 3
+            styles = [{"height": f"{slider_value * 0.9 - 4}vh", "width": "100%"}] * 4
             if source == GraphSource.UNSMRY and self._unsmry_providers is None:
-                styles = [HIDDEN] * 3
+                styles = [HIDDEN] * 4
             elif (
                 source == GraphSource.CONTAINMENT_MASS
                 and ensemble not in self._co2_table_providers
             ):
-                styles = [HIDDEN] * 3
+                styles = [HIDDEN] * 4
             elif (
                 source == GraphSource.CONTAINMENT_ACTUAL_VOLUME
                 and ensemble not in self._co2_actual_volume_table_providers
             ):
-                styles = [HIDDEN] * 3
+                styles = [HIDDEN] * 4
 
             return [top_style, bottom_style] + styles
 
@@ -679,58 +680,38 @@ class CO2Migration(WebvizPluginABC):
     def _add_time_plot_visibility_callback(self) -> None:
         @callback(
             Output(
-                self._settings_component(ViewSettings.Ids.REAL_OR_STAT_DIV), "style"
+                self._view_component(MapViewElement.Ids.TIME_PLOT_LINES_WRAPPER),
+                "style",
             ),
             Output(self._settings_component(ViewSettings.Ids.Y_LIM_OPTIONS), "style"),
+            Output(
+                self._settings_component(ViewSettings.Ids.GRAPH_DISPLAY_HEADER),
+                "style",
+            ),
             Input(self._settings_component(ViewSettings.Ids.REALIZATION), "value"),
             Input(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
         )
         def toggle_time_plot_options_visibility(
             realizations: List[int],
             active_tab: MainTabOption,
-        ) -> Tuple[Dict[str, str], Dict[str, str]]:
-            if active_tab != MainTabOption.CONTAINMENT_OVER_TIME:
-                return (HIDDEN, HIDDEN)
-            if len(realizations) == 1:
-                return (HIDDEN, ROWS)
-            return (ROW, HIDDEN)
+        ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
+            single_real = len(realizations) == 1
+            show_y_lim = (
+                single_real and active_tab == MainTabOption.CONTAINMENT_OVER_TIME
+            )
+            return (
+                HIDDEN if single_real else {},
+                ROWS if show_y_lim else HIDDEN,
+                SECTION if show_y_lim else HIDDEN,
+            )
 
     def _add_graph_settings_visibility_callback(self) -> None:
         @callback(
             Output(self._settings_component(ViewSettings.Ids.DATE_OPTION_COL), "style"),
-            Output(
-                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION_DIV),
-                "style",
-            ),
-            Output(
-                self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS_DIV),
-                "style",
-            ),
-            Output(
-                self._settings_component(ViewSettings.Ids.GRAPH_DISPLAY_HEADER),
-                "style",
-            ),
             Input(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
-            Input(
-                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
-                "value",
-            ),
         )
-        def toggle_graph_settings(
-            active_tab: MainTabOption,
-            statistics_tab_option: StatisticsTabOption,
-        ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str], Dict[str, str]]:
-            show_statistics = active_tab == MainTabOption.STATISTICS
-            return (
-                ROW if active_tab != MainTabOption.CONTAINMENT_OVER_TIME else HIDDEN,
-                ROW if show_statistics else HIDDEN,
-                ROW
-                if show_statistics
-                and statistics_tab_option == StatisticsTabOption.BOX_PLOT
-                else HIDDEN,
-                # The containment state tab has no display options
-                SECTION if active_tab != MainTabOption.CONTAINMENT_STATE else HIDDEN,
-            )
+        def toggle_graph_settings(active_tab: MainTabOption) -> Dict[str, str]:
+            return ROW if active_tab != MainTabOption.CONTAINMENT_OVER_TIME else HIDDEN
 
     def _add_set_unit_list_callback(self) -> None:
         @callback(
@@ -753,9 +734,10 @@ class CO2Migration(WebvizPluginABC):
             Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
             Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
             Output(
-                self._view_component(MapViewElement.Ids.STATISTICS_PLOT),
+                self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT),
                 "figure",
             ),
+            Output(self._view_component(MapViewElement.Ids.BOX_PLOT), "figure"),
             Output(
                 self._view_component(MapViewElement.Ids.PLOT_GENERATION_STORE),
                 "data",
@@ -780,13 +762,9 @@ class CO2Migration(WebvizPluginABC):
             Input(self._settings_component(ViewSettings.Ids.COLOR_BY), "value"),
             Input(self._settings_component(ViewSettings.Ids.MARK_BY), "value"),
             Input(self._settings_component(ViewSettings.Ids.SORT_PLOT), "value"),
-            Input(self._settings_component(ViewSettings.Ids.REAL_OR_STAT), "value"),
+            Input(self._view_component(MapViewElement.Ids.TIME_PLOT_LINES), "value"),
             Input(self._settings_component(ViewSettings.Ids.DATE_OPTION), "value"),
-            Input(
-                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
-                "value",
-            ),
-            Input(self._settings_component(ViewSettings.Ids.BOX_SHOW_POINTS), "value"),
+            Input(self._view_component(MapViewElement.Ids.OUTLIER_TOGGLE), "value"),
             Input(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
             State(
                 self._view_component(MapViewElement.Ids.PLOT_GENERATION_STORE),
@@ -813,18 +791,18 @@ class CO2Migration(WebvizPluginABC):
             color_choice: str,
             mark_choice: Optional[str],
             sorting: str,
-            lines_to_show: str,
+            show_realizations: bool,
             date_option: str,
-            statistics_tab_option: StatisticsTabOption,
-            box_show_points: str,
+            show_all_points: bool,
             active_tab: MainTabOption,
             generation_keys: Optional[Dict[str, Any]],
-        ) -> Tuple[Any, Any, Any, Dict[str, Any]]:
+        ) -> Tuple[Any, Any, Any, Any, Dict[str, Any]]:
             active_tab = MainTabOption(active_tab)
             active_index = {
                 MainTabOption.CONTAINMENT_STATE: 0,
                 MainTabOption.CONTAINMENT_OVER_TIME: 1,
-                MainTabOption.STATISTICS: 2,
+                MainTabOption.EXCEEDANCE: 2,
+                MainTabOption.BOX_PLOT: 3,
             }[active_tab]
             y_limits = [
                 y_min_val if len(y_min_auto) == 0 else None,
@@ -845,10 +823,9 @@ class CO2Migration(WebvizPluginABC):
                     color_choice,
                     mark_choice,
                     sorting,
-                    lines_to_show,
+                    show_realizations,
                     date_option,
-                    statistics_tab_option,
-                    box_show_points,
+                    show_all_points,
                     self._menu_options[ensemble][source],
                 )
 
@@ -910,13 +887,14 @@ class CO2Migration(WebvizPluginABC):
                     LOGGER.warning(
                         "UNSMRY data has not been specified for ensemble %s", ensemble
                     )
-            figures = [no_update, no_update, no_update]
+            figures = [no_update, no_update, no_update, no_update]
             figures[active_index] = figure
             updated_generation_keys[active_tab.value] = generation_key
             return (
                 figures[0],
                 figures[1],
                 figures[2],
+                figures[3],
                 updated_generation_keys,
             )
 
@@ -928,22 +906,21 @@ class CO2Migration(WebvizPluginABC):
             Input(self._view_component(MapViewElement.Ids.TIME_PLOT), "restyleData"),
             State(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
             Input(
-                self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "restyleData"
+                self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT), "restyleData"
             ),
-            State(self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "figure"),
-            Input(
-                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
-                "value",
-            ),
+            State(self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT), "figure"),
+            Input(self._view_component(MapViewElement.Ids.BOX_PLOT), "restyleData"),
+            State(self._view_component(MapViewElement.Ids.BOX_PLOT), "figure"),
         )
         def on_bar_legend_update(
             bar_event: List[Any],
             bar_figure: go.Figure,
             time_event: List[Any],
             time_figure: go.Figure,
-            stats_event: List[Any],
-            stats_figure: go.Figure,
-            _: StatisticsTabOption,
+            exceedance_event: List[Any],
+            exceedance_figure: go.Figure,
+            box_event: List[Any],
+            box_figure: go.Figure,
         ) -> Patch:
             # We cannot subscribe to a legend click event directly, but we can subscribe
             # to the more general "restyleData" event, and then try to identify if this
@@ -959,12 +936,12 @@ class CO2Migration(WebvizPluginABC):
             elif _id == self._view_component(MapViewElement.Ids.TIME_PLOT):
                 if self._is_legend_click_event(time_event):
                     p["time_legendonly"] = extract_legendonly(time_figure)
-            elif _id in (
-                self._view_component(MapViewElement.Ids.STATISTICS_PLOT),
-                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
-            ):
-                if self._is_legend_click_event(stats_event):
-                    p["stats_legendonly"] = extract_legendonly(stats_figure)
+            elif _id == self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT):
+                if self._is_legend_click_event(exceedance_event):
+                    p["exceedance_legendonly"] = extract_legendonly(exceedance_figure)
+            elif _id == self._view_component(MapViewElement.Ids.BOX_PLOT):
+                if self._is_legend_click_event(box_event):
+                    p["box_legendonly"] = extract_legendonly(box_figure)
             return p
 
     @staticmethod
@@ -983,11 +960,8 @@ class CO2Migration(WebvizPluginABC):
             State(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
             State(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
             State(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
-            State(self._view_component(MapViewElement.Ids.STATISTICS_PLOT), "figure"),
-            State(
-                self._settings_component(ViewSettings.Ids.STATISTICS_TAB_OPTION),
-                "value",
-            ),
+            State(self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT), "figure"),
+            State(self._view_component(MapViewElement.Ids.BOX_PLOT), "figure"),
             prevent_initial_call=True,
         )
         def export_data(
@@ -995,8 +969,8 @@ class CO2Migration(WebvizPluginABC):
             active_tab: str,
             bar_figure: go.Figure,
             time_figure: go.Figure,
-            stats_figure: go.Figure,
-            statistics_tab_option: StatisticsTabOption,
+            exceedance_figure: go.Figure,
+            box_figure: go.Figure,
         ) -> Dict[str, Any]:
             file_name = "co2_migration"
             if active_tab == MainTabOption.CONTAINMENT_STATE:
@@ -1007,14 +981,14 @@ class CO2Migration(WebvizPluginABC):
                 current_figure = time_figure
                 file_name += "_time_plot"
                 plot_choice = "containment_time"
-            elif active_tab == MainTabOption.STATISTICS:
-                current_figure = stats_figure
-                if statistics_tab_option == StatisticsTabOption.PROBABILITY_PLOT:
-                    file_name += "_prob_plot"
-                    plot_choice = "probability"
-                else:  # => StatisticsTabOption.BOX_PLOT:
-                    file_name += "_box_plot"
-                    plot_choice = "box"
+            elif active_tab == MainTabOption.EXCEEDANCE:
+                current_figure = exceedance_figure
+                file_name += "_exceedance_plot"
+                plot_choice = "exceedance"
+            elif active_tab == MainTabOption.BOX_PLOT:
+                current_figure = box_figure
+                file_name += "_box_plot"
+                plot_choice = "box"
             else:
                 raise PreventUpdate  # Should not happen
 

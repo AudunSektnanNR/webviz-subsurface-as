@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+import dash_daq as daq
 import plotly.graph_objects as go
 import webviz_core_components as wcc
 from dash import dcc, html
@@ -12,6 +13,8 @@ from webviz_subsurface.plugins._co2_migration._types import LegendData
 from webviz_subsurface.plugins._co2_migration._utilities.containment_info import (
     MainTabOption,
 )
+
+TAB_STYLE = {"flex": "1 1 auto", "width": "auto"}
 
 
 class MainView(ViewABC):
@@ -32,7 +35,11 @@ class MapViewElement(ViewElementABC):
         DATE_WRAPPER = "date-wrapper"
         BAR_PLOT = "bar-plot"
         TIME_PLOT = "time-plot"
-        STATISTICS_PLOT = "statistics-plot"
+        TIME_PLOT_LINES = "time-plot-lines"
+        TIME_PLOT_LINES_WRAPPER = "time-plot-lines-wrapper"
+        EXCEEDANCE_PLOT = "exceedance-plot"
+        BOX_PLOT = "box-plot"
+        OUTLIER_TOGGLE = "outlier-toggle"
         BAR_PLOT_ORDER = "bar-plot-order"
         CONTAINMENT_COLORS = "containment-order"
         SIZE_SLIDER = "size-slider"
@@ -110,6 +117,7 @@ class MapViewElement(ViewElementABC):
                 )
             )
         if self._content["any_table"]:
+            graph_style = {} if self._content["maps"] else {"height": "calc(90vh - 150px)"}
             layout_elements.append(
                 wcc.Frame(
                     # id=get_uuid(LayoutElements.PLOT_VIEW),
@@ -123,7 +131,19 @@ class MapViewElement(ViewElementABC):
                                 self.register_component_unique_id(self.Ids.BAR_PLOT),
                                 self.register_component_unique_id(self.Ids.TIME_PLOT),
                                 self.register_component_unique_id(
-                                    self.Ids.STATISTICS_PLOT
+                                    self.Ids.TIME_PLOT_LINES
+                                ),
+                                self.register_component_unique_id(
+                                    self.Ids.TIME_PLOT_LINES_WRAPPER
+                                ),
+                                self.register_component_unique_id(
+                                    self.Ids.EXCEEDANCE_PLOT
+                                ),
+                                self.register_component_unique_id(
+                                    self.Ids.BOX_PLOT,
+                                ),
+                                self.register_component_unique_id(
+                                    self.Ids.OUTLIER_TOGGLE
                                 ),
                                 self.register_component_unique_id(
                                     self.Ids.CSV_EXPORT_BUTTON
@@ -134,6 +154,7 @@ class MapViewElement(ViewElementABC):
                                 self.register_component_unique_id(
                                     self.Ids.SUMMARY_TABS
                                 ),
+                                graph_style=graph_style,
                             )
                         ),
                     ],
@@ -145,7 +166,8 @@ class MapViewElement(ViewElementABC):
                     data=LegendData(  # type: ignore[arg-type]
                         bar_legendonly=None,
                         time_legendonly=None,
-                        stats_legendonly=None,
+                        exceedance_legendonly=None,
+                        box_legendonly=None,
                     ),
                 )
             )
@@ -170,7 +192,7 @@ class MapViewElement(ViewElementABC):
                             vertical=False,
                             marks={
                                 # 1: "Top",
-                                37: "Drag to scale the size of the containment plots",
+                                37: "Drag to scale the relative size between the map and the graphs",
                                 # 79: "Bottom",
                             },
                         ),
@@ -190,13 +212,43 @@ class MapViewElement(ViewElementABC):
         )
 
 
+def _plot_toggle(toggle_id: str, left_label: str, right_label: str) -> html.Div:
+    return html.Div(
+        [
+            html.Span(left_label),
+            daq.ToggleSwitch(
+                id=toggle_id,
+                value=False,  # True = right_label
+                size=30,
+                style={"position": "relative", "top": "-5px"},
+            ),
+            html.Span(right_label),
+        ],
+        style={
+            "position": "absolute",
+            "top": "5px",
+            "right": "10px",
+            "zIndex": 1000,
+            "display": "flex",
+            "alignItems": "center",
+            "gap": "6px",
+            "fontSize": "15px",
+        },
+    )
+
+
 def _summary_graph_layout(
     bar_plot_id: str,
     time_plot_id: str,
-    statistics_plot_id: str,
+    time_plot_lines_id: str,
+    time_plot_lines_wrapper_id: str,
+    exceedance_plot_id: str,
+    box_plot_id: str,
+    outlier_toggle_id: str,
     csv_export_button_id: str,
     download_csv_id: str,
     summary_tabs_id: str,
+    graph_style: dict,
 ) -> List:
     return [
         html.Div(
@@ -234,6 +286,8 @@ def _summary_graph_layout(
                         wcc.Tab(
                             label="Containment state",
                             value=MainTabOption.CONTAINMENT_STATE,
+                            style=TAB_STYLE,
+                            selected_style=TAB_STYLE,
                             children=[
                                 html.Div(
                                     wcc.Graph(
@@ -242,37 +296,81 @@ def _summary_graph_layout(
                                         config={
                                             "displayModeBar": False,
                                         },
+                                        style=graph_style,
                                     ),
                                 ),
                             ],
                         ),
                         wcc.Tab(
-                            label="Containment over time",
+                            label="Time evolution",
                             value=MainTabOption.CONTAINMENT_OVER_TIME,
+                            style=TAB_STYLE,
+                            selected_style=TAB_STYLE,
+                            children=[
+                                html.Div(
+                                    [
+                                        html.Div(
+                                            _plot_toggle(
+                                                time_plot_lines_id,
+                                                "Mean/P10/P90",
+                                                "Realizations",
+                                            ),
+                                            id=time_plot_lines_wrapper_id,
+                                        ),
+                                        wcc.Graph(
+                                            id=time_plot_id,
+                                            figure=go.Figure(),
+                                            config={
+                                                "displayModeBar": False,
+                                            },
+                                            style=graph_style,
+                                        ),
+                                    ],
+                                    style={"position": "relative"},
+                                ),
+                            ],
+                        ),
+                        wcc.Tab(
+                            label="Exceedance probability",
+                            value=MainTabOption.EXCEEDANCE,
+                            style=TAB_STYLE,
+                            selected_style=TAB_STYLE,
                             children=[
                                 html.Div(
                                     wcc.Graph(
-                                        id=time_plot_id,
+                                        id=exceedance_plot_id,
                                         figure=go.Figure(),
                                         config={
                                             "displayModeBar": False,
                                         },
+                                        style=graph_style,
                                     ),
                                 ),
                             ],
                         ),
                         wcc.Tab(
-                            label="Statistics",
-                            value=MainTabOption.STATISTICS,
+                            label="Box plot",
+                            value=MainTabOption.BOX_PLOT,
+                            style=TAB_STYLE,
+                            selected_style=TAB_STYLE,
                             children=[
                                 html.Div(
-                                    wcc.Graph(
-                                        id=statistics_plot_id,
-                                        figure=go.Figure(),
-                                        config={
-                                            "displayModeBar": False,
-                                        },
-                                    ),
+                                    [
+                                        _plot_toggle(
+                                            outlier_toggle_id,
+                                            "Show outliers",
+                                            "Show all points",
+                                        ),
+                                        wcc.Graph(
+                                            id=box_plot_id,
+                                            figure=go.Figure(),
+                                            config={
+                                                "displayModeBar": False,
+                                            },
+                                            style=graph_style,
+                                        ),
+                                    ],
+                                    style={"position": "relative"},
                                 ),
                             ],
                         ),

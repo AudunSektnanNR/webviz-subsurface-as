@@ -503,7 +503,10 @@ def _adjust_figure(fig: go.Figure, plot_title: str) -> None:
     fig.layout.title.text = plot_title
     fig.layout.title.font = {"size": 14}
     fig.layout.margin.t = 40
-    fig.layout.title.y = 0.95
+    fig.layout.title.yref = "container"
+    fig.layout.title.y = 1
+    fig.layout.title.yanchor = "top"
+    fig.layout.title.pad = {"t": 10}
     fig.layout.title.x = 0.4
 
     fig.layout.paper_bgcolor = "rgba(0,0,0,0)"
@@ -981,7 +984,7 @@ def generate_co2_time_containment_figure(
     )
     hover_end = "</span><extra></extra>"
 
-    if containment_info.use_stats:
+    if not containment_info.show_realizations:
         df_no_real = df.drop(columns=["REAL"]).reset_index(drop=True)
         group_columns = ["date", "name", color_choice]
         if mark_choice != "none":
@@ -1049,7 +1052,7 @@ def generate_co2_time_containment_figure(
     return fig
 
 
-def generate_co2_statistics_figure(
+def generate_co2_exceedance_figure(
     df: pd.DataFrame,
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: ContainmentInfo,
@@ -1162,11 +1165,7 @@ def generate_co2_box_plot_figure(
                 y=values,
                 name=type_val,
                 marker_color=colors[count],
-                boxpoints=(
-                    "all"
-                    if containment_info.box_show_points == "all_points"
-                    else "outliers"
-                ),
+                boxpoints=containment_info.points_to_show,
                 customdata=real,
                 hovertemplate="<span style='font-family:Courier New;'>"
                 "Type       : %{data.name}<br>Amount     : %{y:.3f}<br>"
@@ -1379,7 +1378,7 @@ def _extract_data_from_general_trace(
     else:
         trace_name = getattr(trace, "name", "Unknown")
 
-    if plot_choice in ["probability", "containment_state"]:
+    if plot_choice in ["exceedance", "containment_state"]:
         if trace.x is not None and "_inputArray" in trace.x:
             x_data = trace.x["_inputArray"]
             x_data = {int(k): v for k, v in x_data.items() if str(k).isdigit()}
@@ -1390,7 +1389,7 @@ def _extract_data_from_general_trace(
         if trace.x is not None:
             x_data = dict(enumerate(trace.x))
     if plot_choice in [
-        "probability",
+        "exceedance",
         "containment_time_single",
         "containment_time_multiple",
     ]:
@@ -1404,7 +1403,7 @@ def _extract_data_from_general_trace(
             y_data = {k: int(v) for k, v in enumerate(trace.y)}
     xy_data = {k: (x_data[k], y_data[k]) for k in x_data if k in y_data}
 
-    if plot_choice == "probability":
+    if plot_choice == "exceedance":
         custom_data = []
         if (
             hasattr(trace, "customdata")
@@ -1423,7 +1422,7 @@ def _extract_data_from_general_trace(
         # Merged traces use None to separate realization lines.
         if x_val is None or y_val is None:
             continue
-        if plot_choice == "probability":
+        if plot_choice == "exceedance":
             record = {
                 "type": trace_name,
                 "amount": x_val,

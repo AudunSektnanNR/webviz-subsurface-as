@@ -25,7 +25,7 @@ from webviz_subsurface.plugins._co2_migration._utilities import plume_extent
 from webviz_subsurface.plugins._co2_migration._utilities.co2volume import (
     extract_df_from_fig,
     generate_co2_box_plot_figure,
-    generate_co2_statistics_figure,
+    generate_co2_exceedance_figure,
     generate_co2_time_containment_figure,
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
@@ -36,7 +36,6 @@ from webviz_subsurface.plugins._co2_migration._utilities.containment_data_provid
 from webviz_subsurface.plugins._co2_migration._utilities.containment_info import (
     ContainmentInfo,
     MainTabOption,
-    StatisticsTabOption,
 )
 from webviz_subsurface.plugins._co2_migration._utilities.ensemble_well_picks import (
     EnsembleWellPicks,
@@ -571,22 +570,19 @@ def generate_containment_figure(
                 y_limits,
                 containment_info,
             )
-        if active_tab == MainTabOption.STATISTICS:
-            if (
-                containment_info.statistics_tab_option
-                == StatisticsTabOption.PROBABILITY_PLOT
-            ):
-                return generate_co2_statistics_figure(
-                    containment_df,
-                    co2_scale,
-                    containment_info,
-                    legenddata["stats_legendonly"],
-                )
+        if active_tab == MainTabOption.EXCEEDANCE:
+            return generate_co2_exceedance_figure(
+                containment_df,
+                co2_scale,
+                containment_info,
+                legenddata["exceedance_legendonly"],
+            )
+        if active_tab == MainTabOption.BOX_PLOT:
             return generate_co2_box_plot_figure(
                 containment_df,
                 co2_scale,
                 containment_info,
-                legenddata["stats_legendonly"],
+                legenddata["box_legendonly"],
             )
         raise ValueError(f"Unsupported containment tab: {active_tab}")
     except Exception as exc:
@@ -616,10 +612,9 @@ def process_containment_info(
     color_choice: str,
     mark_choice: Optional[str],
     sorting: str,
-    lines_to_show: str,
+    show_realizations: bool,
     date_option: str,
-    statistics_tab_option: StatisticsTabOption,
-    box_show_points: str,
+    show_all_points: bool,
     menu_options: MenuOptions,
 ) -> ContainmentInfo:
     if mark_choice is None:
@@ -659,10 +654,9 @@ def process_containment_info(
         phases=[phase for phase in menu_options["phases"] if phase != "total"],
         containments=["nogo", "outside", "contained"],
         plume_groups=plume_groups,
-        use_stats=lines_to_show == "stat",
+        show_realizations=show_realizations,
         date_option=date_option,
-        statistics_tab_option=statistics_tab_option,
-        box_show_points=box_show_points,
+        points_to_show="all" if show_all_points else "outliers",
     )
 
 
@@ -724,15 +718,15 @@ def make_plot_generation_key(
             key.update(time_mode="single", y_limits=list(y_limits))
         else:
             key["time_mode"] = (
-                "statistics" if containment_info.use_stats else "realizations"
+                "realizations" if containment_info.show_realizations else "statistics"
             )
-    elif active_tab == MainTabOption.STATISTICS:
+    elif active_tab == MainTabOption.EXCEEDANCE:
+        key["date_option"] = containment_info.date_option
+    elif active_tab == MainTabOption.BOX_PLOT:
         key.update(
             date_option=containment_info.date_option,
-            statistics_plot=containment_info.statistics_tab_option.value,
+            points_to_show=containment_info.points_to_show,
         )
-        if containment_info.statistics_tab_option == StatisticsTabOption.BOX_PLOT:
-            key["box_show_points"] = containment_info.box_show_points
 
     return key
 
@@ -780,8 +774,6 @@ def make_plot_id(
     )
     if active_tab == MainTabOption.CONTAINMENT_OVER_TIME:
         plot_id += "-single" if len(realizations) == 1 else "-multiple"
-    if active_tab == MainTabOption.STATISTICS:
-        plot_id += f"-{containment_info.statistics_tab_option.value}"
     return plot_id
 
 

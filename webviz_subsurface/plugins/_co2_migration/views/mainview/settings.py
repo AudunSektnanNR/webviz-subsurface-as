@@ -15,9 +15,6 @@ from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_pro
 from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     property_origin,
 )
-from webviz_subsurface.plugins._co2_migration._utilities.containment_info import (
-    StatisticsTabOption,
-)
 from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     Co2MassScale,
     Co2VolumeScale,
@@ -82,8 +79,6 @@ class ViewSettings(SettingsGroupABC):
         Y_MIN_AUTO_GRAPH = "y-min-auto-graph"
         Y_MAX_AUTO_GRAPH = "y-max-auto-graph"
         Y_LIM_OPTIONS = "y_limit_options"
-        REAL_OR_STAT = "realization-or-statistics"
-        REAL_OR_STAT_DIV = "realization-or-statistics-div"
         COLOR_BY = "color-by"
         MARK_BY = "mark-by"
         SORT_PLOT = "sort-plot"
@@ -100,10 +95,7 @@ class ViewSettings(SettingsGroupABC):
         PLUME_GROUP_MENU = "plume-group-menu"
         DATE_OPTION = "date-option"
         DATE_OPTION_COL = "date-option-column"
-        STATISTICS_TAB_OPTION = "statistics-tab-option"
-        STATISTICS_TAB_OPTION_DIV = "statistics-tab-option-div"
-        BOX_SHOW_POINTS = "box-plot-points"
-        BOX_SHOW_POINTS_DIV = "box-plot-points-div"
+        GRAPH_FILTER_HEADER = "filter-header"
         GRAPH_DISPLAY_HEADER = "graph-display-header"
 
         VISUALIZATION_THRESHOLD_BUTTON = "visualization-threshold-button"
@@ -215,15 +207,10 @@ class ViewSettings(SettingsGroupABC):
                         self.Ids.CONTAINMENT_MENU,
                         self.Ids.PLUME_GROUP,
                         self.Ids.PLUME_GROUP_MENU,
-                        self.Ids.REAL_OR_STAT,
-                        self.Ids.REAL_OR_STAT_DIV,
                         self.Ids.Y_LIM_OPTIONS,
                         self.Ids.DATE_OPTION,
                         self.Ids.DATE_OPTION_COL,
-                        self.Ids.STATISTICS_TAB_OPTION,
-                        self.Ids.STATISTICS_TAB_OPTION_DIV,
-                        self.Ids.BOX_SHOW_POINTS,
-                        self.Ids.BOX_SHOW_POINTS_DIV,
+                        self.Ids.GRAPH_FILTER_HEADER,
                         self.Ids.GRAPH_DISPLAY_HEADER,
                     ]
                 },
@@ -286,7 +273,7 @@ class ViewSettings(SettingsGroupABC):
             surfaces = surface_provider.surface_names_for_attribute(prop_name)
             if len(surfaces) == 0:
                 warning = f"Surface not found for property: {prop}.\n"
-                warning += f"Expected name: <formation>--{prop_name}"
+                warning += f"Expected name: <zone>--{prop_name}"
                 if MapType[MapAttribute(prop).name].value != "MIGRATION_TIME":
                     warning += "--<date>"
                 warnings.warn(warning + ".gri")
@@ -597,6 +584,31 @@ class ViewSettings(SettingsGroupABC):
             def disable_zone_or_region(zone: str, region: str) -> Tuple[bool, bool]:
                 return region != "all", zone != "all"
 
+            @callback(
+                Output(
+                    self.component_unique_id(self.Ids.GRAPH_FILTER_HEADER).to_string(),
+                    "style",
+                ),
+                [
+                    Input(self.component_unique_id(i).to_string(), "style")
+                    for i in (
+                        self.Ids.ZONE_COL,
+                        self.Ids.REGION_COL,
+                        self.Ids.PHASE_MENU,
+                        self.Ids.CONTAINMENT_MENU,
+                        self.Ids.PLUME_GROUP_MENU,
+                        self.Ids.DATE_OPTION_COL,
+                    )
+                ],
+            )
+            def toggle_filter_header(
+                *filter_styles: Optional[Dict[str, str]]
+            ) -> Dict[str, str]:
+                any_visible = any(
+                    (style or {}).get("display") != "none" for style in filter_styles
+                )
+                return SECTION if any_visible else HIDDEN
+
 
 class OpenOverlayDialogButton(html.Button):
     def __init__(self) -> None:
@@ -738,7 +750,7 @@ class VisualizationThresholdsLayout(wcc.Dialog):
             id=ViewSettings.Ids.VISUALIZATION_THRESHOLD_DIALOG,
             draggable=True,
             open=False,
-            children=html.Div(fields, style={**COL, "width": "500px"}),
+            children=html.Div(fields, style={**COL, "width": "600px"}),
         )
 
 
@@ -1084,7 +1096,11 @@ class GraphSelectorsLayout(html.Div):
                     ],
                     style=ROW,
                 ),
-                html.Div("Filter", style=SECTION),
+                html.Div(
+                    "Filter",
+                    id=containment_ids[ids.GRAPH_FILTER_HEADER],
+                    style=SECTION,
+                ),
                 html.Div(
                     [
                         html.Div(
@@ -1203,22 +1219,6 @@ class GraphSelectorsLayout(html.Div):
                 ),
                 html.Div(
                     [
-                        html.Div("Lines", style={**GRAPH_LABEL, "width": "40px"}),
-                        dcc.RadioItems(
-                            options=[  # type: ignore[arg-type]
-                                {"label": "Mean/P10/P90", "value": "stat"},
-                                {"label": "Realizations", "value": "real"},
-                            ],
-                            value="stat",
-                            id=containment_ids[ids.REAL_OR_STAT],
-                            inline=True,
-                        ),
-                    ],
-                    id=containment_ids[ids.REAL_OR_STAT_DIV],
-                    style=HIDDEN,
-                ),
-                html.Div(
-                    [
                         html.Div(
                             [
                                 html.Div(
@@ -1262,44 +1262,6 @@ class GraphSelectorsLayout(html.Div):
                     ],
                     style=HIDDEN,
                     id=containment_ids[ids.Y_LIM_OPTIONS],
-                ),
-                html.Div(
-                    [
-                        html.Div("Plot type", style=GRAPH_LABEL),
-                        dcc.RadioItems(
-                            options=[  # type: ignore[arg-type]
-                                {
-                                    "label": "Probability",
-                                    "value": StatisticsTabOption.PROBABILITY_PLOT,
-                                },
-                                {
-                                    "label": "Box",
-                                    "value": StatisticsTabOption.BOX_PLOT,
-                                },
-                            ],
-                            value=StatisticsTabOption.PROBABILITY_PLOT,
-                            id=containment_ids[ids.STATISTICS_TAB_OPTION],
-                            inline=True,
-                        ),
-                    ],
-                    id=containment_ids[ids.STATISTICS_TAB_OPTION_DIV],
-                    style=HIDDEN,
-                ),
-                html.Div(
-                    [
-                        html.Div("Points", style=GRAPH_LABEL),
-                        dcc.RadioItems(
-                            options=[  # type: ignore[arg-type]
-                                {"label": "All", "value": "all_points"},
-                                {"label": "Hide outliers", "value": "only_outliers"},
-                            ],
-                            value="only_outliers",
-                            id=containment_ids[ids.BOX_SHOW_POINTS],
-                            inline=True,
-                        ),
-                    ],
-                    id=containment_ids[ids.BOX_SHOW_POINTS_DIV],
-                    style=HIDDEN,
                 ),
             ],
         )
