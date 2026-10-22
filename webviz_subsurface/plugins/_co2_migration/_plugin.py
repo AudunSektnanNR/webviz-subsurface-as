@@ -342,7 +342,7 @@ class CO2Migration(WebvizPluginABC):
             for plot_id in (
                 MapViewElement.Ids.BAR_PLOT,
                 MapViewElement.Ids.TIME_PLOT,
-                MapViewElement.Ids.EXCEEDANCE_PLOT,
+                MapViewElement.Ids.PROBABILITY_PLOT,
                 MapViewElement.Ids.BOX_PLOT,
             )
         ]
@@ -771,7 +771,7 @@ class CO2Migration(WebvizPluginABC):
             Output(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
             Output(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
             Output(
-                self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT),
+                self._view_component(MapViewElement.Ids.PROBABILITY_PLOT),
                 "figure",
             ),
             Output(self._view_component(MapViewElement.Ids.BOX_PLOT), "figure"),
@@ -838,7 +838,7 @@ class CO2Migration(WebvizPluginABC):
             active_index = {
                 MainTabOption.CONTAINMENT_STATE: 0,
                 MainTabOption.CONTAINMENT_OVER_TIME: 1,
-                MainTabOption.EXCEEDANCE: 2,
+                MainTabOption.PROBABILITY: 2,
                 MainTabOption.BOX_PLOT: 3,
             }[active_tab]
             y_limits = [
@@ -952,9 +952,9 @@ class CO2Migration(WebvizPluginABC):
             Input(self._view_component(MapViewElement.Ids.TIME_PLOT), "restyleData"),
             State(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
             Input(
-                self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT), "restyleData"
+                self._view_component(MapViewElement.Ids.PROBABILITY_PLOT), "restyleData"
             ),
-            State(self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT), "figure"),
+            State(self._view_component(MapViewElement.Ids.PROBABILITY_PLOT), "figure"),
             Input(self._view_component(MapViewElement.Ids.BOX_PLOT), "restyleData"),
             State(self._view_component(MapViewElement.Ids.BOX_PLOT), "figure"),
         )
@@ -963,8 +963,8 @@ class CO2Migration(WebvizPluginABC):
             bar_figure: go.Figure,
             time_event: List[Any],
             time_figure: go.Figure,
-            exceedance_event: List[Any],
-            exceedance_figure: go.Figure,
+            probability_event: List[Any],
+            probability_figure: go.Figure,
             box_event: List[Any],
             box_figure: go.Figure,
         ) -> Patch:
@@ -982,9 +982,9 @@ class CO2Migration(WebvizPluginABC):
             elif _id == self._view_component(MapViewElement.Ids.TIME_PLOT):
                 if self._is_legend_click_event(time_event):
                     p["time_legendonly"] = extract_legendonly(time_figure)
-            elif _id == self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT):
-                if self._is_legend_click_event(exceedance_event):
-                    p["exceedance_legendonly"] = extract_legendonly(exceedance_figure)
+            elif _id == self._view_component(MapViewElement.Ids.PROBABILITY_PLOT):
+                if self._is_legend_click_event(probability_event):
+                    p["probability_legendonly"] = extract_legendonly(probability_figure)
             elif _id == self._view_component(MapViewElement.Ids.BOX_PLOT):
                 if self._is_legend_click_event(box_event):
                     p["box_legendonly"] = extract_legendonly(box_figure)
@@ -1006,7 +1006,7 @@ class CO2Migration(WebvizPluginABC):
             State(self._view_component(MapViewElement.Ids.SUMMARY_TABS), "value"),
             State(self._view_component(MapViewElement.Ids.BAR_PLOT), "figure"),
             State(self._view_component(MapViewElement.Ids.TIME_PLOT), "figure"),
-            State(self._view_component(MapViewElement.Ids.EXCEEDANCE_PLOT), "figure"),
+            State(self._view_component(MapViewElement.Ids.PROBABILITY_PLOT), "figure"),
             State(self._view_component(MapViewElement.Ids.BOX_PLOT), "figure"),
             prevent_initial_call=True,
         )
@@ -1015,7 +1015,7 @@ class CO2Migration(WebvizPluginABC):
             active_tab: str,
             bar_figure: go.Figure,
             time_figure: go.Figure,
-            exceedance_figure: go.Figure,
+            probability_figure: go.Figure,
             box_figure: go.Figure,
         ) -> Dict[str, Any]:
             file_name = "co2_migration"
@@ -1027,10 +1027,10 @@ class CO2Migration(WebvizPluginABC):
                 current_figure = time_figure
                 file_name += "_time_plot"
                 plot_choice = "containment_time"
-            elif active_tab == MainTabOption.EXCEEDANCE:
-                current_figure = exceedance_figure
-                file_name += "_exceedance_plot"
-                plot_choice = "exceedance"
+            elif active_tab == MainTabOption.PROBABILITY:
+                current_figure = probability_figure
+                file_name += "_probability_plot"
+                plot_choice = "probability"
             elif active_tab == MainTabOption.BOX_PLOT:
                 current_figure = box_figure
                 file_name += "_box_plot"

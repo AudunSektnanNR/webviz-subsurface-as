@@ -39,7 +39,7 @@ class MapViewElement(ViewElementABC):
         TIME_PLOT = "time-plot"
         TIME_PLOT_LINES = "time-plot-lines"
         TIME_PLOT_LINES_WRAPPER = "time-plot-lines-wrapper"
-        EXCEEDANCE_PLOT = "exceedance-plot"
+        PROBABILITY_PLOT = "probability-plot"
         BOX_PLOT = "box-plot"
         OUTLIER_TOGGLE = "outlier-toggle"
         BAR_PLOT_ORDER = "bar-plot-order"
@@ -140,7 +140,7 @@ class MapViewElement(ViewElementABC):
                                     self.Ids.TIME_PLOT_LINES_WRAPPER
                                 ),
                                 self.register_component_unique_id(
-                                    self.Ids.EXCEEDANCE_PLOT
+                                    self.Ids.PROBABILITY_PLOT
                                 ),
                                 self.register_component_unique_id(
                                     self.Ids.BOX_PLOT,
@@ -168,7 +168,7 @@ class MapViewElement(ViewElementABC):
                     data=LegendData(  # type: ignore[arg-type]
                         bar_legendonly=None,
                         time_legendonly=None,
-                        exceedance_legendonly=None,
+                        probability_legendonly=None,
                         box_legendonly=None,
                     ),
                 )
@@ -244,7 +244,7 @@ def _summary_graph_layout(
     time_plot_id: str,
     time_plot_lines_id: str,
     time_plot_lines_wrapper_id: str,
-    exceedance_plot_id: str,
+    probability_plot_id: str,
     box_plot_id: str,
     outlier_toggle_id: str,
     csv_export_button_id: str,
@@ -302,7 +302,7 @@ def _summary_graph_layout(
                             ],
                         ),
                         wcc.Tab(
-                            label="Time evolution",
+                            label="Time plot",
                             value=MainTabOption.CONTAINMENT_OVER_TIME,
                             style=TAB_STYLE,
                             selected_style=TAB_STYLE,
@@ -330,14 +330,14 @@ def _summary_graph_layout(
                             ],
                         ),
                         wcc.Tab(
-                            label="Exceedance probability",
-                            value=MainTabOption.EXCEEDANCE,
+                            label="Probability plot",
+                            value=MainTabOption.PROBABILITY,
                             style=TAB_STYLE,
                             selected_style=TAB_STYLE,
                             children=[
                                 html.Div(
                                     wcc.Graph(
-                                        id=exceedance_plot_id,
+                                        id=probability_plot_id,
                                         figure=go.Figure(),
                                         config={
                                             "displayModeBar": False,

@@ -1052,7 +1052,7 @@ def generate_co2_time_containment_figure(
     return fig
 
 
-def generate_co2_exceedance_figure(
+def generate_co2_probability_figure(
     df: pd.DataFrame,
     scale: Union[Co2MassScale, Co2VolumeScale],
     containment_info: ContainmentInfo,
@@ -1378,7 +1378,7 @@ def _extract_data_from_general_trace(
     else:
         trace_name = getattr(trace, "name", "Unknown")
 
-    if plot_choice in ["exceedance", "containment_state"]:
+    if plot_choice in ["probability", "containment_state"]:
         if trace.x is not None and "_inputArray" in trace.x:
             x_data = trace.x["_inputArray"]
             x_data = {int(k): v for k, v in x_data.items() if str(k).isdigit()}
@@ -1389,7 +1389,7 @@ def _extract_data_from_general_trace(
         if trace.x is not None:
             x_data = dict(enumerate(trace.x))
     if plot_choice in [
-        "exceedance",
+        "probability",
         "containment_time_single",
         "containment_time_multiple",
     ]:
@@ -1403,7 +1403,7 @@ def _extract_data_from_general_trace(
             y_data = {k: int(v) for k, v in enumerate(trace.y)}
     xy_data = {k: (x_data[k], y_data[k]) for k in x_data if k in y_data}
 
-    if plot_choice == "exceedance":
+    if plot_choice == "probability":
         custom_data = []
         if (
             hasattr(trace, "customdata")
@@ -1422,7 +1422,7 @@ def _extract_data_from_general_trace(
         # Merged traces use None to separate realization lines.
         if x_val is None or y_val is None:
             continue
-        if plot_choice == "exceedance":
+        if plot_choice == "probability":
             record = {
                 "type": trace_name,
                 "amount": x_val,

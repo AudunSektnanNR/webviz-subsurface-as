@@ -24,7 +24,7 @@ from webviz_subsurface.plugins._co2_migration._types import LegendData
 from webviz_subsurface.plugins._co2_migration._utilities.co2volume import (
     extract_df_from_fig,
     generate_co2_box_plot_figure,
-    generate_co2_exceedance_figure,
+    generate_co2_probability_figure,
     generate_co2_time_containment_figure,
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
@@ -517,12 +517,12 @@ def generate_containment_figure(
                 y_limits,
                 containment_info,
             )
-        if active_tab == MainTabOption.EXCEEDANCE:
-            return generate_co2_exceedance_figure(
+        if active_tab == MainTabOption.PROBABILITY:
+            return generate_co2_probability_figure(
                 containment_df,
                 co2_scale,
                 containment_info,
-                legenddata["exceedance_legendonly"],
+                legenddata["probability_legendonly"],
             )
         if active_tab == MainTabOption.BOX_PLOT:
             return generate_co2_box_plot_figure(
@@ -677,7 +677,7 @@ def make_plot_generation_key(
             key["time_mode"] = (
                 "realizations" if containment_info.show_realizations else "statistics"
             )
-    elif active_tab == MainTabOption.EXCEEDANCE:
+    elif active_tab == MainTabOption.PROBABILITY:
         key["date_option"] = containment_info.date_option
     elif active_tab == MainTabOption.BOX_PLOT:
         key.update(

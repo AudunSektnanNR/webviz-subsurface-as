@@ -7,7 +7,7 @@ from webviz_subsurface._utils.enum_shim import StrEnum
 class MainTabOption(StrEnum):
     CONTAINMENT_STATE = "containment-state"
     CONTAINMENT_OVER_TIME = "containment-over-time"
-    EXCEEDANCE = "exceedance"
+    PROBABILITY = "probability"
     BOX_PLOT = "box-plot"
 
 
