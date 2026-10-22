@@ -4,22 +4,13 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import plotly.graph_objects as go
-from dash import (
-    Dash,
-    Input,
-    Output,
-    Patch,
-    State,
-    callback,
-    ctx,
-    html,
-    no_update,
-)
+from dash import Dash, Input, Output, Patch, State, callback, ctx, html, no_update
+from dash._callback import NoUpdate
 from dash.exceptions import PreventUpdate
 from webviz_config import WebvizPluginABC, WebvizSettings
 from webviz_config.utils import StrEnum, callback_typecheck
 
-from webviz_subsurface._providers import FaultPolygonsServer, SurfaceArrayServer
+from webviz_subsurface._providers import FaultPolygonsServer, SurfaceImageServer
 from webviz_subsurface._providers.ensemble_polygon_provider import PolygonServer
 from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     SurfaceData,
@@ -31,7 +22,6 @@ from webviz_subsurface.plugins._co2_migration._utilities.callbacks import (
     find_table_date,
     generate_containment_figure,
     generate_unsmry_figures,
-    get_plume_polygon,
     make_plot_generation_key,
     make_plot_id,
     process_containment_info,
@@ -212,7 +202,7 @@ class CO2Migration(WebvizPluginABC):
                 for ensemble_name in ensembles
             }
             self._realizations_per_ensemble = init_realizations(ensemble_paths)
-            self._surface_server = SurfaceArrayServer.instance(app)
+            self._surface_server = SurfaceImageServer.instance(app)
             self._polygons_server = FaultPolygonsServer.instance(app)
             self._map_attribute_names = init_map_attribute_names(
                 webviz_settings, ensembles, map_attribute_names
@@ -452,6 +442,7 @@ class CO2Migration(WebvizPluginABC):
             Output(
                 self._view_component(MapViewElement.Ids.MAP_ANNOTATIONS), "children"
             ),
+            Output(self._view_component(MapViewElement.Ids.DECKGL_MAP), "bounds"),
             inputs={
                 "attribute": Input(
                     self._settings_component(ViewSettings.Ids.PROPERTY), "value"
@@ -511,6 +502,9 @@ class CO2Migration(WebvizPluginABC):
                     self._settings_component(ViewSettings.Ids.ENSEMBLE), "value"
                 ),
                 "thresholds": [Input(id, "value") for id in self._threshold_ids],
+                "current_bounds": State(
+                    self._view_component(MapViewElement.Ids.DECKGL_MAP), "bounds"
+                ),
             },
         )
         def update_map_attribute(
@@ -533,7 +527,10 @@ class CO2Migration(WebvizPluginABC):
             selected_wells: List[str],
             ensemble: str,
             thresholds: List[Optional[float]],
-        ) -> Tuple[List[Dict[Any, Any]], Optional[List[Any]]]:
+            current_bounds: Optional[List[float]],
+        ) -> Tuple[
+            List[Dict[Any, Any]], Optional[List[Any]], Union[List[float], NoUpdate]
+        ]:
             current_thresholds = dict(zip(self._threshold_ids, thresholds))
             attribute = MapAttribute(attribute)
             map_type = MapType[attribute.name].value
@@ -553,11 +550,10 @@ class CO2Migration(WebvizPluginABC):
                 datestr = None
             else:
                 datestr = self._ensemble_dates[ensemble][date]
-            # Contour data
-            contour_data = None
+            # Plume data
+            plume_data = None
             if map_type == "PLUME":
-                contour_data = {
-                    "property": property_origin(attribute, self._map_attribute_names),
+                plume_data = {
                     "threshold": plume_threshold,
                     "smoothing": plume_smoothing,
                 }
@@ -571,7 +567,7 @@ class CO2Migration(WebvizPluginABC):
                     realization,
                     self._map_attribute_names,
                     statistic,
-                    contour_data,
+                    plume_data,
                 )
                 surf_data, summed_mass = SurfaceData.from_server(
                     server=self._surface_server,
@@ -598,15 +594,6 @@ class CO2Migration(WebvizPluginABC):
                 self._summed_co2,
                 mass_unit,
             )
-            plume_polygon = None
-            if contour_data is not None:
-                plume_polygon = get_plume_polygon(
-                    self._ensemble_surface_providers[ensemble],
-                    realization,
-                    formation,
-                    datestr,
-                    contour_data,
-                )
             # Create layers and view bounds
             fault_polygon_url = self._fault_polygon_handlers[
                 ensemble
@@ -629,7 +616,6 @@ class CO2Migration(WebvizPluginABC):
                 nogo_bounds_url=nogo_polygon_url,
                 hazardous_bounds_url=hazardous_polygon_url,
                 well_pick_provider=self._well_pick_provider.get(ensemble, None),
-                plume_extent_data=plume_polygon,
                 overlay_dialog_options=overlay_dialog_options,
                 selected_wells=selected_wells,
                 show_contours=len(contour_switch) > 0,
@@ -647,7 +633,12 @@ class CO2Migration(WebvizPluginABC):
                 haz_url=hazardous_polygon_url,
                 nogo_url=nogo_polygon_url,
             )
-            return layers, annotations
+            # The image layer reports pre-rotation bounds, so frame the true extent
+            bounds: Union[List[float], NoUpdate] = no_update
+            if surf_data is not None and not current_bounds:
+                meta = surf_data.meta_data
+                bounds = [meta.x_min, meta.y_min, meta.x_max, meta.y_max]
+            return layers, annotations, bounds
 
     def _add_set_well_options_callback(self) -> None:
         @callback(

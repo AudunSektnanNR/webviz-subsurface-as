@@ -5,6 +5,7 @@ from dataclasses import dataclass, replace
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
+import scipy
 import xtgeo
 
 from webviz_subsurface._providers import (
@@ -13,8 +14,8 @@ from webviz_subsurface._providers import (
     SimulatedSurfaceAddress,
     StatisticalSurfaceAddress,
     SurfaceAddress,
-    SurfaceArrayMeta,
-    SurfaceArrayServer,
+    SurfaceImageMeta,
+    SurfaceImageServer,
 )
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
@@ -22,9 +23,6 @@ from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_pro
 from webviz_subsurface.plugins._co2_migration._utilities.generic import (
     MapAttribute,
     MapType,
-)
-from webviz_subsurface.plugins._co2_migration._utilities.plume_extent import (
-    truncate_surfaces,
 )
 
 SCALE_DICT = {"kg": 0.001, "tons": 1, "M tons": 1e6}
@@ -82,11 +80,11 @@ def _surface_cache_address(
 
 
 def publish_and_get_surface_metadata(
-    server: SurfaceArrayServer,
+    server: SurfaceImageServer,
     provider: EnsembleSurfaceProvider,
     address: Union[SurfaceAddress, TruncatedSurfaceAddress],
     transform: SurfaceTransform,
-) -> Tuple[Optional[SurfaceArrayMeta], Optional[str], Optional[Any]]:
+) -> Tuple[Optional[SurfaceImageMeta], Optional[str], Optional[Any]]:
     if isinstance(address, TruncatedSurfaceAddress):
         meta, partial_url = _publish_and_get_truncated_surface_metadata(
             server, provider, address
@@ -138,10 +136,10 @@ def publish_and_get_surface_metadata(
 
 
 def _publish_and_get_truncated_surface_metadata(
-    server: SurfaceArrayServer,
+    server: SurfaceImageServer,
     provider: EnsembleSurfaceProvider,
     address: TruncatedSurfaceAddress,
-) -> Tuple[Optional[SurfaceArrayMeta], str]:
+) -> Tuple[Optional[SurfaceImageMeta], str]:
     qualified_address = QualifiedSurfaceAddress(
         provider.provider_id(),
         # TODO: Should probably use a dedicated address type for this. Statistical surface
@@ -184,18 +182,31 @@ def _generate_surface(
     surfaces = [s for s in surfaces if s is not None]
     if len(surfaces) == 0:
         return None
-    plume_count = truncate_surfaces(surfaces, address.threshold, address.smoothing)
+    plume_count = _truncate_surfaces(surfaces, address.threshold, address.smoothing)
     template: xtgeo.RegularSurface = surfaces[0].copy()  # type: ignore
     template.values = plume_count
     template.values.mask = plume_count < 1e-4  # type: ignore
     return template
 
 
+def _truncate_surfaces(
+    surfaces: List[xtgeo.RegularSurface], threshold: float, smoothing: float
+) -> np.ndarray:
+    binary = [
+        (
+            np.where(np.isnan(s.values) | s.values.mask, 0.0, s.values) > threshold
+        ).astype(float)
+        for s in surfaces
+    ]
+    count = sum(binary)
+    return scipy.ndimage.gaussian_filter(count, sigma=smoothing, mode="nearest")
+
+
 def _publish_and_get_statistical_time_surface_metadata(
-    server: SurfaceArrayServer,
+    server: SurfaceImageServer,
     provider: EnsembleSurfaceProvider,
     address: StatisticalSurfaceAddress,
-) -> Tuple[Optional[SurfaceArrayMeta], str]:
+) -> Tuple[Optional[SurfaceImageMeta], str]:
     qualified_address = QualifiedSurfaceAddress(
         provider.provider_id(),
         StatisticalSurfaceAddress(

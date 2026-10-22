@@ -14,14 +14,13 @@ from webviz_subsurface._providers import (
     SimulatedSurfaceAddress,
     StatisticalSurfaceAddress,
     SurfaceAddress,
-    SurfaceArrayMeta,
-    SurfaceArrayServer,
+    SurfaceImageMeta,
+    SurfaceImageServer,
 )
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
 )
 from webviz_subsurface.plugins._co2_migration._types import LegendData
-from webviz_subsurface.plugins._co2_migration._utilities import plume_extent
 from webviz_subsurface.plugins._co2_migration._utilities.co2volume import (
     extract_df_from_fig,
     generate_co2_box_plot_figure,
@@ -85,12 +84,12 @@ class SurfaceData:
     color_map_range: Tuple[Optional[float], Optional[float]]
     color_map_name: str
     value_range: Tuple[float, float]
-    meta_data: SurfaceArrayMeta
+    meta_data: SurfaceImageMeta
     img_url: str
 
     @staticmethod
     def from_server(
-        server: SurfaceArrayServer,
+        server: SurfaceImageServer,
         provider: EnsembleSurfaceProvider,
         address: Union[SurfaceAddress, TruncatedSurfaceAddress],
         color_map_range: Tuple[Optional[float], Optional[float]],
@@ -146,7 +145,7 @@ def derive_surface_address(
     realization: List[int],
     map_attribute_names: FilteredMapAttribute,
     statistic: str,
-    contour_data: Optional[Dict[str, Any]],
+    plume_data: Optional[Dict[str, Any]],
 ) -> Union[SurfaceAddress, TruncatedSurfaceAddress]:
     if MapType[MapAttribute(attribute).name].value == "PLUME":
         max_attr_name = f"MAX_{MapGroup[MapAttribute(attribute).name]}"
@@ -157,8 +156,8 @@ def derive_surface_address(
             datestr=date,
             realizations=realization,
             basis_attribute=map_attribute_names[basis],
-            threshold=contour_data["threshold"] if contour_data else 0.0,
-            smoothing=contour_data["smoothing"] if contour_data else 0.0,
+            threshold=plume_data["threshold"] if plume_data else 0.0,
+            smoothing=plume_data["smoothing"] if plume_data else 0.0,
         )
     if len(realization) == 1:
         return SimulatedSurfaceAddress(
@@ -183,45 +182,6 @@ def readable_name(attribute: MapAttribute) -> str:
     elif MapType[MapAttribute(attribute).name].value == "PLUME":
         unit = " [# real.]"
     return f"{attribute.value}{unit}"
-
-
-def get_plume_polygon(
-    surface_provider: EnsembleSurfaceProvider,
-    realizations: List[int],
-    surface_name: str,
-    datestr: Optional[str],
-    contour_data: Dict[str, Any],
-) -> Optional[geojson.FeatureCollection]:
-    surface_attribute = contour_data["property"]
-    threshold = contour_data["threshold"]
-    smoothing = contour_data["smoothing"]
-    if (
-        surface_attribute is None
-        or len(realizations) == 0
-        or threshold is None
-        or threshold <= 0
-    ):
-        return None
-    surfaces = [
-        surface_provider.get_surface(
-            SimulatedSurfaceAddress(
-                attribute=surface_attribute,
-                name=surface_name,
-                datestr=datestr,
-                realization=r,
-            )
-        )
-        for r in realizations
-    ]
-    surfaces = [s for s in surfaces if s is not None]
-    if len(surfaces) == 0:
-        return None
-    return plume_extent.plume_polygons(
-        surfaces,
-        threshold,
-        smoothing=smoothing,
-        simplify_factor=0.12 * smoothing,  # Experimental
-    )
 
 
 def _find_legend_title(attribute: MapAttribute, unit: str) -> str:
@@ -394,7 +354,6 @@ def create_map_layers(
     nogo_bounds_url: Optional[str],
     hazardous_bounds_url: Optional[str],  # Keep for backward compatibility
     well_pick_provider: Optional[EnsembleWellPicks],
-    plume_extent_data: Optional[geojson.FeatureCollection],
     overlay_dialog_options: List[str],
     selected_wells: List[str],
     show_contours: bool,
@@ -407,7 +366,7 @@ def create_map_layers(
         meta = surface_data.meta_data
 
         # Generate contour lines
-        contours = []
+        contours: Dict[str, Any] = {"contours": False}
         if (
             show_contours
             and surface_data.color_map_range[0] is not None
@@ -418,24 +377,24 @@ def create_map_layers(
             assert min_val is not None and max_val is not None
             buffer = 0.01 * (max_val - min_val)  # Strange effects at min_val/max_val
             step = (max_val - min_val + 2 * buffer) / (np.round(num_contours) + 1)
-            contours = [min_val + step - buffer, step]
+            contours = {
+                "contours": True,
+                "contourReferencePoint": min_val + step - buffer,
+                "contourInterval": step,
+            }
 
         layers.append(
             {
-                "@@type": "MapLayer",
+                "@@type": "ColormapLayer",
                 "id": "colormap-layer",
                 "name": surface_data.readable_name,
-                "meshUrl": surface_data.img_url,
-                "frame": {
-                    "origin": [meta.x_ori, meta.y_ori],
-                    "count": [meta.x_count, meta.y_count],
-                    "increment": [meta.x_inc, meta.y_inc],
-                    "rotDeg": meta.rot_deg,
-                },
+                "image": surface_data.img_url,
+                "bounds": meta.deckgl_bounds,
+                "rotDeg": meta.deckgl_rot_deg,
+                "valueRange": surface_data.value_range,
                 "colorMapName": surface_data.color_map_name,
                 "colorMapRange": surface_data.color_map_range,
-                "material": False,
-                "contours": contours,
+                **contours,
             }
         )
 
@@ -523,18 +482,6 @@ def create_map_layers(
         )
         if layer is not None:
             layers.append(layer)
-
-    if plume_extent_data is not None:
-        layers.append(
-            {
-                "@@type": "GeoJsonLayer",
-                "name": "Plume Contours",
-                "id": "plume-polygon-layer",
-                "data": dict(plume_extent_data),
-                "lineWidthMinPixels": 2,
-                "getLineColor": [150, 150, 150, 255],
-            }
-        )
     return layers
 
 
