@@ -8,25 +8,23 @@ import numpy as np
 import plotly.graph_objects as go
 import webviz_subsurface_components as wsc
 from dash import dcc, html
-from flask_caching import Cache
 
 from webviz_subsurface._providers import (
     EnsembleSurfaceProvider,
     SimulatedSurfaceAddress,
     StatisticalSurfaceAddress,
     SurfaceAddress,
-    SurfaceArrayMeta,
-    SurfaceArrayServer,
+    SurfaceImageMeta,
+    SurfaceImageServer,
 )
 from webviz_subsurface._providers.ensemble_surface_provider.ensemble_surface_provider import (
     SurfaceStatistic,
 )
 from webviz_subsurface.plugins._co2_migration._types import LegendData
-from webviz_subsurface.plugins._co2_migration._utilities import plume_extent
 from webviz_subsurface.plugins._co2_migration._utilities.co2volume import (
     extract_df_from_fig,
     generate_co2_box_plot_figure,
-    generate_co2_statistics_figure,
+    generate_co2_probability_figure,
     generate_co2_time_containment_figure,
     generate_co2_time_containment_one_realization_figure,
     generate_co2_volume_figure,
@@ -37,7 +35,6 @@ from webviz_subsurface.plugins._co2_migration._utilities.containment_data_provid
 from webviz_subsurface.plugins._co2_migration._utilities.containment_info import (
     ContainmentInfo,
     MainTabOption,
-    StatisticsTabOption,
 )
 from webviz_subsurface.plugins._co2_migration._utilities.ensemble_well_picks import (
     EnsembleWellPicks,
@@ -57,6 +54,7 @@ from webviz_subsurface.plugins._co2_migration._utilities.summary_graphs import (
     generate_summary_figure,
 )
 from webviz_subsurface.plugins._co2_migration._utilities.surface_publishing import (
+    SurfaceTransform,
     TruncatedSurfaceAddress,
     publish_and_get_surface_metadata,
 )
@@ -86,26 +84,24 @@ class SurfaceData:
     color_map_range: Tuple[Optional[float], Optional[float]]
     color_map_name: str
     value_range: Tuple[float, float]
-    meta_data: SurfaceArrayMeta
+    meta_data: SurfaceImageMeta
     img_url: str
 
     @staticmethod
     def from_server(
-        server: SurfaceArrayServer,
+        server: SurfaceImageServer,
         provider: EnsembleSurfaceProvider,
         address: Union[SurfaceAddress, TruncatedSurfaceAddress],
         color_map_range: Tuple[Optional[float], Optional[float]],
         color_map_name: str,
         readable_name_: str,
-        visualization_info: Dict[str, Any],
-        map_attribute_names: FilteredMapAttribute,
+        transform: SurfaceTransform,
     ) -> Tuple[Any, Optional[Any]]:
         surf_meta, img_url, summed_mass = publish_and_get_surface_metadata(
             server,
             provider,
             address,
-            visualization_info,
-            map_attribute_names,
+            transform,
         )
         if surf_meta is None:  # Surface file does not exist
             return None, None
@@ -149,7 +145,7 @@ def derive_surface_address(
     realization: List[int],
     map_attribute_names: FilteredMapAttribute,
     statistic: str,
-    contour_data: Optional[Dict[str, Any]],
+    plume_data: Optional[Dict[str, Any]],
 ) -> Union[SurfaceAddress, TruncatedSurfaceAddress]:
     if MapType[MapAttribute(attribute).name].value == "PLUME":
         max_attr_name = f"MAX_{MapGroup[MapAttribute(attribute).name]}"
@@ -160,8 +156,8 @@ def derive_surface_address(
             datestr=date,
             realizations=realization,
             basis_attribute=map_attribute_names[basis],
-            threshold=contour_data["threshold"] if contour_data else 0.0,
-            smoothing=contour_data["smoothing"] if contour_data else 0.0,
+            threshold=plume_data["threshold"] if plume_data else 0.0,
+            smoothing=plume_data["smoothing"] if plume_data else 0.0,
         )
     if len(realization) == 1:
         return SimulatedSurfaceAddress(
@@ -186,45 +182,6 @@ def readable_name(attribute: MapAttribute) -> str:
     elif MapType[MapAttribute(attribute).name].value == "PLUME":
         unit = " [# real.]"
     return f"{attribute.value}{unit}"
-
-
-def get_plume_polygon(
-    surface_provider: EnsembleSurfaceProvider,
-    realizations: List[int],
-    surface_name: str,
-    datestr: Optional[str],
-    contour_data: Dict[str, Any],
-) -> Optional[geojson.FeatureCollection]:
-    surface_attribute = contour_data["property"]
-    threshold = contour_data["threshold"]
-    smoothing = contour_data["smoothing"]
-    if (
-        surface_attribute is None
-        or len(realizations) == 0
-        or threshold is None
-        or threshold <= 0
-    ):
-        return None
-    surfaces = [
-        surface_provider.get_surface(
-            SimulatedSurfaceAddress(
-                attribute=surface_attribute,
-                name=surface_name,
-                datestr=datestr,
-                realization=r,
-            )
-        )
-        for r in realizations
-    ]
-    surfaces = [s for s in surfaces if s is not None]
-    if len(surfaces) == 0:
-        return None
-    return plume_extent.plume_polygons(
-        surfaces,
-        threshold,
-        smoothing=smoothing,
-        simplify_factor=0.12 * smoothing,  # Experimental
-    )
 
 
 def _find_legend_title(attribute: MapAttribute, unit: str) -> str:
@@ -387,28 +344,6 @@ def create_map_annotations(
     return annotations
 
 
-def create_map_viewports() -> Dict:
-    return {
-        "layout": [1, 1],
-        "viewports": [
-            {
-                "id": "1_view",
-                "show3D": False,
-                "isSync": True,
-                "layerIds": [
-                    "colormap-layer",
-                    "fault-polygons-layer",
-                    "license-boundary-layer",
-                    "nogo-boundary-layer",
-                    "hazardous-boundary-layer",  # Keep for backward compatibility
-                    "well-picks-layer",
-                    "plume-polygon-layer",
-                ],
-            }
-        ],
-    }
-
-
 # pylint: disable=too-many-arguments
 def create_map_layers(
     realizations: List[int],
@@ -419,20 +354,19 @@ def create_map_layers(
     nogo_bounds_url: Optional[str],
     hazardous_bounds_url: Optional[str],  # Keep for backward compatibility
     well_pick_provider: Optional[EnsembleWellPicks],
-    plume_extent_data: Optional[geojson.FeatureCollection],
-    options_dialog_options: List[str],
+    overlay_dialog_options: List[str],
     selected_wells: List[str],
     show_contours: bool,
     num_contours: Optional[float],
 ) -> List[Dict]:
     layers = []
-    outline = LayoutLabels.SHOW_POLYGONS_AS_OUTLINES in options_dialog_options
+    outline = LayoutLabels.SHOW_POLYGONS_AS_OUTLINES in overlay_dialog_options
     if surface_data is not None:
         # Update ColormapLayer
         meta = surface_data.meta_data
 
         # Generate contour lines
-        contours = []
+        contours: Dict[str, Any] = {"contours": False}
         if (
             show_contours
             and surface_data.color_map_range[0] is not None
@@ -443,30 +377,30 @@ def create_map_layers(
             assert min_val is not None and max_val is not None
             buffer = 0.01 * (max_val - min_val)  # Strange effects at min_val/max_val
             step = (max_val - min_val + 2 * buffer) / (np.round(num_contours) + 1)
-            contours = [min_val + step - buffer, step]
+            contours = {
+                "contours": True,
+                "contourReferencePoint": min_val + step - buffer,
+                "contourInterval": step,
+            }
 
         layers.append(
             {
-                "@@type": "MapLayer",
+                "@@type": "ColormapLayer",
                 "id": "colormap-layer",
                 "name": surface_data.readable_name,
-                "meshUrl": surface_data.img_url,
-                "frame": {
-                    "origin": [meta.x_ori, meta.y_ori],
-                    "count": [meta.x_count, meta.y_count],
-                    "increment": [meta.x_inc, meta.y_inc],
-                    "rotDeg": meta.rot_deg,
-                },
+                "image": surface_data.img_url,
+                "bounds": meta.deckgl_bounds,
+                "rotDeg": meta.deckgl_rot_deg,
+                "valueRange": surface_data.value_range,
                 "colorMapName": surface_data.color_map_name,
                 "colorMapRange": surface_data.color_map_range,
-                "material": False,
-                "contours": contours,
+                **contours,
             }
         )
 
     if (
         fault_polygon_url is not None
-        and LayoutLabels.SHOW_FAULTPOLYGONS in options_dialog_options
+        and LayoutLabels.SHOW_FAULTPOLYGONS in overlay_dialog_options
     ):
         layers.append(
             {
@@ -479,7 +413,7 @@ def create_map_layers(
 
     if (
         containment_bounds_url is not None
-        and LayoutLabels.SHOW_CONTAINMENT_POLYGON in options_dialog_options
+        and LayoutLabels.SHOW_CONTAINMENT_POLYGON in overlay_dialog_options
     ):
         layers.append(
             {
@@ -499,7 +433,7 @@ def create_map_layers(
 
     if (
         nogo_bounds_url is not None
-        and LayoutLabels.SHOW_NOGO_POLYGON in options_dialog_options
+        and LayoutLabels.SHOW_NOGO_POLYGON in overlay_dialog_options
     ):
         layers.append(
             {
@@ -519,7 +453,7 @@ def create_map_layers(
 
     if (
         hazardous_bounds_url is not None
-        and LayoutLabels.SHOW_NOGO_POLYGON in options_dialog_options
+        and LayoutLabels.SHOW_NOGO_POLYGON in overlay_dialog_options
     ):
         layers.append(
             {
@@ -541,25 +475,13 @@ def create_map_layers(
         well_pick_provider is not None
         and formation is not None
         and len(realizations) > 0
-        and LayoutLabels.SHOW_WELLS in options_dialog_options
+        and LayoutLabels.SHOW_WELLS in overlay_dialog_options
     ):
         layer = well_pick_provider.geojson_layer(
             realizations[0], selected_wells, formation
         )
         if layer is not None:
             layers.append(layer)
-
-    if plume_extent_data is not None:
-        layers.append(
-            {
-                "@@type": "GeoJsonLayer",
-                "name": "Plume Contours",
-                "id": "plume-polygon-layer",
-                "data": dict(plume_extent_data),
-                "lineWidthMinPixels": 2,
-                "getLineColor": [150, 150, 150, 255],
-            }
-        )
     return layers
 
 
@@ -595,22 +517,19 @@ def generate_containment_figure(
                 y_limits,
                 containment_info,
             )
-        if active_tab == MainTabOption.STATISTICS:
-            if (
-                containment_info.statistics_tab_option
-                == StatisticsTabOption.PROBABILITY_PLOT
-            ):
-                return generate_co2_statistics_figure(
-                    containment_df,
-                    co2_scale,
-                    containment_info,
-                    legenddata["stats_legendonly"],
-                )
+        if active_tab == MainTabOption.PROBABILITY:
+            return generate_co2_probability_figure(
+                containment_df,
+                co2_scale,
+                containment_info,
+                legenddata["probability_legendonly"],
+            )
+        if active_tab == MainTabOption.BOX_PLOT:
             return generate_co2_box_plot_figure(
                 containment_df,
                 co2_scale,
                 containment_info,
-                legenddata["stats_legendonly"],
+                legenddata["box_legendonly"],
             )
         raise ValueError(f"Unsupported containment tab: {active_tab}")
     except Exception as exc:
@@ -630,32 +549,14 @@ def generate_unsmry_figures(
     )
 
 
-def process_visualization_info(
-    attribute: str,
-    thresholds: dict,
-    unit: str,
-    stored_info: Dict[str, Any],
-    cache: Cache,
-) -> Dict[str, Any]:
-    """
-    Clear surface cache if the threshold for visualization or mass unit is changed
-    """
-    stored_info["attribute"] = attribute
-    stored_info["change"] = False
-    if (
-        MapType[MapAttribute(attribute).name].value not in ["PLUME", "MIGRATION_TIME"]
-        and unit != stored_info["unit"]
-    ):
-        stored_info["unit"] = unit
-        stored_info["change"] = True
-    if thresholds is not None:
-        for att in stored_info["thresholds"].keys():
-            if stored_info["thresholds"][att] != thresholds[att]:
-                stored_info["change"] = True
-                stored_info["thresholds"][att] = thresholds[att]
-    if stored_info["change"]:
-        cache.clear()
-    return stored_info
+def find_table_date(
+    slider_dates: List[str], date_index: Optional[int], table_dates: List[str]
+) -> Optional[str]:
+    if date_index is None:
+        return None
+    # Map dates are formatted YYYYMMDD, table dates YYYY-MM-DD
+    date = slider_dates[date_index].replace("-", "")
+    return next((d for d in table_dates if d.replace("-", "") == date), None)
 
 
 # pylint: disable=too-many-locals
@@ -668,10 +569,9 @@ def process_containment_info(
     color_choice: str,
     mark_choice: Optional[str],
     sorting: str,
-    lines_to_show: str,
+    show_realizations: bool,
     date_option: str,
-    statistics_tab_option: StatisticsTabOption,
-    box_show_points: str,
+    show_all_points: bool,
     menu_options: MenuOptions,
 ) -> ContainmentInfo:
     if mark_choice is None:
@@ -711,10 +611,9 @@ def process_containment_info(
         phases=[phase for phase in menu_options["phases"] if phase != "total"],
         containments=["nogo", "outside", "contained"],
         plume_groups=plume_groups,
-        use_stats=lines_to_show == "stat",
+        show_realizations=show_realizations,
         date_option=date_option,
-        statistics_tab_option=statistics_tab_option,
-        box_show_points=box_show_points,
+        points_to_show="all" if show_all_points else "outliers",
     )
 
 
@@ -776,15 +675,15 @@ def make_plot_generation_key(
             key.update(time_mode="single", y_limits=list(y_limits))
         else:
             key["time_mode"] = (
-                "statistics" if containment_info.use_stats else "realizations"
+                "realizations" if containment_info.show_realizations else "statistics"
             )
-    elif active_tab == MainTabOption.STATISTICS:
+    elif active_tab == MainTabOption.PROBABILITY:
+        key["date_option"] = containment_info.date_option
+    elif active_tab == MainTabOption.BOX_PLOT:
         key.update(
             date_option=containment_info.date_option,
-            statistics_plot=containment_info.statistics_tab_option.value,
+            points_to_show=containment_info.points_to_show,
         )
-        if containment_info.statistics_tab_option == StatisticsTabOption.BOX_PLOT:
-            key["box_show_points"] = containment_info.box_show_points
 
     return key
 
@@ -832,8 +731,6 @@ def make_plot_id(
     )
     if active_tab == MainTabOption.CONTAINMENT_OVER_TIME:
         plot_id += "-single" if len(realizations) == 1 else "-multiple"
-    if active_tab == MainTabOption.STATISTICS:
-        plot_id += f"-{containment_info.statistics_tab_option.value}"
     return plot_id
 
 
