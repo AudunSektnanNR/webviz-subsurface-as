@@ -72,15 +72,14 @@ class ContainmentDataProvider:
     @staticmethod
     def _get_menu_options(provider: EnsembleTableProvider) -> MenuOptions:
         realization = provider.realizations()[0]
-        df = provider.get_column_data(["phase", "date"], [realization])
-        spatial_df = provider.get_column_data(["zone", "region", "plume_group"])
+        df = provider.get_column_data(
+            ["phase", "date", "zone", "region", "plume_group"]
+        )
+        ContainmentDataProvider._validate_dates_and_phases(provider, df, realization)
+        reference_df = df.loc[df["REAL"] == realization, ["phase", "date"]]
         spatial_options = {
             column: ["all"]
-            + [
-                value
-                for value in spatial_df[column].dropna().unique()
-                if value != "all"
-            ]
+            + [value for value in df[column].dropna().unique() if value != "all"]
             for column in ["zone", "region", "plume_group"]
         }
         zones = spatial_options["zone"]
@@ -96,10 +95,10 @@ class ContainmentDataProvider:
 
         plume_groups = sorted(plume_groups, key=plume_sort_key)
 
-        observed_phases = set(df["phase"].dropna().unique())
+        observed_phases = set(reference_df["phase"].dropna().unique())
         phases = [phase for phase in _PHASE_ORDER if phase in observed_phases]
 
-        dates = df["date"].unique()
+        dates = reference_df["date"].unique()
         dates.sort()
 
         return {
@@ -109,6 +108,27 @@ class ContainmentDataProvider:
             "plume_groups": plume_groups if len(plume_groups) > 1 else [],
             "dates": dates,
         }
+
+    @staticmethod
+    def _validate_dates_and_phases(
+        provider: EnsembleTableProvider,
+        df: pd.DataFrame,
+        reference_realization: int,
+    ) -> None:
+        for column in ["date", "phase"]:
+            values_per_realization = df.groupby("REAL")[column].agg(
+                lambda values: set(values.dropna())
+            )
+            expected = values_per_realization.loc[reference_realization]
+            for realization, observed in values_per_realization.items():
+                if observed != expected:
+                    raise ContainmentDataValidationError(
+                        f"Inconsistent {column} sets for provider {provider}: "
+                        f"realization {realization} differs from reference "
+                        f"realization {reference_realization}. "
+                        f"Missing: {sorted(expected - observed)}; "
+                        f"extra: {sorted(observed - expected)}."
+                    )
 
     @staticmethod
     def _validate(provider: EnsembleTableProvider) -> None:
