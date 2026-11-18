@@ -95,7 +95,7 @@ def build_mapping(
         if not matched_name:
             continue
         if scenario == PhasesScenario.THREE_PHASES and any(
-            g in attr for g in ["sgas", "amfg"]
+            g in attr for g in ["sgas", "amfg",]
         ):
             LOGGER.info(
                 f"Map '{attr}' is available, but since the scenario is not saline aquifer,"
