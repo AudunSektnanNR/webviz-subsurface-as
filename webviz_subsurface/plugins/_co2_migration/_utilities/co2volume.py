@@ -697,13 +697,12 @@ def generate_co2_time_containment_one_realization_figure(
     else:
         sort_order = ["date", color_choice]
     df.sort_values(by=sort_order, inplace=True)
-    if y_limits[0] is None and y_limits[1] is not None:
+    y_min, y_max = y_limits[0], y_limits[1]
+    if y_min is None and y_max is not None:
         y_limits[0] = 0.0
-    elif y_limits[1] is None and y_limits[0] is not None:
-        maximum = df.groupby("date")["amount"].sum().max()
-        y_limits[1] = maximum * 1.05
-        if y_limits[1] <= y_limits[0]:
-            y_limits[1] = y_limits[0] + 1.0
+    elif y_max is None and y_min is not None:
+        maximum = df.groupby("date")["amount"].sum().max() * 1.05
+        y_limits[1] = y_min + 1.0 if maximum <= y_min else maximum
     elif (df["amount"] == 0.0).all() and y_limits == [None, None]:
         y_limits = [0.0, 1.0]
 
@@ -788,10 +787,10 @@ def _add_hover_info_in_field(
     prev_vals = {date: 0.0 for date in dates}
     date_dict = spaced_dates(dates, 4)  # type: ignore[arg-type]
 
-    x_values = []
-    y_values = []
-    hover_texts = []
-    hover_colors = []
+    x_values: List[Optional[str]] = []
+    y_values: List[Optional[float]] = []
+    hover_texts: List[Optional[str]] = []
+    hover_colors: List[str] = []
 
     for name, color in zip(cat_ord["type"], colors):
         sub_df = df[df["type"] == name]
@@ -972,8 +971,8 @@ def _add_merged_realization_trace(
         return
 
     x_values = []
-    y_parts = []
-    custom_data_parts = []
+    y_parts: List[np.ndarray] = []
+    custom_data_parts: List[np.ndarray] = []
 
     for realization, realization_df in category_df.groupby("REAL", sort=False):
         amounts = realization_df["amount"].to_numpy(dtype=np.float64, copy=False)

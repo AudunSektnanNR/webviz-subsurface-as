@@ -1053,7 +1053,7 @@ class GraphSelectorsLayout(html.Div):
                     [
                         html.Div("Sort by", style=GRAPH_LABEL),
                         dcc.RadioItems(
-                            options=[
+                            options=[  # type: ignore[arg-type]
                                 {"label": "colors", "value": "color"},
                                 {"label": "marks", "value": "marking"},
                             ],
